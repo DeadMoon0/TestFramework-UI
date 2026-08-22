@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+		<IsPackable>false</IsPackable>
+		<!--
+		  The pages under wwwroot are the fixtures of the browser suite: each one is a resilience case
+		  (a renamed control, a relocated one, three that are genuinely ambiguous, late rendering).
+		  They are hand-written and self-contained on purpose - no framework, no build step, nothing
+		  that could make a failing test a question about tooling rather than about the page.
+		-->
+	</PropertyGroup>
+
+</Project>

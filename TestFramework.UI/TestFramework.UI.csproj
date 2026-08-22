@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<Title>TestFramework.UI</Title>
+		<Authors>DeadMoon0</Authors>
+		<Product>TestFramework</Product>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageTags>Test;UnitTest;IntegrationTest;Framework;Fluent;Timeline;UI;Structure</PackageTags>
+		<PackageIcon>Icon.png</PackageIcon>
+		<Description>The technology-neutral foundation for UI testing inside a TestFramework timeline: the session picture a run carries from interaction to assertion, expected-structure comparison with missing/surplus reporting, and tolerant cell rules. Contains no browser dependency - pair it with TestFramework.UI.Browser to drive a web UI.</Description>
+		<Version>0.1.0</Version>
+		<PackageProjectUrl>https://github.com/DeadMoon0/TestFramework-UI</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
+		<PackageReleaseNotes>First release. Requires TestFramework.Core 0.3.0 and TestFramework.Config 0.2.1.</PackageReleaseNotes>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>TestFramework.UI.Tests</_Parameter1>
+		</AssemblyAttribute>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>TestFramework.UI.Browser</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="TestFramework.Config" Version="0.2.1" />
+		<PackageReference Include="TestFramework.Core" Version="0.3.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\Modules\TestFramework-Common\Assets\Icon.png" Condition="Exists('..\Modules\TestFramework-Common\Assets\Icon.png')">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<!--
+	  The icon lives in a submodule, so a fresh clone without it packs an invalid nuspec and NuGet
+	  reports only that the icon file does not exist. Fail here instead, with the command that fixes it.
+	-->
+	<Target Name="EnsurePackageIconPresent" BeforeTargets="GenerateNuspec">
+		<Error Condition="!Exists('..\Modules\TestFramework-Common\Assets\Icon.png')"
+		       Text="The package icon is missing because the TestFramework-Common submodule is not checked out. Run: git submodule update --init --recursive" />
+	</Target>
+
+</Project>

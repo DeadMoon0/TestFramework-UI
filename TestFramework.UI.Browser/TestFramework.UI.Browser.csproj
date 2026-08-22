@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<Title>TestFramework.UI.Browser</Title>
+		<Authors>DeadMoon0</Authors>
+		<Product>TestFramework</Product>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageTags>Test;UnitTest;IntegrationTest;Framework;Fluent;Timeline;UI;Browser;Playwright;WebUI;E2E</PackageTags>
+		<PackageIcon>Icon.png</PackageIcon>
+		<Description>Drive a local browser from inside a TestFramework timeline. Interactions read as imperative steps (Navigate, Click, Fill, Expect) and address elements the way a person does - by role, label, placeholder or visible text - so a renamed or relocated control does not fail a test that only wanted to press it. Every non-exact match is recorded and assertable, ambiguity fails with the candidates and the dial that resolves it, and expected page structure is declared as a typed, reusable field.</Description>
+		<Version>0.1.0</Version>
+		<PackageProjectUrl>https://github.com/DeadMoon0/TestFramework-UI</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
+		<PackageReleaseNotes>First release. Requires TestFramework.Core 0.3.0, TestFramework.Config 0.2.1 and TestFramework.UI 0.1.0.</PackageReleaseNotes>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>TestFramework.UI.Browser.Tests</_Parameter1>
+		</AssemblyAttribute>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>TestFramework.UI.Web</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+		<PackageReference Include="TestFramework.Config" Version="0.2.1" />
+		<PackageReference Include="TestFramework.Core" Version="0.3.0" />
+	</ItemGroup>
+
+	<!--
+	  Sibling package inside this repository. The produced nuspec declares it as a version-pinned
+	  dependency, the same way a consumer resolves it; only the build inside the repo short-circuits
+	  to the project.
+	-->
+	<ItemGroup>
+		<ProjectReference Include="..\TestFramework.UI\TestFramework.UI.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\Modules\TestFramework-Common\Assets\Icon.png" Condition="Exists('..\Modules\TestFramework-Common\Assets\Icon.png')">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<Target Name="EnsurePackageIconPresent" BeforeTargets="GenerateNuspec">
+		<Error Condition="!Exists('..\Modules\TestFramework-Common\Assets\Icon.png')"
+		       Text="The package icon is missing because the TestFramework-Common submodule is not checked out. Run: git submodule update --init --recursive" />
+	</Target>
+
+</Project>
