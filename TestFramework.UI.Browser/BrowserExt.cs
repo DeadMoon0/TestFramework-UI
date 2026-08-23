@@ -4,6 +4,7 @@ using TestFramework.Core.Steps;
 using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Events;
 using TestFramework.UI.Browser.Identifier;
+using TestFramework.UI.Browser.Layouting;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Steps;
@@ -203,6 +204,33 @@ public static class BrowserExt
         /// <returns>The step.</returns>
         public Step<UiTableResultContext> ReadTable(UiTarget table, VariableIdentifier? into = null)
             => new ReadTableStep(this.app, table, into);
+
+        /// <summary>
+        /// Checks that the page is laid out the way a layout says.
+        /// </summary>
+        /// <remarks>
+        /// Relations between the things a person sees - above, left of, inside, not overlapping - rather
+        /// than coordinates, with a built-in tolerance for rounding. Retried until the page settles; a
+        /// failure lists every violated relation with both actual rectangles.
+        /// </remarks>
+        /// <param name="expected">The relations the page must satisfy.</param>
+        /// <returns>The step.</returns>
+        public Step<UiCompareResultContext> CheckLayout(ExpectedLayout expected)
+            => new CheckLayoutStep(this.app, expected);
+
+        /// <summary>
+        /// Records where everything in a part of the page sits, so a later run can be told when the
+        /// geometry changed.
+        /// </summary>
+        /// <remarks>
+        /// Positions are relative to the scope and snapped to a four-pixel grid, so only a change a
+        /// person could point at reads as drift - no pixel files, no baseline service.
+        /// </remarks>
+        /// <param name="scope">The element whose contents are recorded.</param>
+        /// <param name="name">The variable to record them in.</param>
+        /// <returns>The step.</returns>
+        public Step<UiCaptureResultContext> CaptureLayout(UiTarget scope, string name)
+            => new CaptureLayoutStep(this.app, scope, name);
 
         /// <summary>
         /// Records what a part of the page is built like, so a later run can be told when it changed.

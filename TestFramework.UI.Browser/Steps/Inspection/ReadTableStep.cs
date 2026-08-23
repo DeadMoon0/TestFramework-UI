@@ -84,9 +84,11 @@ internal sealed class ReadTableStep : UiInspectionStep<UiTableResultContext>
 
     /// <inheritdoc />
     protected override async Task<(UiTableResultContext Result, string? Detail)> InspectAsync(
-        ILocator locator,
+        ILocator? locator,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(locator);
+
         UiTableSnapshot snapshot = await DomTableReader.ReadAsync(locator, cancellationToken).ConfigureAwait(false);
 
         // Rows keyed by column name rather than by position, because an assertion that says

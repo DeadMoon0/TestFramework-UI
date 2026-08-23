@@ -62,6 +62,7 @@ internal static class UiValueReader
             UiValueKind.Checked => Result(await Element(source, locator).IsCheckedAsync().ConfigureAwait(false), resolved),
             UiValueKind.Attribute => await AttributeAsync(source, Element(source, locator), resolved).ConfigureAwait(false),
             UiValueKind.SelectedOption => await SelectedOptionAsync(source, Element(source, locator), resolved).ConfigureAwait(false),
+            UiValueKind.Style => await StyleAsync(source, Element(source, locator), resolved).ConfigureAwait(false),
             UiValueKind.Url => Result(page.Url, resolved: null),
             UiValueKind.QueryParam => QueryParam(source, page),
             UiValueKind.LocalStorage => await LocalStorageAsync(source, page).ConfigureAwait(false),
@@ -175,6 +176,24 @@ internal static class UiValueReader
         string? popup = await locator.GetAttributeAsync("aria-haspopup").ConfigureAwait(false);
 
         return string.Equals(popup, "listbox", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task<UiReadResult> StyleAsync(UiValueSource source, ILocator locator, UiResolvedTarget? resolved)
+    {
+        string value = (await locator
+            .EvaluateAsync<string>("(el, prop) => getComputedStyle(el).getPropertyValue(prop)", source.Argument)
+            .ConfigureAwait(false) ?? string.Empty).Trim();
+
+        if (value.Length == 0)
+        {
+            // Computed style answers "" for a property that does not exist, which is a typo nine times
+            // out of ten - and a typo deserves a message, not an empty variable.
+            throw new InvalidOperationException(
+                $"The computed style of {source.Target!.Describe()} has no value for '{source.Argument}'. " +
+                "Property names are CSS names, for example 'background-color'.");
+        }
+
+        return Result(value, resolved);
     }
 
     private static UiReadResult QueryParam(UiValueSource source, IPage page)

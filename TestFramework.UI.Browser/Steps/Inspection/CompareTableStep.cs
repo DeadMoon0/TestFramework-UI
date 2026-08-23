@@ -48,9 +48,11 @@ internal sealed class CompareTableStep : UiInspectionStep<UiCompareResultContext
 
     /// <inheritdoc />
     protected override async Task<(UiCompareResultContext Result, string? Detail)> InspectAsync(
-        ILocator locator,
+        ILocator? locator,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(locator);
+
         UiTableSnapshot snapshot = await DomTableReader.ReadAsync(locator, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<UiDifference> differences = this.expected.Compare(snapshot);
 

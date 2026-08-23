@@ -66,9 +66,11 @@ internal sealed class CaptureStructureStep : UiInspectionStep<UiCaptureResultCon
 
     /// <inheritdoc />
     protected override async Task<(UiCaptureResultContext Result, string? Detail)> InspectAsync(
-        ILocator locator,
+        ILocator? locator,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(locator);
+
         UiElementSnapshot snapshot = await DomProjector.ProjectAsync(locator, cancellationToken).ConfigureAwait(false);
         string rendered = DomProjector.Render(snapshot);
 

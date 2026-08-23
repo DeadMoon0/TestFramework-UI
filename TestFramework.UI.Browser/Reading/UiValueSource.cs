@@ -34,6 +34,9 @@ public enum UiValueKind
 
     /// <summary>One entry of the page's local storage.</summary>
     LocalStorage,
+
+    /// <summary>One computed style property of an element.</summary>
+    Style,
 }
 
 /// <summary>
@@ -96,6 +99,7 @@ public sealed record UiValueSource
         UiValueKind.Url => "the page address",
         UiValueKind.QueryParam => $"query parameter '{this.Argument}'",
         UiValueKind.LocalStorage => $"local storage '{this.Argument}'",
+        UiValueKind.Style => $"style '{this.Argument}' of {this.Target!.Describe()}",
         _ => this.Kind.ToString(),
     };
 
@@ -193,6 +197,26 @@ public static class Value
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         return UiValueSource.OfPage(UiValueKind.QueryParam, name);
+    }
+
+    /// <summary>
+    /// One computed style property of an element, as the browser resolved it.
+    /// </summary>
+    /// <remarks>
+    /// The raw escape hatch of the layout checks, and ranked below them for the same reason raw
+    /// selectors rank below roles: a computed value is the page's implementation, and a test pinning
+    /// <c>rgb(168, 71, 28)</c> fails on the next restyle whether a person could tell or not. Reach for
+    /// it when the property IS the requirement - and note that colours come back resolved, as
+    /// <c>rgb(...)</c>, whatever notation the stylesheet used.
+    /// </remarks>
+    /// <param name="target">The element.</param>
+    /// <param name="property">The CSS property name, for example <c>background-color</c>.</param>
+    /// <returns>The source.</returns>
+    public static UiValueSource Style(UiTarget target, string property)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(property);
+
+        return UiValueSource.OfElement(UiValueKind.Style, target, property);
     }
 
     /// <summary>

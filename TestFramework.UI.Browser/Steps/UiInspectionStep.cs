@@ -41,22 +41,35 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
     where TResult : StepResultContext
 {
     private readonly WebAppIdentifier app;
-    private readonly UiTarget target;
+    private readonly UiTarget? target;
 
     protected UiInspectionStep(WebAppIdentifier app, UiTarget target)
+        : this(app)
+        => this.target = target ?? throw new ArgumentNullException(nameof(target));
+
+    /// <summary>
+    /// Creates an inspection without a subject element - one that looks at the page as a whole, the way
+    /// a layout check relates many elements rather than examining one.
+    /// </summary>
+    /// <param name="app">The application to look at.</param>
+    protected UiInspectionStep(WebAppIdentifier app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        ArgumentNullException.ThrowIfNull(target);
 
         this.app = app;
-        this.target = target;
     }
 
     /// <summary>The application being looked at.</summary>
     protected WebAppIdentifier App => this.app;
 
     /// <summary>What is being looked at.</summary>
-    protected UiTarget Target => this.target;
+    protected UiTarget Target => this.target ?? throw new InvalidOperationException("This inspection has no subject element.");
+
+    /// <summary>The element being looked at, or null for an inspection of the page as a whole.</summary>
+    private protected UiTarget? Subject => this.target;
+
+    /// <summary>The lookup machinery of the running inspection, for the steps that resolve their own targets.</summary>
+    private protected UiInspectionLens? Lens { get; private set; }
 
     /// <summary>How this inspection is named in the session story.</summary>
     protected abstract string ActionName { get; }
@@ -124,9 +137,13 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
 
         try
         {
-            UiResolvedTarget resolved = await this
-                .ResolveAsync(query, session, resolutionOptions, config, cancellationToken)
-                .ConfigureAwait(false);
+            this.Lens = new UiInspectionLens(session, query, resolutionOptions, config);
+
+            UiResolvedTarget? resolved = this.target is null
+                ? null
+                : await this
+                    .ResolveAsync(query, session, resolutionOptions, config, cancellationToken)
+                    .ConfigureAwait(false);
 
             (TResult result, string? detail) = await this
                 .InspectUntilSettledAsync(query, resolved, config, cancellationToken)
@@ -165,7 +182,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
     /// <param name="locator">The element being looked at.</param>
     /// <param name="cancellationToken">Cancels the look.</param>
     /// <returns>What was found, and a line for the session story.</returns>
-    protected abstract Task<(TResult Result, string? Detail)> InspectAsync(ILocator locator, CancellationToken cancellationToken);
+    protected abstract Task<(TResult Result, string? Detail)> InspectAsync(ILocator? locator, CancellationToken cancellationToken);
 
     /// <summary>
     /// Whether this result is worth looking again for, because the page may not have settled.
@@ -205,7 +222,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
             try
             {
                 return await TargetResolver
-                    .ResolveAsync(query, this.target, UiSmartContext.Section, resolutionOptions, this.app, session.Page.Url, cancellationToken)
+                    .ResolveAsync(query, this.target!, UiSmartContext.Section, resolutionOptions, this.app, session.Page.Url, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (UiTargetNotFoundException) when (DateTimeOffset.UtcNow < deadline)
@@ -217,7 +234,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
 
     private async Task<(TResult Result, string? Detail)> InspectUntilSettledAsync(
         PlaywrightElementQuery query,
-        UiResolvedTarget resolved,
+        UiResolvedTarget? resolved,
         WebAppConfig config,
         CancellationToken cancellationToken)
     {
@@ -226,7 +243,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
         while (true)
         {
             (TResult result, string? detail) = await this
-                .InspectAsync(query.Locate(resolved), cancellationToken)
+                .InspectAsync(resolved is null ? null : query.Locate(resolved), cancellationToken)
                 .ConfigureAwait(false);
 
             if (!this.ShouldRetry(result) || DateTimeOffset.UtcNow >= deadline)
@@ -243,19 +260,19 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
         string sessionVariable,
         UiSession session,
         string label,
-        UiResolvedTarget resolved,
+        UiResolvedTarget? resolved,
         string? detail,
         Stopwatch stopwatch)
     {
         UiSessionEntry entry = new UiSessionEntry(
             label,
             this.ActionName,
-            this.target.Describe(),
-            resolved.DescribeMatch(),
-            resolved.Rank,
-            !resolved.Spec.Exact,
-            resolved.CandidateCount,
-            resolved.Snippet,
+            this.target?.Describe() ?? "the page",
+            resolved?.DescribeMatch(),
+            resolved?.Rank,
+            resolved is not null && !resolved.Spec.Exact,
+            resolved?.CandidateCount ?? 0,
+            resolved?.Snippet,
             detail,
             session.Page.Url,
             session.DrainConsoleErrors(),
@@ -273,3 +290,17 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
             ? picture
             : UiSessionPicture.Empty(app);
 }
+
+/// <summary>
+/// The lookup machinery of one running inspection, for a step that resolves targets of its own.
+/// </summary>
+/// <param name="Session">The browser session.</param>
+/// <param name="Query">The page's lookup surface.</param>
+/// <param name="Options">The resolution dials of this session.</param>
+/// <param name="Config">The application's configuration.</param>
+internal sealed record UiInspectionLens(
+    UiSession Session,
+    PlaywrightElementQuery Query,
+    UiResolutionOptions Options,
+    WebAppConfig Config);
+

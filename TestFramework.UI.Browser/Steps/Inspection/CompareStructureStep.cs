@@ -52,9 +52,11 @@ internal sealed class CompareStructureStep : UiInspectionStep<UiCompareResultCon
 
     /// <inheritdoc />
     protected override async Task<(UiCompareResultContext Result, string? Detail)> InspectAsync(
-        ILocator locator,
+        ILocator? locator,
         CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(locator);
+
         UiElementSnapshot snapshot = await DomProjector.ProjectAsync(locator, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<UiDifference> differences = StructureDiffer.Compare(this.expected, snapshot);
 
