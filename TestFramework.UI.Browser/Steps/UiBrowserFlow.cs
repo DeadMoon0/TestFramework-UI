@@ -284,9 +284,29 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         => [this.app.ExternalRequirement ?? new EnvironmentRequirement(BrowserEnvironmentResourceKinds.WebApp, this.app)];
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Also where the retry rule is enforced, because this is the one moment at plan time a step sees
+    /// both its final options and the run's variables - after the modifiers have been applied, before
+    /// any browser exists.
+    /// </remarks>
     public StepGeneric? CreateCleanupStep(VariableStore variableStore)
     {
         ArgumentNullException.ThrowIfNull(variableStore);
+
+        // Retrying a flow replays its actions against whatever the failed attempt left behind: a second
+        // "Place order" places a second order. A flow that begins with Navigate starts every attempt
+        // from a known page, so that is the one shape a retry is allowed on - refused here, at plan
+        // time, rather than discovered in production data.
+        if (this.RetryOptions.MaxRetryCount.GetValue(variableStore) > 0
+            && (this.actions.Count == 0 || this.actions[0].Kind != UiActionKind.Navigate))
+        {
+            throw new InvalidOperationException(
+                $"'{this.LabelOptions.Label ?? this.Name}' combines WithRetry with a browser flow that starts " +
+                $"with {(this.actions.Count == 0 ? "no action" : this.actions[0].Kind.ToString())}. A retried " +
+                "attempt replays its actions against whatever the failed one left behind, so only a flow whose " +
+                "first action is Navigate may retry - each attempt then starts from a known page. Start the " +
+                "flow with Navigate, or drop WithRetry.");
+        }
 
         // Every browser step offers one, but a run needs exactly one: it closes every session the run
         // opened. The first step planned claims it.
