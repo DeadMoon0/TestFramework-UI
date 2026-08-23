@@ -113,8 +113,12 @@ public static class BrowserTimelineResultExtensions
     {
         ArgumentNullException.ThrowIfNull(run);
 
+        // A script wait counts too: it is the same hatch, used between steps instead of inside one.
         IReadOnlyList<UiSessionEntry> scripts = SessionOf(run, app).Entries
-            .Where(static entry => entry.Action is nameof(UiActionKind.Execute) or nameof(UiActionKind.Evaluate))
+            .Where(static entry => entry.Action
+                is nameof(UiActionKind.Execute)
+                or nameof(UiActionKind.Evaluate)
+                or "WaitScript")
             .ToList();
 
         return run.Assert(scripts, $"the scripts '{app}' ran");

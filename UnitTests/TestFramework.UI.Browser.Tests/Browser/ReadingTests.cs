@@ -150,6 +150,33 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
     }
 
     [BrowserFact]
+    public async Task AFillThatMissesNamesTheFieldsThePageOffers()
+    {
+        // Regression: collecting these suggestions once built GetByPlaceholder(null) and crashed with a
+        // NullReferenceException - so every transiently mis-timed Fill died on the message instead of
+        // retrying, and a genuinely mistyped field name got a crash instead of the way out.
+        Timeline timeline = Timeline.Create()
+            .Trigger(BrowserExt.Session("shop")
+                .Navigate("/checkout")
+                .Fill("Emial", "typo@example.test"))
+                .Name("typo")
+            .Build();
+
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+
+        UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("typo").LastResult.Exception);
+
+        Assert.DoesNotContain("Object reference", failure.Message, StringComparison.Ordinal);
+
+        // The fields the page does offer, read off the role channels - including the placeholder-only
+        // one, whose accessible name is its placeholder.
+        Assert.Contains("Email", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("Street", failure.Message, StringComparison.Ordinal);
+
+        output.WriteLine(failure.Message);
+    }
+
+    [BrowserFact]
     public async Task SelectRefusesAComboboxAndNamesTheVerbThatDrivesIt()
     {
         // The most likely mistake a Material shop will make, met with the answer rather than a mystery:

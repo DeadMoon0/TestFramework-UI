@@ -105,9 +105,12 @@ internal sealed class PlaywrightElementQuery : IUiElementQuery
             return Array.Empty<string>();
         }
 
-        // Only channels a person could read a name off are worth listing back: suggesting test ids or
-        // selectors would answer a question nobody asked.
-        if (spec.Channel is UiMatchChannel.Css or UiMatchChannel.ElementId or UiMatchChannel.TestId)
+        // Only a role can be enumerated without a name: "every button" is a real question, while
+        // "every label" is the label lookup's own text with nothing filled in - building GetByLabel(null)
+        // is how this method once crashed the not-found message it exists to improve. The role channels
+        // still carry every suggestion worth making: an element found by its label or placeholder shows
+        // that same text as its accessible name here.
+        if (spec.Channel is not UiMatchChannel.Role)
         {
             return Array.Empty<string>();
         }
@@ -281,10 +284,41 @@ internal sealed class PlaywrightElementQuery : IUiElementQuery
             string? name = await element
                 .EvaluateAsync<string?>(
                     """
-                    element => element.getAttribute('aria-label')
-                        || element.getAttribute('placeholder')
-                        || element.getAttribute('title')
-                        || (element.innerText || element.textContent || '').trim()
+                    element => {
+                        // The name channels of the accessible-name computation, in its order - so the
+                        // suggestion for a field is the label a person reads, however the page wired it.
+                        const labelledBy = element.getAttribute('aria-labelledby');
+
+                        if (labelledBy) {
+                            const text = labelledBy
+                                .split(/\s+/)
+                                .map(id => document.getElementById(id)?.innerText || '')
+                                .join(' ')
+                                .trim();
+
+                            if (text) {
+                                return text;
+                            }
+                        }
+
+                        const aria = element.getAttribute('aria-label');
+
+                        if (aria) {
+                            return aria;
+                        }
+
+                        if (element.labels && element.labels.length > 0) {
+                            const text = Array.from(element.labels, label => label.innerText).join(' ').trim();
+
+                            if (text) {
+                                return text;
+                            }
+                        }
+
+                        return element.getAttribute('placeholder')
+                            || element.getAttribute('title')
+                            || (element.innerText || element.textContent || '').trim();
+                    }
                     """)
                 .ConfigureAwait(false);
 

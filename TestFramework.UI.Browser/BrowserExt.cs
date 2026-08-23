@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Variables;
+using TestFramework.UI.Browser.Events;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Runtime;
+using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Steps;
 using TestFramework.UI.Browser.Steps.Inspection;
 using TestFramework.UI.Browser.Structure;
@@ -42,9 +44,85 @@ public static class BrowserExt
     public static PageProxy Page(WebAppIdentifier app) => new PageProxy(app);
 
     /// <summary>
+    /// Things a timeline can wait for on a page, between its steps.
+    /// </summary>
+    /// <remarks>
+    /// A flow's own <c>Expect</c> covers "the page caught up with what I just did". These are for the
+    /// state another actor produces - a different step, a background job, a redirect - so the waiting
+    /// stands in the timeline where that actor is visible, with its own name and timeout.
+    /// </remarks>
+    public static UiEventProxy Events { get; } = new UiEventProxy();
+
+    /// <summary>
     /// Things a fixture does around a suite, which are not steps.
     /// </summary>
     public static UiToolingProxy Tooling { get; } = new UiToolingProxy();
+
+    /// <summary>
+    /// The waits available on a page.
+    /// </summary>
+    public sealed class UiEventProxy
+    {
+        internal UiEventProxy()
+        {
+        }
+
+        /// <summary>
+        /// Completes when an element is on the page and visible.
+        /// </summary>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">The element. A plain string names visible text.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementVisibleEvent ElementVisible(WebAppIdentifier app, UiTarget target, VariableReference<TimeSpan>? pollDelay = null)
+            => new UiElementVisibleEvent(app, target, pollDelay);
+
+        /// <summary>
+        /// Completes when an element is gone from the page, or was never there.
+        /// </summary>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">The element. A plain string names visible text.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementHiddenEvent ElementHidden(WebAppIdentifier app, UiTarget target, VariableReference<TimeSpan>? pollDelay = null)
+            => new UiElementHiddenEvent(app, target, pollDelay);
+
+        /// <summary>
+        /// Completes when a text is visible on the page.
+        /// </summary>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="text">The words to wait for.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementVisibleEvent TextAppears(WebAppIdentifier app, string text, VariableReference<TimeSpan>? pollDelay = null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(text);
+
+            return new UiElementVisibleEvent(app, Target.Text(text), pollDelay);
+        }
+
+        /// <summary>
+        /// Completes when the page's address contains a text - or matches an expression, with
+        /// <see cref="UiUrlMatchesEvent.AsRegex"/>.
+        /// </summary>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="pattern">The substring, or the expression.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiUrlMatchesEvent UrlMatches(WebAppIdentifier app, VariableReference<string> pattern, VariableReference<TimeSpan>? pollDelay = null)
+            => new UiUrlMatchesEvent(app, pattern, pollDelay);
+
+        /// <summary>
+        /// Completes when a script in the page returns <c>true</c>.
+        /// </summary>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="script">The question, phrased to always have a boolean answer - for example
+        /// <c>() =&gt; window.myApp?.ready === true</c>.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiScriptIsTrueEvent ScriptIsTrue(WebAppIdentifier app, JsScript script, VariableReference<TimeSpan>? pollDelay = null)
+            => new UiScriptIsTrueEvent(app, script, pollDelay);
+    }
 
     /// <summary>
     /// The inspections available on one application's page.
