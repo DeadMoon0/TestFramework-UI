@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, signal } from '@angular/core';
 
 /**
@@ -9,10 +10,11 @@ import { Component, signal } from '@angular/core';
  */
 @Component({
   selector: 'app-broken',
+  imports: [MatButtonModule],
   template: `
     <h2>Reports</h2>
 
-    <button type="button" (click)="generate()">Generate report</button>
+    <button mat-flat-button type="button" (click)="generate()">Generate report</button>
 
     @if (done()) {
       <p data-testid="report-note">Report ready</p>

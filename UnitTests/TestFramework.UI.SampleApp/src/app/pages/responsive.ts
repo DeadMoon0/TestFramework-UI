@@ -1,3 +1,4 @@
+import { MatButtonModule } from '@angular/material/button';
 import { Component, signal } from '@angular/core';
 
 /**
@@ -10,10 +11,11 @@ import { Component, signal } from '@angular/core';
  */
 @Component({
   selector: 'app-responsive',
+  imports: [MatButtonModule],
   template: `
     <h2>Catalogue</h2>
 
-    <button type="button" class="burger" (click)="open.set(!open())" aria-label="Menu">☰ Menu</button>
+    <button mat-stroked-button type="button" class="burger" (click)="open.set(!open())" aria-label="Menu">☰ Menu</button>
 
     <nav [class.open]="open()" aria-label="Catalogue">
       <a href="#tools">Tools</a>
@@ -25,15 +27,37 @@ import { Component, signal } from '@angular/core';
   `,
   styles: `
     /* Desktop: the links are present and the burger is display:none, which takes it out of the
-       accessibility tree - so a run at 1080p cannot perceive it any more than a person could. */
+       accessibility tree - so a run at 1080p cannot perceive it any more than a person could.
+
+       These four declarations are this page's behaviour and its entire reason for existing. Everything
+       below them is only how it looks. */
     .burger { display: none; }
-    nav { display: flex; gap: 1rem; }
+    nav { display: flex; gap: .35rem; }
 
     @media (max-width: 767px) {
       .burger { display: inline-block; }
       nav { display: none; }
       nav.open { display: flex; flex-direction: column; }
     }
+
+    nav {
+      width: fit-content;
+      padding: .3rem;
+      background: var(--mat-sys-surface-container);
+      border-radius: var(--mat-sys-corner-medium);
+    }
+
+    nav a {
+      padding: .4rem .85rem;
+      border-radius: var(--mat-sys-corner-small);
+      color: var(--mat-sys-on-surface-variant);
+      text-decoration: none;
+      font: var(--mat-sys-label-large);
+    }
+
+    nav a:hover { background: var(--mat-sys-surface-container-highest); color: var(--mat-sys-primary); }
+
+    [data-testid='viewport-note'] { margin-top: 1rem; color: var(--mat-sys-on-surface-variant); font: var(--mat-sys-body-small); }
   `,
 })
 export class Responsive {

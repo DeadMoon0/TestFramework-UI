@@ -1,11 +1,16 @@
-<header>
+<!--
+  The shell. The navigation keeps its accessible name and its link texts, because that is how the suite
+  finds its way around - Material only changes how any of it looks.
+-->
+<mat-toolbar class="shell-bar">
   <h1>Sample Shop</h1>
+
   <nav aria-label="Main">
-    <a routerLink="/products" routerLinkActive="active">Products</a>
-    <a routerLink="/checkout" routerLinkActive="active">Checkout</a>
-    <a routerLink="/orders" routerLinkActive="active">Orders</a>
+    <a mat-button routerLink="/products" routerLinkActive="active">Products</a>
+    <a mat-button routerLink="/checkout" routerLinkActive="active">Checkout</a>
+    <a mat-button routerLink="/orders" routerLinkActive="active">Orders</a>
   </nav>
-</header>
+</mat-toolbar>
 
 <main>
   <router-outlet />

@@ -1,3 +1,6 @@
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { Component, signal } from '@angular/core';
 
 /**
@@ -8,16 +11,23 @@ import { Component, signal } from '@angular/core';
  */
 @Component({
   selector: 'app-renamed',
+  imports: [MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
     <h2>Settings</h2>
 
-    <p>Display name: <input aria-label="Display name" /></p>
+    <mat-form-field appearance="outline">
+      <mat-label>Display name</mat-label>
+      <input matInput aria-label="Display name" />
+    </mat-form-field>
 
-    <button type="button" (click)="saved.set(true)">Save changes</button>
+    <div><button mat-flat-button type="button" (click)="saved.set(true)">Save changes</button></div>
 
     @if (saved()) {
       <p data-testid="saved-note">Settings saved</p>
     }
+  `,
+  styles: `
+    mat-form-field { width: 100%; max-width: 22rem; display: block; margin-bottom: .5rem; }
   `,
 })
 export class Renamed {

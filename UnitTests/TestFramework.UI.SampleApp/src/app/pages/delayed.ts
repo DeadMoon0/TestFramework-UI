@@ -1,3 +1,5 @@
+import { MatButtonModule } from '@angular/material/button';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Component, OnDestroy, signal } from '@angular/core';
 
 /**
@@ -9,16 +11,18 @@ import { Component, OnDestroy, signal } from '@angular/core';
  */
 @Component({
   selector: 'app-delayed',
+  imports: [MatButtonModule, MatProgressBarModule],
   template: `
     <h2>Orders</h2>
 
     @if (!loaded()) {
+      <mat-progress-bar mode="indeterminate" aria-label="Loading orders" />
       <p data-testid="spinner">Loading orders...</p>
     } @else {
       <p data-testid="loaded-note">3 orders loaded</p>
 
       @if (actionsReady()) {
-        <button type="button" (click)="exported.set(true)">Export all</button>
+        <button mat-flat-button type="button" (click)="exported.set(true)">Export all</button>
       }
     }
 
@@ -28,6 +32,19 @@ import { Component, OnDestroy, signal } from '@angular/core';
 
     @if (exported()) {
       <p data-testid="export-note">Export started</p>
+    }
+  `,
+  styles: `
+    mat-progress-bar { max-width: 20rem; margin-bottom: .6rem; }
+
+    [role='status'] {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: .3rem .8rem;
+      background: var(--mat-sys-tertiary-container);
+      color: var(--mat-sys-on-tertiary-container);
+      border-radius: var(--mat-sys-corner-full);
+      font: var(--mat-sys-label-large);
     }
   `,
 })

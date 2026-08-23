@@ -1,0 +1,149 @@
+@use '@angular/material' as mat;
+
+/*
+ * The sample shop's look: Angular Material 3, themed as a workshop supplier rather than as a default.
+ *
+ * The app is a fixture, so how it looks is not the only thing at stake. The browser suite finds controls
+ * by their role, their label and the words in them, which means a restyle - even one that swaps in a
+ * component library - must leave all three alone. Getting Material in here without breaking a single
+ * test is the clearest demonstration of that claim there is, so this file and the templates beside it
+ * follow two rules that are not matters of taste:
+ *
+ *   No text-transform on anything a test reads. A browser's innerText is the *rendered* text, so
+ *   uppercasing a button would quietly change what the framework sees it say - "LOAD MORE" is not
+ *   "Load more". Material's own type scale is used unchanged for that reason.
+ *
+ *   No entrance animation on content, and no Material component whose roles would fight the semantics a
+ *   fixture is there to provide. A status chip inside a role="cell" stays a plain element, because
+ *   nesting an interactive Material chip inside a table cell would change what the page means.
+ */
+
+html {
+  color-scheme: light dark;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$orange-palette,
+        tertiary: mat.$blue-palette,
+      ),
+      typography: (
+        plain-family: (
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif,
+        ),
+        brand-family: (
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          sans-serif,
+        ),
+      ),
+      density: 0,
+    )
+  );
+
+  /* Semantic colours Material has no token for. Status is the shop's own vocabulary, and it should read
+     the same in either theme. */
+  --shop-shipped: #2f6f4a;
+  --shop-shipped-surface: #e4f0e7;
+  --shop-packing: #8a5a06;
+  --shop-packing-surface: #f8eeda;
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    --shop-shipped: #6fc394;
+    --shop-shipped-surface: #16301f;
+    --shop-packing: #dda63f;
+    --shop-packing-surface: #33260c;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-medium);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  text-wrap: balance;
+}
+
+h1 {
+  font: var(--mat-sys-title-large);
+}
+
+h2 {
+  font: var(--mat-sys-headline-small);
+  margin-bottom: 1.5rem;
+}
+
+h3 {
+  font: var(--mat-sys-title-medium);
+}
+
+p {
+  margin: 0 0 0.85rem;
+}
+
+a {
+  color: var(--mat-sys-primary);
+  text-underline-offset: 2px;
+}
+
+/* A fixture app that could not be operated from the keyboard would be a poor stand-in for a real one. */
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+  border-radius: var(--mat-sys-corner-extra-small);
+}
+
+/* Status wording belongs to the page; only its colour is decided here. Kept as a plain element rather
+   than a Material chip on purpose: these sit inside role="cell". */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--mat-sys-corner-full);
+  padding: 0.1rem 0.6rem;
+  font: var(--mat-sys-label-medium);
+  background: var(--mat-sys-surface-container-high);
+  color: var(--mat-sys-on-surface-variant);
+  white-space: nowrap;
+}
+
+[role='status'],
+[data-testid$='-note'] {
+  color: var(--shop-shipped);
+  font-weight: 550;
+}
+
+[data-testid$='-loading'],
+[data-testid='spinner'] {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

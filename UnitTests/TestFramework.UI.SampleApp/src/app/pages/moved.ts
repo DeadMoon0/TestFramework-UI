@@ -1,3 +1,6 @@
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { Component, signal } from '@angular/core';
 
 /**
@@ -10,6 +13,7 @@ import { Component, signal } from '@angular/core';
  */
 @Component({
   selector: 'app-moved',
+  imports: [MatButtonModule, MatFormFieldModule, MatInputModule],
   template: `
     <h2>Settings</h2>
 
@@ -17,7 +21,10 @@ import { Component, signal } from '@angular/core';
       <div class="panel panel--wide">
         <section>
           <div>
-            <p>Display name: <input aria-label="Display name" /></p>
+            <mat-form-field appearance="outline">
+              <mat-label>Display name</mat-label>
+              <input matInput aria-label="Display name" />
+            </mat-form-field>
           </div>
         </section>
       </div>
@@ -31,7 +38,7 @@ import { Component, signal } from '@angular/core';
       <div class="footer__inner">
         <div class="footer__actions">
           <span class="hint">All changes are final.</span>
-          <button type="button" class="btn btn--ghost _q71" (click)="saved.set(true)">Save changes</button>
+          <button mat-stroked-button type="button" class="btn btn--ghost _q71" (click)="saved.set(true)">Save changes</button>
         </div>
       </div>
     </footer>
@@ -41,10 +48,21 @@ import { Component, signal } from '@angular/core';
     }
   `,
   styles: `
-    .footer { margin-top: 3rem; border-top: 1px solid #ccc; padding-top: 1rem; }
+    /* The markup here is deliberately unhelpful - wrappers, a float, generated-looking class names -
+       because that is this page's job. It is styled only enough to look like a settings screen, and the
+       button still ends up a long way from where any selector would look for it. */
+    .panel {
+      padding: 1.15rem 1.35rem;
+      background: var(--mat-sys-surface-container-low);
+      border: 1px solid var(--mat-sys-outline-variant);
+      border-radius: var(--mat-sys-corner-medium);
+    }
+
+    mat-form-field { width: 100%; max-width: 22rem; }
+    .sidebar { float: right; width: 9rem; color: var(--mat-sys-on-surface-variant); font: var(--mat-sys-body-small); }
+    .footer { margin-top: 3rem; border-top: 1px solid var(--mat-sys-outline-variant); padding-top: 1rem; clear: both; }
     .footer__actions { display: flex; justify-content: flex-end; gap: 1rem; align-items: center; }
-    .btn--ghost { background: transparent; border: 1px solid #333; padding: .4rem .9rem; }
-    .sidebar { float: right; width: 8rem; color: #999; }
+    .hint { color: var(--mat-sys-on-surface-variant); font: var(--mat-sys-body-small); }
   `,
 })
 export class Moved {

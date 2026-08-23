@@ -39,9 +39,40 @@ import { OrderRow } from './order-row';
     <p class="total" data-testid="orders-total">{{ total() | currency: 'EUR' }}</p>
   `,
   styles: `
-    :host { display: block; border-top: 2px solid #333; }
-    .head { display: grid; grid-template-columns: 6rem 1fr 3rem 6rem 7rem 6rem; font-weight: 600; padding: .35rem 0; }
-    .total { text-align: right; font-weight: 600; }
+    /* One column definition, used by the header here and by every row component. Changing it is a
+       layout change and nothing else - no test knows these widths exist. */
+    :host {
+      --order-columns: 6.5rem 1fr 3.5rem 7rem 7.5rem 6rem;
+
+      display: block;
+      background: var(--mat-sys-surface-container-lowest);
+      border: 1px solid var(--mat-sys-outline-variant);
+      border-radius: var(--mat-sys-corner-medium);
+      overflow: hidden;
+    }
+
+    .head {
+      display: grid;
+      grid-template-columns: var(--order-columns);
+      gap: .5rem;
+      padding: .7rem 1rem;
+      background: var(--mat-sys-surface-container);
+      border-bottom: 1px solid var(--mat-sys-outline-variant);
+      font: var(--mat-sys-label-medium);
+      color: var(--mat-sys-on-surface-variant);
+    }
+
+    .empty { margin: 0; padding: 1.75rem 1rem; text-align: center; color: var(--mat-sys-on-surface-variant); }
+
+    .total {
+      margin: 0;
+      padding: .8rem 1rem;
+      text-align: right;
+      font: var(--mat-sys-title-small);
+      font-variant-numeric: tabular-nums;
+      border-top: 1px solid var(--mat-sys-outline-variant);
+      background: var(--mat-sys-surface-container);
+    }
   `,
 })
 export class OrderList {

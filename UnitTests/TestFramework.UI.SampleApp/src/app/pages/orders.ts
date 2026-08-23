@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
 import { Order } from '../orders/order';
 import { OrderList } from '../orders/order-list';
 
@@ -12,19 +14,21 @@ import { OrderList } from '../orders/order-list';
  */
 @Component({
   selector: 'app-orders',
-  imports: [OrderList],
+  imports: [OrderList, MatButtonModule, MatTabsModule],
   template: `
     <h2>Orders</h2>
 
-    <div role="tablist" aria-label="Status">
+    <!-- Material's tab group renders role="tablist" and role="tab" of its own accord, so the semantics a
+         test reasons about survive the swap; only the markup underneath them changed. The list stays
+         outside the group because the tabs filter it rather than containing it. -->
+    <mat-tab-group
+      aria-label="Status"
+      [selectedIndex]="tabIndex()"
+      (selectedIndexChange)="selectTab($event)">
       @for (tab of tabs; track tab) {
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === tab"
-          (click)="activeTab.set(tab)">{{ tab }}</button>
+        <mat-tab [label]="tab" />
       }
-    </div>
+    </mat-tab-group>
 
     @if (loading()) {
       <p data-testid="orders-loading">Loading orders...</p>
@@ -32,15 +36,15 @@ import { OrderList } from '../orders/order-list';
       <app-order-list [orders]="visible()" [label]="'Orders ' + activeTab()" (cancel)="askToCancel($event)" />
 
       @if (!showAll() && filtered().length > pageSize) {
-        <button type="button" (click)="showAll.set(true)">Load more</button>
+        <button mat-stroked-button type="button" (click)="showAll.set(true)">Load more</button>
       }
     }
 
     @if (pendingCancel()) {
       <div role="dialog" aria-label="Cancel order" class="dialog">
         <p>Cancel order {{ pendingCancel() }}?</p>
-        <button type="button" (click)="confirmCancel()">Yes, cancel it</button>
-        <button type="button" (click)="pendingCancel.set('')">Keep it</button>
+        <button mat-flat-button type="button" (click)="confirmCancel()">Yes, cancel it</button>
+        <button mat-button type="button" (click)="pendingCancel.set('')">Keep it</button>
       </div>
     }
 
@@ -49,9 +53,22 @@ import { OrderList } from '../orders/order-list';
     }
   `,
   styles: `
-    [role='tablist'] { display: flex; gap: .5rem; margin-bottom: 1rem; }
-    [role='tab'][aria-selected='true'] { font-weight: 700; text-decoration: underline; }
-    .dialog { border: 2px solid #333; padding: 1rem; margin-top: 1rem; max-width: 22rem; }
+    mat-tab-group { margin-bottom: 1.5rem; }
+
+    /* The tab group carries no panels, so its body would otherwise take up room for nothing. */
+    ::ng-deep .mat-mdc-tab-body-wrapper { display: none; }
+
+    .dialog {
+      margin-top: 1.5rem;
+      max-width: 24rem;
+      padding: 1.15rem 1.35rem;
+      background: var(--mat-sys-surface-container-high);
+      border-radius: var(--mat-sys-corner-large);
+      box-shadow: var(--mat-sys-level3);
+    }
+
+    .dialog p { font: var(--mat-sys-title-small); }
+    .dialog button + button { margin-left: .5rem; }
   `,
 })
 export class Orders {
@@ -87,6 +104,14 @@ export class Orders {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  protected tabIndex(): number {
+    return this.tabs.indexOf(this.activeTab() as (typeof this.tabs)[number]);
+  }
+
+  protected selectTab(index: number): void {
+    this.activeTab.set(this.tabs[index]);
   }
 
   protected askToCancel(id: string): void {

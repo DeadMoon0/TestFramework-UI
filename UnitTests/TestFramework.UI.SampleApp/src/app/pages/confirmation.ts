@@ -21,6 +21,22 @@ import { toSignal } from '@angular/core/rxjs-interop';
       <dd data-testid="shipping">{{ shipping() }}</dd>
     </dl>
   `,
+  styles: `
+    dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: .5rem 1.5rem;
+      max-width: 26rem;
+      margin: 0;
+      padding: 1.15rem 1.35rem;
+      background: var(--mat-sys-surface-container-low);
+      border: 1px solid var(--mat-sys-outline-variant);
+      border-radius: var(--mat-sys-corner-medium);
+    }
+
+    dt { font: var(--mat-sys-label-large); color: var(--mat-sys-on-surface-variant); }
+    dd { margin: 0; font: var(--mat-sys-title-small); font-variant-numeric: tabular-nums; }
+  `,
 })
 export class Confirmation {
   private readonly route = inject(ActivatedRoute);
