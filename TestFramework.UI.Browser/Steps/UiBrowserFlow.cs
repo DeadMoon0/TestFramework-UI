@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -275,7 +276,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                     picture = picture.Add(entries, session.Page.Url, await SafeTitleAsync(session).ConfigureAwait(false));
 
                     throw await this
-                        .FailAsync(action, index, session, runState, picture, sessionVariable, variableStore, logger, exception)
+                        .FailAsync(action, index, entries, session, runState, picture, sessionVariable, variableStore, logger, exception)
                         .ConfigureAwait(false);
                 }
             }
@@ -302,6 +303,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     private async Task<Exception> FailAsync(
         UiActionSpec action,
         int index,
+        IReadOnlyList<UiSessionEntry> stepEntries,
         UiSession session,
         UiRunState runState,
         UiSessionPicture picture,
@@ -310,7 +312,11 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         ScopedLogger logger,
         Exception inner)
     {
-        IReadOnlyList<string> consoleErrors = session.DrainConsoleErrors();
+        // Everything the page complained about during this step, not only since the last action. A click
+        // that throws is usually recorded against the click, while the failure lands on whatever came
+        // after it and never appeared - and that later failure is exactly where a reader needs to be told
+        // the application broke.
+        List<string> consoleErrors = [.. stepEntries.SelectMany(static entry => entry.ConsoleErrors), .. session.DrainConsoleErrors()];
 
         // Recorded even on the failing path, so the debugging UI and the next run's comparison both see
         // how far the session actually got.

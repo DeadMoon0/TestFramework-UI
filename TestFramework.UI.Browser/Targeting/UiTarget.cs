@@ -165,9 +165,18 @@ public sealed record UiTarget
     /// <returns>The source form, for example <c>Target.Button("Save").InSection("Billing")</c>.</returns>
     public string ToSourceCode()
     {
+        // A plain string is the shortest way to name an element, but only while it stands alone: the moment
+        // a dial is chained onto it the suggestion has to be something a reader can paste, and
+        // "Delete".InSection(...) is not C#.
+        bool hasDials = this.Scope is not null
+            || this.NearText is not null
+            || this.Exact
+            || this.Index is not null
+            || this.AllowFirstOfMany;
+
         string head = this.Kind switch
         {
-            UiTargetKind.Smart => Quote(this.Name),
+            UiTargetKind.Smart => hasDials ? $"Target.Smart({Quote(this.Name)})" : Quote(this.Name),
             UiTargetKind.Button => $"Target.Button({Quote(this.Name)})",
             UiTargetKind.Link => $"Target.Link({Quote(this.Name)})",
             UiTargetKind.Field => $"Target.Field({Quote(this.Name)})",

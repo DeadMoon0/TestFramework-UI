@@ -11,7 +11,9 @@ export interface CartLine {
  */
 @Injectable({ providedIn: 'root' })
 export class Cart {
-  private readonly lines = signal<readonly CartLine[]>([]);
+  private static readonly storageKey = 'sample-app.cart';
+
+  private readonly lines = signal<readonly CartLine[]>(Cart.restore());
 
   readonly items = this.lines.asReadonly();
   readonly count = computed(() => this.lines().reduce((total, line) => total + line.quantity, 0));
@@ -25,9 +27,32 @@ export class Cart {
         ? current.map(line => (line.product === product ? { ...line, quantity: line.quantity + 1 } : line))
         : [...current, { product, quantity: 1, price }];
     });
+
+    this.persist();
   }
 
   clear(): void {
     this.lines.set([]);
+    this.persist();
+  }
+
+  /**
+   * The cart survives a reload, the way a real one does.
+   *
+   * It also gives a test something to check isolation with: if one run's cart were visible to the next,
+   * this is where it would show.
+   */
+  private persist(): void {
+    localStorage.setItem(Cart.storageKey, JSON.stringify(this.lines()));
+  }
+
+  private static restore(): readonly CartLine[] {
+    try {
+      const stored = localStorage.getItem(Cart.storageKey);
+
+      return stored ? (JSON.parse(stored) as CartLine[]) : [];
+    } catch {
+      return [];
+    }
   }
 }
