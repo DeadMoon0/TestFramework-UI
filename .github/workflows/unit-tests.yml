@@ -1,0 +1,45 @@
+name: Unit Tests
+
+# The browser tests gate themselves: without TESTFRAMEWORK_UI_BROWSER they skip with a visible
+# reason, so a bare runner is green on the browser-free suite - which is the fresh-clone promise.
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unit-tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Foundation tests
+        run: dotnet test UnitTests/TestFramework.UI.Tests/TestFramework.UI.Tests.csproj --configuration Release --logger "trx"
+
+      - name: Browser package tests
+        run: dotnet test UnitTests/TestFramework.UI.Browser.Tests/TestFramework.UI.Browser.Tests.csproj --configuration Release --logger "trx"
+
+      - name: Web bridge tests
+        run: dotnet test UnitTests/TestFramework.UI.Web.Tests/TestFramework.UI.Web.Tests.csproj --configuration Release --logger "trx"
