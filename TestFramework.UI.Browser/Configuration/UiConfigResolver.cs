@@ -37,24 +37,47 @@ internal static class UiConfigResolver
             return config;
         }
 
-        string? foreignIdentifier = identifier.BaseUrlFromIdentifier ?? config.BaseUrlFromApi;
+        string? foreignIdentifier = identifier.BaseUrlFromIdentifier ?? config.BaseUrlFromSite ?? config.BaseUrlFromApi;
 
         if (foreignIdentifier is { Length: > 0 }
-            && TryResolveForeignBaseUrl(serviceProvider, foreignIdentifier) is { Length: > 0 } foreignBaseUrl)
+            && TryResolveForeignBaseUrl(serviceProvider, foreignIdentifier, identifier.ExternalRequirement?.ResourceKind) is { Length: > 0 } foreignBaseUrl)
         {
             return config with { BaseUrl = foreignBaseUrl };
+        }
+
+        // The application's own identifier is the last road, and the normal one: a site serving this
+        // application publishes its address under the same name, whether a container started it or a
+        // configuration file named a deployed one. Deployed and containerized runs both land here.
+        if (foreignIdentifier is null
+            && TryResolveForeignBaseUrl(serviceProvider, identifier.Identifier, requiredKind: null) is { Length: > 0 } ownBaseUrl)
+        {
+            return config with { BaseUrl = ownBaseUrl };
         }
 
         throw UiConfigurationException.MissingBaseUrl(identifier);
     }
 
-    private static string? TryResolveForeignBaseUrl(IServiceProvider serviceProvider, string foreignIdentifier)
+    private static string? TryResolveForeignBaseUrl(IServiceProvider serviceProvider, string foreignIdentifier, string? requiredKind)
     {
-        // Several bridges may be registered; the first that recognises the identifier wins, and none of
-        // them being able to answer is a configuration error rather than a silent fallback.
+        // Several bridges may be registered. An identifier that carries a kind is answered by the
+        // matching-kind sources first, then by the kind-agnostic ones; without a kind, registration
+        // order decides. None of them answering is a configuration error rather than a silent
+        // fallback.
+        if (requiredKind is not null)
+        {
+            return AskSources(serviceProvider, foreignIdentifier, source => string.Equals(source.ResourceKind, requiredKind, StringComparison.Ordinal))
+                ?? AskSources(serviceProvider, foreignIdentifier, source => source.ResourceKind is null);
+        }
+
+        return AskSources(serviceProvider, foreignIdentifier, _ => true);
+    }
+
+    private static string? AskSources(IServiceProvider serviceProvider, string foreignIdentifier, Func<IUiBaseUrlSource, bool> filter)
+    {
         foreach (IUiBaseUrlSource source in serviceProvider.GetServices<IUiBaseUrlSource>())
         {
-            if (source.TryGetBaseUrl(serviceProvider, foreignIdentifier, out string? baseUrl)
+            if (filter(source)
+                && source.TryGetBaseUrl(serviceProvider, foreignIdentifier, out string? baseUrl)
                 && baseUrl is { Length: > 0 })
             {
                 return baseUrl;

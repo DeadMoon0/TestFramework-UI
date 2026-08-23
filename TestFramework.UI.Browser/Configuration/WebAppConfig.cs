@@ -16,14 +16,28 @@ namespace TestFramework.UI.Browser.Configuration;
 /// </remarks>
 public sealed record WebAppConfig
 {
-    /// <summary>The address the application is reached at. Relative paths in steps resolve against it.</summary>
+    /// <summary>
+    /// The address the application is reached at. Relative paths in steps resolve against it.
+    /// </summary>
+    /// <remarks>
+    /// An explicit address always wins, so leave it unset when the address should come from a
+    /// configured or environment-published resource: the same entry then serves a deployed and a
+    /// containerized run, differing only in what wrote the resource's address.
+    /// </remarks>
     public string? BaseUrl { get; init; }
 
     /// <summary>
-    /// The identifier of a REST API whose configured address to use instead, for applications the
-    /// TestFramework.Web family already configures. Requires the bridge package.
+    /// The identifier of a REST API whose configured address to use instead, for an application the
+    /// TestFramework.Web family serves itself. Requires the bridge package.
     /// </summary>
     public string? BaseUrlFromApi { get; init; }
+
+    /// <summary>
+    /// The identifier of a configured site whose address to use instead, when it differs from this
+    /// application's own identifier. Requires the bridge package. With matching names nothing has to
+    /// be set: the application's own identifier is looked up in the site configuration by itself.
+    /// </summary>
+    public string? BaseUrlFromSite { get; init; }
 
     /// <summary>
     /// Another entry to inherit every unset value from. Lets a mobile variant be one line rather than a
@@ -113,6 +127,7 @@ public sealed record WebAppConfig
         {
             BaseUrl = this.BaseUrl ?? parent.BaseUrl,
             BaseUrlFromApi = this.BaseUrlFromApi ?? parent.BaseUrlFromApi,
+            BaseUrlFromSite = this.BaseUrlFromSite ?? parent.BaseUrlFromSite,
             BasedOn = null,
             Browser = this.Browser == Defaults.Browser ? parent.Browser : this.Browser,
             Channel = this.Channel ?? parent.Channel,

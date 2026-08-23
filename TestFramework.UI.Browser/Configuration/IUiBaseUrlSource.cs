@@ -13,6 +13,17 @@ namespace TestFramework.UI.Browser.Configuration;
 public interface IUiBaseUrlSource
 {
     /// <summary>
+    /// The environment requirement kind this source answers for, or <see langword="null"/> for a
+    /// source that answers for any.
+    /// </summary>
+    /// <remarks>
+    /// With more than one bridge registered, one identifier could exist in several foreign
+    /// configurations. An identifier that carries a kind is then answered only by the source that
+    /// declares the same kind; the strings stay opaque to this package.
+    /// </remarks>
+    string? ResourceKind => null;
+
+    /// <summary>
     /// Looks the address up.
     /// </summary>
     /// <param name="serviceProvider">The run's services, holding whatever configuration this source reads.</param>

@@ -16,7 +16,7 @@
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>First release. Requires TestFramework.UI.Browser 0.1.0 and TestFramework.Web 0.3.0.</PackageReleaseNotes>
+		<PackageReleaseNotes>First release. Browser steps resolve their application from the Web family's configuration: an identifier shared with a configured site resolves by itself, FromWebApi covers an application the API process serves, FromSite covers a name mismatch. Requires TestFramework.UI.Browser 0.1.0 and TestFramework.Web 0.4.0.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -26,7 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="TestFramework.Web" Version="0.3.0" />
+		<PackageReference Include="TestFramework.Web" Version="0.4.0" />
 		<PackageReference Include="TestFramework.Config" Version="0.2.1" />
 		<PackageReference Include="TestFramework.Core" Version="0.3.0" />
 	</ItemGroup>
