@@ -99,6 +99,28 @@ public static class BrowserTimelineResultExtensions
     }
 
     /// <summary>
+    /// Every script the session ran - the uses of the escape hatch.
+    /// </summary>
+    /// <remarks>
+    /// A script bypasses what the verbs guarantee, so how many a suite runs is worth watching the same
+    /// way loose matches are: <c>run.UiScripts("shop").Should().HaveNoItems()</c> is a suite saying its
+    /// tests speak only in what a person could do.
+    /// </remarks>
+    /// <param name="run">The finished run.</param>
+    /// <param name="app">The application.</param>
+    /// <returns>The script actions, in the order they ran.</returns>
+    public static ValueHandle<IReadOnlyList<UiSessionEntry>> UiScripts(this TimelineRun run, WebAppIdentifier app)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        IReadOnlyList<UiSessionEntry> scripts = SessionOf(run, app).Entries
+            .Where(static entry => entry.Action is nameof(UiActionKind.Execute) or nameof(UiActionKind.Evaluate))
+            .ToList();
+
+        return run.Assert(scripts, $"the scripts '{app}' ran");
+    }
+
+    /// <summary>
     /// How the loosest match of the session was found, or null when nothing was matched loosely.
     /// </summary>
     /// <param name="run">The finished run.</param>

@@ -1,5 +1,6 @@
 using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Reading;
+using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Targeting;
 
@@ -48,6 +49,12 @@ public enum UiActionKind
 
     /// <summary>Photograph the page.</summary>
     Screenshot,
+
+    /// <summary>Run JavaScript for its effect, ignoring what it returns.</summary>
+    Execute,
+
+    /// <summary>Run JavaScript and keep what it returns in a variable.</summary>
+    Evaluate,
 }
 
 /// <summary>
@@ -63,13 +70,17 @@ public enum UiActionKind
 /// <param name="CaptureName">The variable a read writes, or the name a screenshot is filed under.</param>
 /// <param name="Sensitive">True when the value must never appear in a log, a trace or a failure message.</param>
 /// <param name="Source">What a read reads, for the read action.</param>
+/// <param name="Script">The JavaScript, for the script actions.</param>
+/// <param name="ResultBinder">Writes an evaluation's result in the type the test asked for.</param>
 internal sealed record UiActionSpec(
     UiActionKind Kind,
     UiTarget? Target = null,
     VariableReference<string>? Value = null,
     string? CaptureName = null,
     bool Sensitive = false,
-    UiValueSource? Source = null)
+    UiValueSource? Source = null,
+    JsScript? Script = null,
+    IUiScriptResultBinder? ResultBinder = null)
 {
     /// <summary>
     /// What a plain string target means for this verb.
@@ -95,6 +106,10 @@ internal sealed record UiActionSpec(
     public string Describe() => this switch
     {
         { Kind: UiActionKind.Read, Source: { } source } => $"Read {source.Describe()}",
+        { Kind: UiActionKind.Execute or UiActionKind.Evaluate, Script: { } script } =>
+            this.Target is { } scriptTarget
+                ? $"{this.Kind} script '{script.Name}' on {scriptTarget.Describe()}"
+                : $"{this.Kind} script '{script.Name}'",
         { Target: { } target } => $"{this.Kind} {target.Describe()}",
         _ => this.Kind.ToString(),
     };

@@ -18,6 +18,7 @@ using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Reading;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Runtime;
+using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Targeting;
 using TestFramework.UI.Session;
 
@@ -193,6 +194,89 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         return this.Add(new UiActionSpec(UiActionKind.Screenshot, CaptureName: name));
     }
 
+    /// <summary>
+    /// Runs JavaScript in the page for its effect, ignoring what it returns.
+    /// </summary>
+    /// <remarks>
+    /// The escape hatch, and honest about it: a script bypasses everything the verbs guarantee. Nothing
+    /// checks that what it touches is visible, enabled or there at all, so '() =&gt; el.click()' will
+    /// happily press a button a person could not - a green test over a broken page. Scripts are for
+    /// reading state and seeding it, not for acting; every one is recorded in the session story, and
+    /// <c>run.UiScripts(app)</c> lets a suite keep their number at zero.
+    /// </remarks>
+    /// <param name="script">The function, called as <c>() =&gt; ...</c>, or <c>args =&gt; ...</c> when
+    /// arguments were declared.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Execute(JsScript script)
+    {
+        ArgumentNullException.ThrowIfNull(script);
+
+        return this.Add(new UiActionSpec(UiActionKind.Execute, Script: script));
+    }
+
+    /// <summary>
+    /// Runs JavaScript on one element, found the way every other verb finds it.
+    /// </summary>
+    /// <param name="target">The element. A plain string names it by its visible text.</param>
+    /// <param name="script">The function, called as <c>el =&gt; ...</c>, or <c>(el, args) =&gt; ...</c>
+    /// when arguments were declared.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Execute(UiTarget target, JsScript script)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(script);
+
+        return this.Add(new UiActionSpec(UiActionKind.Execute, target, Script: script));
+    }
+
+    /// <summary>
+    /// Runs JavaScript in the page and keeps what it returns in a variable.
+    /// </summary>
+    /// <remarks>
+    /// For the value no verb reads yet. The result must be plain data the page can hand over - strings,
+    /// numbers, booleans, arrays, objects - and it lands in the variable as the type this call names, so
+    /// the rest of the timeline gets a value rather than JSON.
+    /// </remarks>
+    /// <typeparam name="T">The type the variable is declared and written as.</typeparam>
+    /// <param name="script">The function, called as <c>() =&gt; ...</c>, or <c>args =&gt; ...</c> when
+    /// arguments were declared.</param>
+    /// <param name="into">The variable to write.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Evaluate<T>(JsScript script, VariableIdentifier into)
+    {
+        ArgumentNullException.ThrowIfNull(script);
+        ArgumentNullException.ThrowIfNull(into);
+
+        return this.Add(new UiActionSpec(
+            UiActionKind.Evaluate,
+            Script: script,
+            CaptureName: into.Identifier,
+            ResultBinder: new UiScriptResultBinder<T>()));
+    }
+
+    /// <summary>
+    /// Runs JavaScript on one element and keeps what it returns in a variable.
+    /// </summary>
+    /// <typeparam name="T">The type the variable is declared and written as.</typeparam>
+    /// <param name="target">The element. A plain string names it by its visible text.</param>
+    /// <param name="script">The function, called as <c>el =&gt; ...</c>, or <c>(el, args) =&gt; ...</c>
+    /// when arguments were declared.</param>
+    /// <param name="into">The variable to write.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Evaluate<T>(UiTarget target, JsScript script, VariableIdentifier into)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(script);
+        ArgumentNullException.ThrowIfNull(into);
+
+        return this.Add(new UiActionSpec(
+            UiActionKind.Evaluate,
+            target,
+            Script: script,
+            CaptureName: into.Identifier,
+            ResultBinder: new UiScriptResultBinder<T>()));
+    }
+
     /// <inheritdoc />
     public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
         // A bridged identifier declares the requirement of the package that provisions it, so one
@@ -219,6 +303,21 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             if (action.Value?.Identifier is { } identifier)
             {
                 contract.Inputs.Add(new StepIOEntry(identifier.Identifier, StepIOKind.Variable, true, typeof(string)));
+            }
+
+            foreach ((string _, VariableReference<string> argument) in action.Script?.Arguments ?? [])
+            {
+                if (argument.Identifier is { } argumentIdentifier)
+                {
+                    // A script's dependencies are step inputs like any other verb's, so the planner sees
+                    // them and a typo fails before a browser starts.
+                    contract.Inputs.Add(new StepIOEntry(argumentIdentifier.Identifier, StepIOKind.Variable, true, typeof(string)));
+                }
+            }
+
+            if (action.Kind == UiActionKind.Evaluate && action.CaptureName is { } evaluated)
+            {
+                contract.Outputs.Add(new StepIOEntry(evaluated, StepIOKind.Variable, true, action.ResultBinder!.ResultType));
             }
 
             if (action.Kind == UiActionKind.Read && action.CaptureName is { } captureName)
@@ -432,6 +531,13 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                     .ConfigureAwait(false);
                 break;
 
+            case UiActionKind.Execute:
+            case UiActionKind.Evaluate:
+                (resolved, detail) = await this
+                    .RunScriptAsync(action, session, query, resolutionOptions, config, variableStore, cancellationToken)
+                    .ConfigureAwait(false);
+                break;
+
             case UiActionKind.Choose:
                 resolved = await this
                     .ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken)
@@ -593,6 +699,43 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         }
 
         return (resolved, result.Detail);
+    }
+
+    /// <summary>
+    /// Runs one script action: resolves the element when the action names one, runs the script, and for
+    /// an evaluation writes the variable in the type the test asked for.
+    /// </summary>
+    private async Task<(UiResolvedTarget? Resolved, string Detail)> RunScriptAsync(
+        UiActionSpec action,
+        UiSession session,
+        PlaywrightElementQuery query,
+        UiResolutionOptions resolutionOptions,
+        WebAppConfig config,
+        VariableStore variableStore,
+        CancellationToken cancellationToken)
+    {
+        JsScript script = action.Script!;
+
+        UiResolvedTarget? resolved = action.Target is null
+            ? null
+            : await this.ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken).ConfigureAwait(false);
+
+        System.Text.Json.JsonElement? result = await UiScriptRunner.RunAsync(
+            script,
+            session.Page,
+            resolved is null ? null : query.Locate(resolved),
+            variableStore,
+            cancellationToken).ConfigureAwait(false);
+
+        if (action.Kind == UiActionKind.Execute)
+        {
+            return (resolved, $"'{script.Name}'");
+        }
+
+        action.ResultBinder!.Bind(variableStore, action.CaptureName!, result, script.Name);
+
+        // The raw result, shortened: enough to see what came back without a screen of JSON.
+        return (resolved, $"'{script.Name}' -> {UiText.Truncate(result!.Value.GetRawText(), 80)}");
     }
 
     private async Task<UiResolvedTarget> ResolveAsync(
