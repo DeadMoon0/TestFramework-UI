@@ -113,6 +113,41 @@ public static class BrowserExt
             => new UiUrlMatchesEvent(app, pattern, pollDelay);
 
         /// <summary>
+        /// Completes when a part of the page is built the way a structure says.
+        /// </summary>
+        /// <remarks>
+        /// The same comparison the <c>CompareStructure</c> step makes, as a wait - for the shape another
+        /// actor produces over time. A timeout reports the last look's differences, so a wait that never
+        /// matched ends as readably as a comparison that failed.
+        /// </remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="scope">The element to compare, and everything inside it.</param>
+        /// <param name="expected">The structure it should have.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiStructureMatchesEvent StructureMatches(
+            WebAppIdentifier app,
+            UiTarget scope,
+            WebElementStructure expected,
+            VariableReference<TimeSpan>? pollDelay = null)
+            => new UiStructureMatchesEvent(app, scope, expected, pollDelay);
+
+        /// <summary>
+        /// Completes when a table on the page holds what an expected table says.
+        /// </summary>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="table">The table element.</param>
+        /// <param name="expected">The rows it should hold.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiTableMatchesEvent TableMatches(
+            WebAppIdentifier app,
+            UiTarget table,
+            ExpectedTable expected,
+            VariableReference<TimeSpan>? pollDelay = null)
+            => new UiTableMatchesEvent(app, table, expected, pollDelay);
+
+        /// <summary>
         /// Completes when a script in the page returns <c>true</c>.
         /// </summary>
         /// <param name="app">The application to watch.</param>

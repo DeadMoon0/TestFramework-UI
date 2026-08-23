@@ -4,6 +4,11 @@
 		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
+
+		<!-- One framework's browser fleet at a time. Both target frameworks at once means two Edge fleets
+		     and two test hosts on one machine, and the delayed-page waits - real seconds by design - start
+		     missing their windows. Sequential is slower and honest; parallel was flaky and lying. -->
+		<TestTfmsInParallel>false</TestTfmsInParallel>
 	</PropertyGroup>
 
 	<ItemGroup>
