@@ -15,6 +15,7 @@ using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Identifier;
+using TestFramework.UI.Browser.Reading;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Targeting;
@@ -95,6 +96,20 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     public UiBrowserFlow Select(UiTarget field, VariableReference<string> option)
         => this.Add(new UiActionSpec(UiActionKind.Select, field, option));
 
+    /// <summary>
+    /// Chooses an option from whatever kind of list control the page has.
+    /// </summary>
+    /// <remarks>
+    /// Drives a native <c>&lt;select&gt;</c> and the ARIA combobox pattern alike - the component-library
+    /// selects are the second kind - and matches the option by its label or value, exactly first and
+    /// loosely only when nothing matches exactly. <see cref="Select"/> stays the native-only verb.
+    /// </remarks>
+    /// <param name="field">The list control.</param>
+    /// <param name="option">The option, as a person would name it.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Choose(UiTarget field, VariableReference<string> option)
+        => this.Add(new UiActionSpec(UiActionKind.Choose, field, option));
+
     /// <summary>Ticks a checkbox or selects a radio button.</summary>
     /// <param name="target">The checkbox or radio button.</param>
     /// <returns>The same flow, for chaining.</returns>
@@ -147,11 +162,25 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     /// <param name="target">What to read.</param>
     /// <param name="into">The variable to write.</param>
     /// <returns>The same flow, for chaining.</returns>
-    public UiBrowserFlow Read(UiTarget target, VariableIdentifier into)
+    public UiBrowserFlow Read(UiTarget target, VariableIdentifier into) => this.Read(Value.Text(target), into);
+
+    /// <summary>
+    /// Reads a value off the page into a variable, for the rest of the timeline to use.
+    /// </summary>
+    /// <remarks>
+    /// The variable receives the source's own type - a string for text, a bool for a tick, an int for a
+    /// count. A read is a snapshot of what the page says now; waiting for the page to say something is
+    /// what <see cref="Expect"/> is for.
+    /// </remarks>
+    /// <param name="source">What to read - see <see cref="Value"/>.</param>
+    /// <param name="into">The variable to write.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Read(UiValueSource source, VariableIdentifier into)
     {
+        ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(into);
 
-        return this.Add(new UiActionSpec(UiActionKind.Read, target, CaptureName: into.Identifier));
+        return this.Add(new UiActionSpec(UiActionKind.Read, source.Target, CaptureName: into.Identifier, Source: source));
     }
 
     /// <summary>Photographs the page into the run's output folder.</summary>
@@ -194,7 +223,13 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
 
             if (action.Kind == UiActionKind.Read && action.CaptureName is { } captureName)
             {
-                contract.Outputs.Add(new StepIOEntry(captureName, StepIOKind.Variable, true, typeof(string)));
+                // The variable's declared type is the source's own - so a count is an int to the step
+                // that consumes it, not a string that happens to hold digits.
+                contract.Outputs.Add(new StepIOEntry(
+                    captureName,
+                    StepIOKind.Variable,
+                    true,
+                    action.Source?.ValueType ?? typeof(string)));
             }
         }
 
@@ -292,6 +327,11 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         }
     }
 
+    /// <summary>
+    /// The actions as written, for the tests that check what a verb records.
+    /// </summary>
+    internal IReadOnlyList<UiActionSpec> ActionsForTesting => this.actions;
+
     private UiBrowserFlow Add(UiActionSpec action)
     {
         ((IFreezable)this).EnsureNotFrozen();
@@ -386,12 +426,32 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 detail = "gone";
                 break;
 
+            case UiActionKind.Read:
+                (resolved, detail) = await this
+                    .ReadAsync(action, session, query, resolutionOptions, config, variableStore, cancellationToken)
+                    .ConfigureAwait(false);
+                break;
+
+            case UiActionKind.Choose:
+                resolved = await this
+                    .ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken)
+                    .ConfigureAwait(false);
+
+                detail = await UiChooser.ChooseAsync(
+                    query.Locate(resolved),
+                    session.Page,
+                    value ?? throw new ArgumentException("Choosing needs an option to choose."),
+                    action.Target!.Describe(),
+                    config.DefaultActionTimeout,
+                    cancellationToken).ConfigureAwait(false);
+                break;
+
             default:
                 resolved = await this
                     .ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken)
                     .ConfigureAwait(false);
 
-                detail = await ActOnAsync(action, query.Locate(resolved), value, detail, variableStore).ConfigureAwait(false);
+                detail = await ActOnAsync(action, query.Locate(resolved), value, detail).ConfigureAwait(false);
                 break;
         }
 
@@ -426,8 +486,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         UiActionSpec action,
         ILocator locator,
         string? value,
-        string? detail,
-        VariableStore variableStore)
+        string? detail)
     {
         switch (action.Kind)
         {
@@ -440,6 +499,17 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 return detail;
 
             case UiActionKind.Select:
+                string tag = await locator.EvaluateAsync<string>("el => el.tagName.toLowerCase()").ConfigureAwait(false);
+
+                if (tag != "select")
+                {
+                    // The one wrong answer would be to click around and hope: a component library's
+                    // select is a different contract, and there is a verb for it.
+                    throw new InvalidOperationException(
+                        $"The {action.Target!.Describe()} is a <{tag}>, not a native <select>, so Select " +
+                        "cannot drive it. Use Choose(...), which drives native lists and ARIA comboboxes alike.");
+                }
+
                 await locator.SelectOptionAsync(value ?? string.Empty).ConfigureAwait(false);
                 return detail;
 
@@ -459,14 +529,70 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible }).ConfigureAwait(false);
                 return "visible";
 
-            case UiActionKind.Read:
-                string text = UiText.Normalize(await locator.InnerTextAsync().ConfigureAwait(false)) ?? string.Empty;
-                variableStore.SetVariable(action.CaptureName!, text);
-                return text;
-
             default:
                 throw new InvalidOperationException($"Action '{action.Kind}' does not act on an element.");
         }
+    }
+
+    /// <summary>
+    /// Answers one read: resolves the element when the source names one, asks the reader, and writes the
+    /// variable in the source's own type.
+    /// </summary>
+    private async Task<(UiResolvedTarget? Resolved, string Detail)> ReadAsync(
+        UiActionSpec action,
+        UiSession session,
+        PlaywrightElementQuery query,
+        UiResolutionOptions resolutionOptions,
+        WebAppConfig config,
+        VariableStore variableStore,
+        CancellationToken cancellationToken)
+    {
+        UiValueSource source = action.Source!;
+
+        if (source.Kind == UiValueKind.Count)
+        {
+            // A count is a question about the whole page, not about one element, so it goes to the
+            // resolver's ladder rather than through single-element resolution - zero and many are both
+            // answers here, not failures.
+            (int count, UiQuerySpec? spec) = await TargetResolver.CountAsync(
+                query,
+                source.Target!,
+                action.Context,
+                resolutionOptions,
+                this.app,
+                session.Page.Url,
+                cancellationToken).ConfigureAwait(false);
+
+            variableStore.SetVariable(action.CaptureName!, count);
+
+            return (null, spec is null ? "0 (no channel matched)" : $"{count} via {spec.DescribeMatch()}");
+        }
+
+        UiResolvedTarget? resolved = source.Target is null
+            ? null
+            : await this.ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken).ConfigureAwait(false);
+
+        UiReadResult result = await UiValueReader.ReadAsync(
+            source,
+            session.Page,
+            resolved is null ? null : query.Locate(resolved),
+            resolved,
+            cancellationToken).ConfigureAwait(false);
+
+        switch (result.TypedValue)
+        {
+            case bool flag:
+                variableStore.SetVariable(action.CaptureName!, flag);
+                break;
+            case int number:
+                variableStore.SetVariable(action.CaptureName!, number);
+                break;
+            default:
+                variableStore.SetVariable(action.CaptureName!, (string)result.TypedValue);
+                break;
+        }
+
+        return (resolved, result.Detail);
     }
 
     private async Task<UiResolvedTarget> ResolveAsync(

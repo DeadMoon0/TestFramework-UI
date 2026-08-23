@@ -117,6 +117,91 @@ internal static class TargetResolver
         return confirmed ?? fuzzyMatch;
     }
 
+    /// <summary>
+    /// Counts how many elements answer to a target.
+    /// </summary>
+    /// <remarks>
+    /// The count comes from the first lookup channel that finds anything, tried in the same two-sweep
+    /// order resolution uses - so what gets counted is exactly what the same target would act on, and a
+    /// count is never assembled from two different ways of looking. Zero is an answer: a question about
+    /// how many is not an expectation that there are any.
+    /// </remarks>
+    /// <param name="query">The page to ask.</param>
+    /// <param name="target">What to count. The <c>Nth</c> and <c>First</c> dials pick one match and are
+    /// therefore ignored here.</param>
+    /// <param name="context">What a plain string means for the verb doing the asking.</param>
+    /// <param name="options">The dials that apply to this session.</param>
+    /// <param name="app">The application identifier, for failure messages.</param>
+    /// <param name="url">The current address, for failure messages.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>How many elements the target's winning channel finds, and which channel that was - or a
+    /// count of zero when no channel finds anything.</returns>
+    public static async Task<(int Count, UiQuerySpec? Spec)> CountAsync(
+        IUiElementQuery query,
+        UiTarget target,
+        UiSmartContext context,
+        UiResolutionOptions options,
+        string app,
+        string url,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(options);
+
+        UiQuerySpec? scopeSpec = null;
+        int scopeIndex = 0;
+
+        if (target.Scope is { } scope)
+        {
+            // The scope still has to be exactly one element - "how many rows in the Orders section" is
+            // only a question once there is one Orders section to ask it about.
+            UiResolvedTarget resolvedScope = await ResolveAsync(
+                query,
+                scope,
+                UiSmartContext.Section,
+                options,
+                app,
+                url,
+                cancellationToken).ConfigureAwait(false);
+
+            scopeSpec = resolvedScope.Spec;
+            scopeIndex = resolvedScope.Index;
+        }
+
+        IReadOnlyList<UiChannelStep> ladder = UiChannelLadder.For(target, context);
+
+        foreach (bool exact in target.Exact ? new[] { true } : new[] { true, false })
+        {
+            foreach (UiChannelStep step in ladder)
+            {
+                if (!exact && UiChannelLadder.IsExactOnly(step.Channel))
+                {
+                    continue;
+                }
+
+                UiQuerySpec spec = new UiQuerySpec(
+                    step.Channel,
+                    Text: TextFor(target, step.Channel),
+                    Exact: exact,
+                    Role: step.Role,
+                    Css: target.Css,
+                    NearText: target.NearText,
+                    Within: scopeSpec,
+                    WithinIndex: scopeIndex);
+
+                int count = await query.CountAsync(spec, cancellationToken).ConfigureAwait(false);
+
+                if (count > 0)
+                {
+                    return (count, spec);
+                }
+            }
+        }
+
+        return (0, null);
+    }
+
     private static async Task<UiResolvedTarget?> SweepAsync(
         IUiElementQuery query,
         UiTarget target,

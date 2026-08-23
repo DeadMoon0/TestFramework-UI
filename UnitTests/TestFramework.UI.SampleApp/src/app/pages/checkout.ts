@@ -6,6 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
 import { Cart } from '../cart';
 
 /**
@@ -17,10 +18,10 @@ import { Cart } from '../cart';
  * this page is worth Materialising: the four naming channels are deliberately kept apart, so a run that
  * still fills all four is not relying on the shape of the DOM to do it.
  *
- * The shipping control stays a native `<select>` on purpose. Material's own select is a `role="combobox"`
- * that opens its options in an overlay somewhere else in the document, so it cannot be driven the way a
- * `<select>` is - and until the framework's Select verb understands that, replacing this would delete a
- * covered case rather than add one.
+ * The shipping control stays a native `<select>` and the country is Material's own - which is a
+ * `role="combobox"` that opens its options in an overlay somewhere else in the document. Both kinds on
+ * one form, deliberately: `Select` drives only the first, `Choose` must drive both, and this page is
+ * where that difference is provable.
  */
 @Component({
   selector: 'app-checkout',
@@ -31,6 +32,7 @@ import { Cart } from '../cart';
     MatFormFieldModule,
     MatInputModule,
     MatRadioModule,
+    MatSelectModule,
   ],
   template: `
     <h2>Checkout</h2>
@@ -63,6 +65,15 @@ import { Cart } from '../cart';
           <option value="express">Express</option>
         </select>
       </p>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Country</mat-label>
+        <mat-select name="country" [(ngModel)]="country">
+          <mat-option value="DE">Germany</mat-option>
+          <mat-option value="AT">Austria</mat-option>
+          <mat-option value="CH">Switzerland</mat-option>
+        </mat-select>
+      </mat-form-field>
 
       <fieldset>
         <legend>Payment</legend>
@@ -142,6 +153,7 @@ export class Checkout {
   protected readonly city = signal('');
   protected readonly voucher = signal('');
   protected readonly shipping = signal('standard');
+  protected readonly country = signal('DE');
   protected readonly payment = signal('card');
   protected readonly terms = signal(false);
   protected readonly error = signal('');
