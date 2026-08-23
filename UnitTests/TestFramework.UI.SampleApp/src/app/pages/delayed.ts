@@ -15,6 +15,17 @@ import { Component, OnDestroy, signal } from '@angular/core';
   template: `
     <h2>Orders</h2>
 
+    <!-- A component reporting its state on attributes rather than in visible words: the element is
+         always there, only data-state flips - the channel the attribute wait events watch. The
+         heartbeat ticks forever, so "it changed from whatever it was" always has a change to see. -->
+    <p
+      data-testid="sync-state"
+      [attr.data-state]="loaded() ? 'ready' : 'loading'"
+      [attr.data-heartbeat]="heartbeat()"
+    >
+      {{ loaded() ? 'Orders are ready' : 'Fetching orders' }}
+    </p>
+
     @if (!loaded()) {
       <mat-progress-bar mode="indeterminate" aria-label="Loading orders" />
       <p data-testid="spinner">Loading orders...</p>
@@ -53,6 +64,7 @@ export class Delayed implements OnDestroy {
   protected readonly actionsReady = signal(false);
   protected readonly banner = signal(true);
   protected readonly exported = signal(false);
+  protected readonly heartbeat = signal(0);
 
   private readonly timers: ReturnType<typeof setTimeout>[] = [
     setTimeout(() => this.loaded.set(true), 900),
@@ -60,7 +72,10 @@ export class Delayed implements OnDestroy {
     setTimeout(() => this.banner.set(false), 2400),
   ];
 
+  private readonly pulse = setInterval(() => this.heartbeat.update(beats => beats + 1), 400);
+
   ngOnDestroy(): void {
     this.timers.forEach(timer => clearTimeout(timer));
+    clearInterval(this.pulse);
   }
 }

@@ -134,7 +134,10 @@ The configured browser engine is not on the machine. The message names the three
 A wait event raises `TimeoutException` with its own message — what was watched, where the page was,
 how many polls, the advice for that kind of wait, and the bundle path. Structure and table waits
 additionally report their **last look**, difference by difference, with the expectation the page did
-satisfy at that moment. The event gives up slightly before its step timeout on purpose: the runner
+satisfy at that moment. The attribute waits report the value the attribute actually read on the last
+look (`AttributeEquals`) or the baseline it never moved from (`AttributeChanged` — whose baseline is
+the wait's *first* look, so a change that happens before the wait starts is invisible to it). The
+count waits report the last count. The event gives up slightly before its step timeout on purpose: the runner
 abandons a timed-out step the instant its own clock fires, and a message raised at that same moment
 would never be seen.
 

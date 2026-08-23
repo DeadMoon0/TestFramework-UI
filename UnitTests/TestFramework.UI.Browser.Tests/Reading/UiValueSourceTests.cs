@@ -27,6 +27,7 @@ public class UiValueSourceTests
         Assert.Equal(typeof(string), Value.Url().ValueType);
         Assert.Equal(typeof(string), Value.QueryParam("total").ValueType);
         Assert.Equal(typeof(string), Value.LocalStorage("cart").ValueType);
+        Assert.Equal(typeof(string), Value.Cookie("session").ValueType);
     }
 
     [Fact]
@@ -36,6 +37,7 @@ public class UiValueSourceTests
         Assert.Equal("whether checkbox 'Accept terms' is checked", Value.Checked(Target.Checkbox("Accept terms")).Describe());
         Assert.Equal("query parameter 'total'", Value.QueryParam("total").Describe());
         Assert.Equal("local storage 'sample-app.cart'", Value.LocalStorage("sample-app.cart").Describe());
+        Assert.Equal("cookie 'changelog-visited'", Value.Cookie("changelog-visited").Describe());
         Assert.Equal("the page address", Value.Url().Describe());
     }
 
@@ -45,6 +47,7 @@ public class UiValueSourceTests
         Assert.ThrowsAny<ArgumentException>(() => Value.Attribute(Target.Section("Orders"), " "));
         Assert.ThrowsAny<ArgumentException>(() => Value.QueryParam(""));
         Assert.ThrowsAny<ArgumentException>(() => Value.LocalStorage(" "));
+        Assert.ThrowsAny<ArgumentException>(() => Value.Cookie(" "));
     }
 
     [Fact]

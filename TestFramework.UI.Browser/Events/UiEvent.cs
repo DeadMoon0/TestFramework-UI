@@ -83,6 +83,14 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
     private protected abstract string TimeoutAdvice(VariableStore variableStore);
 
     /// <summary>
+    /// Called once before the first poll of an execution, for a wait that keeps state between polls -
+    /// a baseline, a last-seen value - so a rerun starts clean.
+    /// </summary>
+    private protected virtual void OnPollingStarting()
+    {
+    }
+
+    /// <summary>
     /// Looks at the page once. Must not throw for a page that simply is not there yet.
     /// </summary>
     private protected abstract Task<UiProbeOutcome> ProbeAsync(
@@ -157,6 +165,7 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
         this.resolutionOptions = new UiResolutionOptions(config.AmbiguityMode);
         this.clock = Stopwatch.StartNew();
         this.polls = 0;
+        this.OnPollingStarting();
 
         string waited = this.DescribeWaited(variableStore);
         logger.LogInformation("Waiting for {0} on '{1}'.", waited, this.app.ToString());

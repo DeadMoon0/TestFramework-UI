@@ -103,6 +103,89 @@ public static class BrowserExt
         }
 
         /// <summary>
+        /// Completes when a text is gone from the page, or was never there.
+        /// </summary>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="text">The words that must go away.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementHiddenEvent TextDisappears(WebAppIdentifier app, string text, VariableReference<TimeSpan>? pollDelay = null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(text);
+
+            return new UiElementHiddenEvent(app, Target.Text(text), pollDelay);
+        }
+
+        /// <summary>
+        /// Completes when an attribute of an element reads a value a rule accepts.
+        /// </summary>
+        /// <remarks>
+        /// The channel components report on without a visible word changing - <c>data-state</c>,
+        /// <c>aria-busy</c>, <c>aria-expanded</c>. A plain string for <paramref name="expected"/> means
+        /// exact; <c>Cell.Contains</c>, <c>Cell.Matches</c> and the other rules say anything looser.
+        /// </remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">The element carrying the attribute.</param>
+        /// <param name="attribute">The attribute name, for example <c>data-state</c>.</param>
+        /// <param name="expected">What the value must satisfy.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiAttributeEqualsEvent AttributeEquals(
+            WebAppIdentifier app,
+            UiTarget target,
+            string attribute,
+            CellRule expected,
+            VariableReference<TimeSpan>? pollDelay = null)
+            => new UiAttributeEqualsEvent(app, target, attribute, expected, pollDelay);
+
+        /// <summary>
+        /// Completes when an attribute of an element no longer reads what the wait first saw.
+        /// </summary>
+        /// <remarks>
+        /// For transitions with no destination value a test could name - a stamp, a counter, a rotating
+        /// id. The baseline is taken on the wait's first look, so the wait must start before the change.
+        /// When the destination is known, <see cref="AttributeEquals"/> says it better.
+        /// </remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">The element carrying the attribute.</param>
+        /// <param name="attribute">The attribute name.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiAttributeChangedEvent AttributeChanged(
+            WebAppIdentifier app,
+            UiTarget target,
+            string attribute,
+            VariableReference<TimeSpan>? pollDelay = null)
+            => new UiAttributeChangedEvent(app, target, attribute, pollDelay);
+
+        /// <summary>
+        /// Completes when exactly <paramref name="count"/> elements answer to a target.
+        /// </summary>
+        /// <remarks>
+        /// For lists that fill in. A page can pass through the expected count on its way past it and
+        /// satisfy this wait; a list whose final size matters more than the moment it is reached is
+        /// better waited on with <see cref="StructureMatches"/> or <see cref="TableMatches"/>.
+        /// </remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">What to count.</param>
+        /// <param name="count">The count to reach. Zero waits for absence.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementCountEvent CountIs(WebAppIdentifier app, UiTarget target, int count, VariableReference<TimeSpan>? pollDelay = null)
+            => new UiElementCountEvent(app, target, count, atLeast: false, pollDelay);
+
+        /// <summary>
+        /// Completes when at least <paramref name="count"/> elements answer to a target.
+        /// </summary>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">What to count.</param>
+        /// <param name="count">The count to reach.</param>
+        /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementCountEvent CountAtLeast(WebAppIdentifier app, UiTarget target, int count, VariableReference<TimeSpan>? pollDelay = null)
+            => new UiElementCountEvent(app, target, count, atLeast: true, pollDelay);
+
+        /// <summary>
         /// Completes when the page's address contains a text - or matches an expression, with
         /// <see cref="UiUrlMatchesEvent.AsRegex"/>.
         /// </summary>

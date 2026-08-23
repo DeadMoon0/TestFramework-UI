@@ -17,8 +17,17 @@ public enum UiActionKind
     /// <summary>Press something.</summary>
     Click,
 
-    /// <summary>Type into something.</summary>
+    /// <summary>Press something twice, the way a person opens or renames.</summary>
+    DoubleClick,
+
+    /// <summary>Press something with the secondary button, the way a person asks for options.</summary>
+    RightClick,
+
+    /// <summary>Set what a form control holds.</summary>
     Fill,
+
+    /// <summary>Type into something one keystroke at a time.</summary>
+    Type,
 
     /// <summary>Choose from a native list by value or label.</summary>
     Select,
@@ -37,6 +46,21 @@ public enum UiActionKind
 
     /// <summary>Move the pointer onto something.</summary>
     Hover,
+
+    /// <summary>Move the pointer off everything, to where the page shows its resting state.</summary>
+    MouseAway,
+
+    /// <summary>Drag something onto something else.</summary>
+    Drag,
+
+    /// <summary>Bring something into view.</summary>
+    ScrollTo,
+
+    /// <summary>Scroll the page to its top.</summary>
+    ScrollToTop,
+
+    /// <summary>Scroll the page to its bottom.</summary>
+    ScrollToBottom,
 
     /// <summary>Wait until something is there, and fail if it never is.</summary>
     Expect,
@@ -72,6 +96,7 @@ public enum UiActionKind
 /// <param name="Source">What a read reads, for the read action.</param>
 /// <param name="Script">The JavaScript, for the script actions.</param>
 /// <param name="ResultBinder">Writes an evaluation's result in the type the test asked for.</param>
+/// <param name="SecondTarget">Where a drag ends, for the drag action.</param>
 internal sealed record UiActionSpec(
     UiActionKind Kind,
     UiTarget? Target = null,
@@ -80,15 +105,19 @@ internal sealed record UiActionSpec(
     bool Sensitive = false,
     UiValueSource? Source = null,
     JsScript? Script = null,
-    IUiScriptResultBinder? ResultBinder = null)
+    IUiScriptResultBinder? ResultBinder = null,
+    UiTarget? SecondTarget = null)
 {
     /// <summary>
     /// What a plain string target means for this verb.
     /// </summary>
     public UiSmartContext Context => this.Kind switch
     {
-        UiActionKind.Click or UiActionKind.Hover => UiSmartContext.Clickable,
-        UiActionKind.Fill or UiActionKind.Select or UiActionKind.Choose => UiSmartContext.Fillable,
+        UiActionKind.Click or UiActionKind.DoubleClick or UiActionKind.RightClick or UiActionKind.Hover
+            => UiSmartContext.Clickable,
+        UiActionKind.Fill or UiActionKind.Type or UiActionKind.Select or UiActionKind.Choose
+            => UiSmartContext.Fillable,
+        UiActionKind.Press when this.Target is not null => UiSmartContext.Fillable,
         UiActionKind.Check or UiActionKind.Uncheck => UiSmartContext.Checkable,
         UiActionKind.Read => this.Source?.Kind switch
         {
@@ -106,6 +135,8 @@ internal sealed record UiActionSpec(
     public string Describe() => this switch
     {
         { Kind: UiActionKind.Read, Source: { } source } => $"Read {source.Describe()}",
+        { Kind: UiActionKind.Drag, Target: { } dragged, SecondTarget: { } destination } =>
+            $"Drag {dragged.Describe()} to {destination.Describe()}",
         { Kind: UiActionKind.Execute or UiActionKind.Evaluate, Script: { } script } =>
             this.Target is { } scriptTarget
                 ? $"{this.Kind} script '{script.Name}' on {scriptTarget.Describe()}"

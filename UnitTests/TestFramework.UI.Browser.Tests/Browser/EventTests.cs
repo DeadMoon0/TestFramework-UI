@@ -163,4 +163,101 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
 
         output.WriteLine(failure.Message);
     }
+
+    [BrowserFact]
+    public async Task WhatAComponentSaysOnItsAttributesCanBeWaitedOn()
+    {
+        // The sync-state element reports on attributes, not in visible words: a heartbeat that ticks
+        // every 400 ms, and a data-state that flips to 'ready' at 900 ms. Three waits, none of which a
+        // text wait could express - and the banner's disappearance in the words a person would use.
+        Timeline timeline = Timeline.Create()
+            .Trigger(BrowserExt.Session("shop").Navigate("/delayed")).Name("open")
+            .WaitForEvent(BrowserExt.Events.AttributeChanged(
+                    "shop",
+                    Target.TestId("sync-state"),
+                    "data-heartbeat",
+                    pollDelay: TimeSpan.FromMilliseconds(100)))
+                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("alive")
+            .WaitForEvent(BrowserExt.Events.AttributeEquals(
+                    "shop",
+                    Target.TestId("sync-state"),
+                    "data-state",
+                    "ready",
+                    pollDelay: TimeSpan.FromMilliseconds(100)))
+                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("synced")
+            .WaitForEvent(BrowserExt.Events.TextDisappears(
+                    "shop",
+                    "Syncing with the warehouse",
+                    pollDelay: TimeSpan.FromMilliseconds(100)))
+                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("banner-gone")
+            .Build();
+
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+
+        run.EnsureRanToCompletion();
+
+        // Every wait is part of the session story, under its own action name.
+        run.UiTrace("shop").Should().Match(
+            static entries => entries.Any(entry => entry.Action == "WaitAttributeChange")
+                && entries.Any(entry => entry.Action == "WaitAttribute")
+                && entries.Any(entry => entry.Action == "WaitHidden"),
+            "the attribute waits and the disappearance in the trace");
+    }
+
+    [BrowserFact]
+    public async Task AnAttributeWaitThatTimesOutReportsTheValueItSaw()
+    {
+        // data-state settles on 'ready'; a wait for 'done' must end by naming what the attribute
+        // actually read, because that IS the diagnosis.
+        Timeline timeline = Timeline.Create()
+            .Trigger(BrowserExt.Session("shop").Navigate("/delayed").Expect("3 orders loaded")).Name("open")
+            .WaitForEvent(BrowserExt.Events.AttributeEquals(
+                    "shop",
+                    Target.TestId("sync-state"),
+                    "data-state",
+                    "done",
+                    pollDelay: TimeSpan.FromMilliseconds(100)))
+                .WithTimeOut(TimeSpan.FromSeconds(3)).Name("never")
+            .Build();
+
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+
+        TimeoutException failure = Assert.IsType<TimeoutException>(run.Step("never").LastResult.Exception);
+
+        Assert.Contains("'data-state'", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("the attribute read 'ready'", failure.Message, StringComparison.Ordinal);
+
+        output.WriteLine(failure.Message);
+    }
+
+    [BrowserFact]
+    public async Task AGrowingListCanBeWaitedOnByItsCount()
+    {
+        // The orders arrive over HTTP, the third only after "Load more" - so the first count is reached
+        // by loading and the second by acting, and neither wait names an element, only how many.
+        Timeline timeline = Timeline.Create()
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Name("open")
+            .WaitForEvent(BrowserExt.Events.CountAtLeast(
+                    "shop",
+                    Target.Css("app-order-row"),
+                    2,
+                    pollDelay: TimeSpan.FromMilliseconds(100)))
+                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("loaded")
+            .Trigger(BrowserExt.Session("shop").Click("Load more")).Name("more")
+            .WaitForEvent(BrowserExt.Events.CountIs(
+                    "shop",
+                    Target.Css("app-order-row"),
+                    3,
+                    pollDelay: TimeSpan.FromMilliseconds(100)))
+                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("all-three")
+            .Build();
+
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+
+        run.EnsureRanToCompletion();
+
+        run.UiTrace("shop").Should().Match(
+            static entries => entries.Count(entry => entry.Action == "WaitCount") == 2,
+            "both count waits in the trace");
+    }
 }

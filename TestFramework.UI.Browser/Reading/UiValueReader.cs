@@ -66,6 +66,7 @@ internal static class UiValueReader
             UiValueKind.Url => Result(page.Url, resolved: null),
             UiValueKind.QueryParam => QueryParam(source, page),
             UiValueKind.LocalStorage => await LocalStorageAsync(source, page).ConfigureAwait(false),
+            UiValueKind.Cookie => await CookieAsync(source, page).ConfigureAwait(false),
 
             // Count never reaches this reader: it needs the resolver's ladder rather than one element,
             // so the flow answers it there.
@@ -232,6 +233,31 @@ internal static class UiValueReader
         throw new InvalidOperationException(
             $"The page holds no local storage entry '{source.Argument}'. " +
             Offer("It holds", keys.Take(MaxNamed).ToList()));
+    }
+
+    private static async Task<UiReadResult> CookieAsync(UiValueSource source, IPage page)
+    {
+        // The browser's own jar, asked for the current address - so what is read is what the page's
+        // requests actually carry, HttpOnly cookies included, rather than the subset document.cookie
+        // shows scripts.
+        bool scoped = Uri.TryCreate(page.Url, UriKind.Absolute, out Uri? address)
+            && (address.Scheme == Uri.UriSchemeHttp || address.Scheme == Uri.UriSchemeHttps);
+
+        IReadOnlyList<BrowserContextCookiesResult> cookies = scoped
+            ? await page.Context.CookiesAsync([page.Url]).ConfigureAwait(false)
+            : await page.Context.CookiesAsync().ConfigureAwait(false);
+
+        foreach (BrowserContextCookiesResult cookie in cookies)
+        {
+            if (string.Equals(cookie.Name, source.Argument, StringComparison.Ordinal))
+            {
+                return Result(cookie.Value, resolved: null);
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"The browser holds no cookie '{source.Argument}' for {page.Url}. " +
+            Offer("It holds", cookies.Select(static cookie => cookie.Name).Take(MaxNamed).ToList()));
     }
 
     private static string Offer(string lead, IReadOnlyList<string> names)

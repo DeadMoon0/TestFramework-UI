@@ -22,6 +22,8 @@ export const routes: Routes = [
   { path: 'moved', loadComponent: () => import('./pages/moved').then(m => m.Moved) },
   { path: 'ambiguous', loadComponent: () => import('./pages/ambiguous').then(m => m.Ambiguous) },
   { path: 'delayed', loadComponent: () => import('./pages/delayed').then(m => m.Delayed) },
+  { path: 'scrolling', loadComponent: () => import('./pages/scrolling').then(m => m.Scrolling) },
+  { path: 'interactions', loadComponent: () => import('./pages/interactions').then(m => m.Interactions) },
   { path: 'broken', loadComponent: () => import('./pages/broken').then(m => m.Broken) },
   { path: 'responsive', loadComponent: () => import('./pages/responsive').then(m => m.Responsive) },
 

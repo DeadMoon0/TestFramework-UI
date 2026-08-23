@@ -218,4 +218,45 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
 
         output.WriteLine(failure.Message);
     }
+
+    [BrowserFact]
+    public async Task ACookieTheBrowserHoldsIsReadable()
+    {
+        // The changelog page plants one on arrival; the read asks the browser's jar, not
+        // document.cookie, so an HttpOnly cookie would answer the same way.
+        Timeline timeline = Timeline.Create()
+            .Trigger(BrowserExt.Session("shop")
+                .Navigate("/scrolling")
+                .Expect("The newest entry is at the top.")
+                .Read(Value.Cookie("changelog-visited"), "visited"))
+                .Name("read")
+            .Build();
+
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+
+        run.EnsureRanToCompletion();
+
+        run.Variable<string>("visited").Should().Be("yes");
+    }
+
+    [BrowserFact]
+    public async Task AMissingCookieNamesTheOnesTheBrowserHolds()
+    {
+        Timeline timeline = Timeline.Create()
+            .Trigger(BrowserExt.Session("shop")
+                .Navigate("/scrolling")
+                .Expect("The newest entry is at the top.")
+                .Read(Value.Cookie("session-token"), "x"))
+                .Name("read")
+            .Build();
+
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+
+        UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("read").LastResult.Exception);
+
+        Assert.Contains("no cookie 'session-token'", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("'changelog-visited'", failure.Message, StringComparison.Ordinal);
+
+        output.WriteLine(failure.Message);
+    }
 }

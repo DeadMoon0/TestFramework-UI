@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Exceptions;
@@ -160,5 +161,45 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
 
         Assert.Contains("no value for 'background-colr'", failure.Message, StringComparison.Ordinal);
         Assert.Contains("'background-color'", failure.Message, StringComparison.Ordinal);
+    }
+
+    [BrowserFact]
+    public async Task ScrollingIsAFirstPartyActionTheViewportChecksCanPin()
+    {
+        // The changelog is taller than any viewport, so none of these checks could pass by accident:
+        // each InViewport is only true if the scroll before it really moved the page.
+        Timeline timeline = Timeline.Create()
+            .Trigger(BrowserExt.Session("shop")
+                .Navigate("/scrolling")
+                .Expect("The newest entry is at the top.")
+                .ScrollToBottom())
+                .Name("down")
+            .Trigger(BrowserExt.Page("shop").CheckLayout(ExpectedLayout
+                .InViewport(Target.TestId("end-note"))))
+                .Name("end-visible")
+            .Trigger(BrowserExt.Session("shop").ScrollToTop()).Name("up")
+            .Trigger(BrowserExt.Page("shop").CheckLayout(ExpectedLayout
+                .InViewport(Target.TestId("top-note"))))
+                .Name("top-visible")
+            .Trigger(BrowserExt.Session("shop")
+                .ScrollTo(Target.Text("Entry 42: routine maintenance and small fixes.")))
+                .Name("to-entry")
+            .Trigger(BrowserExt.Page("shop").CheckLayout(ExpectedLayout
+                .InViewport(Target.Text("Entry 42: routine maintenance and small fixes."))))
+                .Name("entry-visible")
+            .Build();
+
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+
+        run.EnsureRanToCompletion();
+
+        // First-party means first-party: the scroll verbs are trace entries of their own kind, and the
+        // script audit stays empty - a suite holding UiScripts at zero keeps that grip.
+        run.UiTrace("shop").Should().Match(
+            static entries => entries.Any(entry => entry.Action == "ScrollToBottom")
+                && entries.Any(entry => entry.Action == "ScrollToTop")
+                && entries.Any(entry => entry.Action == "ScrollTo"),
+            "all three scroll verbs in the trace");
+        run.UiScripts("shop").Should().HaveNoItems();
     }
 }

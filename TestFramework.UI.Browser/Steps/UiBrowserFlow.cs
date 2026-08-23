@@ -74,6 +74,20 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     /// <returns>The same flow, for chaining.</returns>
     public UiBrowserFlow Click(UiTarget target) => this.Add(new UiActionSpec(UiActionKind.Click, target));
 
+    /// <summary>Presses something twice, the way a person opens or renames.</summary>
+    /// <param name="target">What to double-click. A plain string names it the way <see cref="Click"/> does.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow DoubleClick(UiTarget target) => this.Add(new UiActionSpec(UiActionKind.DoubleClick, target));
+
+    /// <summary>Presses something with the secondary button, the way a person asks for options.</summary>
+    /// <remarks>
+    /// What appears is the page's own answer - a context menu the application renders. The browser's
+    /// native menu never opens under automation, so this only tests pages that handle the event.
+    /// </remarks>
+    /// <param name="target">What to right-click.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow RightClick(UiTarget target) => this.Add(new UiActionSpec(UiActionKind.RightClick, target));
+
     /// <summary>Types into a field, replacing whatever it held.</summary>
     /// <param name="field">The field. A plain string names it by label, placeholder or accessible name.</param>
     /// <param name="value">What to type.</param>
@@ -89,6 +103,21 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     /// <returns>The same flow, for chaining.</returns>
     public UiBrowserFlow FillSensitive(UiTarget field, VariableReference<string> value)
         => this.Add(new UiActionSpec(UiActionKind.Fill, field, value, Sensitive: true));
+
+    /// <summary>
+    /// Types into a field one keystroke at a time, after whatever it already holds.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="Fill"/> sets the value in one motion, which is right for a form and wrong for anything
+    /// listening to individual keys - an autocomplete, an input mask, a shortcut recorder. This verb
+    /// presses each character as a person would, key events and all. It is the slower one on purpose;
+    /// reach for it when the keystrokes ARE the behaviour under test.
+    /// </remarks>
+    /// <param name="field">The field. A plain string names it by label, placeholder or accessible name.</param>
+    /// <param name="text">What to type, character by character.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Type(UiTarget field, VariableReference<string> text)
+        => this.Add(new UiActionSpec(UiActionKind.Type, field, text));
 
     /// <summary>Chooses an option from a list.</summary>
     /// <param name="field">The list.</param>
@@ -122,14 +151,88 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     public UiBrowserFlow Uncheck(UiTarget target) => this.Add(new UiActionSpec(UiActionKind.Uncheck, target));
 
     /// <summary>Presses keys, for example <c>Enter</c> or <c>Control+Enter</c>.</summary>
+    /// <remarks>
+    /// The keys go to whatever currently has focus, which makes this the verb for a page-wide shortcut.
+    /// A shortcut that belongs to one control is better said with the targeted overload, which focuses
+    /// first.
+    /// </remarks>
     /// <param name="keys">The key or chord.</param>
     /// <returns>The same flow, for chaining.</returns>
     public UiBrowserFlow Press(VariableReference<string> keys) => this.Add(new UiActionSpec(UiActionKind.Press, Value: keys));
+
+    /// <summary>Presses keys on one control - focused first, so the keys land where the test says.</summary>
+    /// <param name="target">The control to focus and press the keys on.</param>
+    /// <param name="keys">The key or chord, for example <c>Control+Enter</c>.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Press(UiTarget target, VariableReference<string> keys)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+
+        return this.Add(new UiActionSpec(UiActionKind.Press, target, keys));
+    }
 
     /// <summary>Moves the pointer onto something, for whatever that reveals.</summary>
     /// <param name="target">What to hover.</param>
     /// <returns>The same flow, for chaining.</returns>
     public UiBrowserFlow Hover(UiTarget target) => this.Add(new UiActionSpec(UiActionKind.Hover, target));
+
+    /// <summary>
+    /// Moves the pointer off everything, to the viewport's top-left corner.
+    /// </summary>
+    /// <remarks>
+    /// The other half of <see cref="Hover"/>: what a page shows must also go away when the pointer
+    /// leaves, and that is a behaviour worth a test of its own. The corner is the one place with nothing
+    /// of the page's own in it on most layouts; a page with a control there gets its pointer moved onto
+    /// that control, so hover something known-inert instead.
+    /// </remarks>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow MouseAway() => this.Add(new UiActionSpec(UiActionKind.MouseAway));
+
+    /// <summary>
+    /// Drags something onto something else - pressed, moved, released, the way a hand does it.
+    /// </summary>
+    /// <remarks>
+    /// Real pointer events from source to destination, so both the HTML5 drag contract and the
+    /// pointer-tracking kind of widget see what they would see from a person.
+    /// </remarks>
+    /// <param name="target">What to pick up. A plain string names it by its visible text.</param>
+    /// <param name="destination">What to drop it on.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow DragTo(UiTarget target, UiTarget destination)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(destination);
+
+        return this.Add(new UiActionSpec(UiActionKind.Drag, target, SecondTarget: destination));
+    }
+
+    /// <summary>
+    /// Brings something into view.
+    /// </summary>
+    /// <remarks>
+    /// The acting verbs scroll on their own before they act, so this is not a prerequisite for a
+    /// <see cref="Click"/>. It is for when the scrolling itself is the point: content that loads as it
+    /// approaches the viewport, a sticky bar that appears past a threshold, or a layout check about to
+    /// ask what is <c>InViewport</c>.
+    /// </remarks>
+    /// <param name="target">What to bring into view. A plain string names visible text.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow ScrollTo(UiTarget target) => this.Add(new UiActionSpec(UiActionKind.ScrollTo, target));
+
+    /// <summary>Scrolls the page back to its top.</summary>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow ScrollToTop() => this.Add(new UiActionSpec(UiActionKind.ScrollToTop));
+
+    /// <summary>
+    /// Scrolls the page to its bottom.
+    /// </summary>
+    /// <remarks>
+    /// The bottom as the page has it at that moment. A list that grows while being scrolled - an
+    /// infinite feed - has no bottom to arrive at; scroll to the thing being looked for instead, with
+    /// <see cref="ScrollTo"/>, or wait for it with an event.
+    /// </remarks>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow ScrollToBottom() => this.Add(new UiActionSpec(UiActionKind.ScrollToBottom));
 
     /// <summary>
     /// Waits until something is there, and fails if it never is.
@@ -530,14 +633,54 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 detail = target;
                 break;
 
-            case UiActionKind.Press:
+            case UiActionKind.Press when action.Target is null:
                 await session.Page.Keyboard.PressAsync(value ?? throw new ArgumentException("A key press needs keys.")).ConfigureAwait(false);
+                break;
+
+            case UiActionKind.MouseAway:
+                await session.Page.Mouse.MoveAsync(0, 0).ConfigureAwait(false);
+                detail = "to the corner";
+                break;
+
+            case UiActionKind.Drag:
+                resolved = await this
+                    .ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken)
+                    .ConfigureAwait(false);
+
+                UiResolvedTarget destination = await this
+                    .ResolveTargetAsync(action.SecondTarget!, UiSmartContext.Text, session, query, resolutionOptions, config, cancellationToken)
+                    .ConfigureAwait(false);
+
+                await query.Locate(resolved).DragToAsync(query.Locate(destination)).ConfigureAwait(false);
+
+                // The destination's own match is said here, because the entry's audit fields carry the
+                // dragged thing - a destination the framework had to reach for must not hide behind it.
+                detail = destination.IsLoose
+                    ? $"to {action.SecondTarget!.Describe()} (matched via {destination.DescribeMatch()})"
+                    : $"to {action.SecondTarget!.Describe()}";
                 break;
 
             case UiActionKind.Screenshot:
                 detail = await UiFailureBundle
                     .ScreenshotAsync(session, runState, action.CaptureName ?? "screenshot")
                     .ConfigureAwait(false);
+                break;
+
+            // Instant on purpose, both of them: a stylesheet's scroll-behavior:smooth would leave the
+            // page mid-glide when the next action looks at it, and where the viewport ends up must not
+            // depend on styling.
+            case UiActionKind.ScrollToTop:
+                await session.Page
+                    .EvaluateAsync("() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })")
+                    .ConfigureAwait(false);
+                detail = "top";
+                break;
+
+            case UiActionKind.ScrollToBottom:
+                await session.Page
+                    .EvaluateAsync("() => window.scrollTo({ top: document.documentElement.scrollHeight, left: 0, behavior: 'instant' })")
+                    .ConfigureAwait(false);
+                detail = "bottom";
                 break;
 
             case UiActionKind.ExpectNot:
@@ -620,8 +763,24 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 await locator.ClickAsync().ConfigureAwait(false);
                 return null;
 
+            case UiActionKind.DoubleClick:
+                await locator.DblClickAsync().ConfigureAwait(false);
+                return null;
+
+            case UiActionKind.RightClick:
+                await locator.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right }).ConfigureAwait(false);
+                return null;
+
             case UiActionKind.Fill:
                 await locator.FillAsync(value ?? string.Empty).ConfigureAwait(false);
+                return detail;
+
+            case UiActionKind.Type:
+                await locator.PressSequentiallyAsync(value ?? string.Empty).ConfigureAwait(false);
+                return detail;
+
+            case UiActionKind.Press:
+                await locator.PressAsync(value ?? throw new ArgumentException("A key press needs keys.")).ConfigureAwait(false);
                 return detail;
 
             case UiActionKind.Select:
@@ -650,6 +809,10 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             case UiActionKind.Hover:
                 await locator.HoverAsync().ConfigureAwait(false);
                 return null;
+
+            case UiActionKind.ScrollTo:
+                await locator.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
+                return "into view";
 
             case UiActionKind.Expect:
                 await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible }).ConfigureAwait(false);
@@ -758,15 +921,31 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         return (resolved, $"'{script.Name}' -> {UiText.Truncate(result!.Value.GetRawText(), 80)}");
     }
 
-    private async Task<UiResolvedTarget> ResolveAsync(
+    private Task<UiResolvedTarget> ResolveAsync(
         UiActionSpec action,
         UiSession session,
         PlaywrightElementQuery query,
         UiResolutionOptions resolutionOptions,
         WebAppConfig config,
         CancellationToken cancellationToken)
+        => this.ResolveTargetAsync(
+            action.Target ?? throw new InvalidOperationException($"Action '{action.Kind}' needs a target."),
+            action.Context,
+            session,
+            query,
+            resolutionOptions,
+            config,
+            cancellationToken);
+
+    private async Task<UiResolvedTarget> ResolveTargetAsync(
+        UiTarget target,
+        UiSmartContext context,
+        UiSession session,
+        PlaywrightElementQuery query,
+        UiResolutionOptions resolutionOptions,
+        WebAppConfig config,
+        CancellationToken cancellationToken)
     {
-        UiTarget target = action.Target ?? throw new InvalidOperationException($"Action '{action.Kind}' needs a target.");
         DateTimeOffset deadline = DateTimeOffset.UtcNow + config.DefaultActionTimeout;
 
         while (true)
@@ -774,7 +953,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             try
             {
                 return await TargetResolver
-                    .ResolveAsync(query, target, action.Context, resolutionOptions, this.app, session.Page.Url, cancellationToken)
+                    .ResolveAsync(query, target, context, resolutionOptions, this.app, session.Page.Url, cancellationToken)
                     .ConfigureAwait(false);
             }
             catch (UiTargetNotFoundException) when (DateTimeOffset.UtcNow < deadline)

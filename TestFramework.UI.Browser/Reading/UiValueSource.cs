@@ -37,6 +37,9 @@ public enum UiValueKind
 
     /// <summary>One computed style property of an element.</summary>
     Style,
+
+    /// <summary>One cookie the browser holds for the page.</summary>
+    Cookie,
 }
 
 /// <summary>
@@ -100,6 +103,7 @@ public sealed record UiValueSource
         UiValueKind.QueryParam => $"query parameter '{this.Argument}'",
         UiValueKind.LocalStorage => $"local storage '{this.Argument}'",
         UiValueKind.Style => $"style '{this.Argument}' of {this.Target!.Describe()}",
+        UiValueKind.Cookie => $"cookie '{this.Argument}'",
         _ => this.Kind.ToString(),
     };
 
@@ -230,5 +234,23 @@ public static class Value
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
         return UiValueSource.OfPage(UiValueKind.LocalStorage, key);
+    }
+
+    /// <summary>
+    /// One cookie the browser holds for the page's address. A cookie the browser does not hold fails,
+    /// naming the ones it does.
+    /// </summary>
+    /// <remarks>
+    /// Read from the browser rather than from <c>document.cookie</c>, so an <c>HttpOnly</c> cookie - a
+    /// session token, typically - is as readable as any other. What the page's own scripts cannot see,
+    /// a test still can.
+    /// </remarks>
+    /// <param name="name">The cookie name.</param>
+    /// <returns>The source.</returns>
+    public static UiValueSource Cookie(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+        return UiValueSource.OfPage(UiValueKind.Cookie, name);
     }
 }
