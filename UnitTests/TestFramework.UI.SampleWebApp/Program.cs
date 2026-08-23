@@ -32,25 +32,68 @@ public static class Program
     public const string AngularPathBase = "/app";
 
     /// <summary>
+    /// The configuration key naming where the Angular build output is.
+    /// </summary>
+    /// <remarks>
+    /// Needed because a test fixture starts this application inside the test host, where the content root
+    /// is the test project's own output folder and the path relative to it means nothing.
+    /// </remarks>
+    public const string AngularRootSetting = "AngularRoot";
+
+    /// <summary>
     /// Starts the host.
     /// </summary>
     /// <param name="args">Command line arguments, passed to the host builder.</param>
-    public static void Main(string[] args)
+    public static void Main(string[] args) => CreateApp(args).Run();
+
+    /// <summary>
+    /// Builds the host without starting it.
+    /// </summary>
+    /// <remarks>
+    /// Separate from <see cref="Main"/> so a test fixture can start the very same application in its own
+    /// process on a port the operating system picks. The browser suite then drives a real host over a real
+    /// socket - the point being to exercise what a browser actually does, which an in-memory test host
+    /// could not.
+    /// </remarks>
+    /// <param name="args">Command line arguments, passed to the host builder.</param>
+    /// <returns>The configured application.</returns>
+    public static WebApplication CreateApp(string[] args)
     {
         WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
         WebApplication app = builder.Build();
 
+        string? angularRoot = ResolveAngularRoot(app);
+
         app.UseDefaultFiles();
         app.UseStaticFiles();
 
+        if (angularRoot is not null)
+        {
+            ServeAngularFiles(app, angularRoot);
+        }
+
+        // Explicit, and deliberately after every file server: the single-page fallback below matches every
+        // path under the application's prefix, and once an endpoint has been selected the static file
+        // middleware steps aside - which would answer every script request with the shell instead of the
+        // script. Routing therefore has to come after the files, not before them.
+        app.UseRouting();
+
         MapOrdersApi(app);
-        MapAngularApp(app);
+        MapAngularFallback(app, angularRoot);
 
         // Lets a test fixture confirm the host is up before it drives a browser at it.
         app.MapGet("/health", static () => Results.Ok(new { status = "ok" }));
 
-        app.Run();
+        return app;
     }
+
+    /// <summary>
+    /// Where the Angular application's build output is expected.
+    /// </summary>
+    /// <param name="contentRoot">The host's content root.</param>
+    /// <returns>The folder, whether or not it exists.</returns>
+    public static string AngularOutputDirectory(string contentRoot)
+        => Path.GetFullPath(Path.Combine(contentRoot, "..", "TestFramework.UI.SampleApp", "dist", "sample-app", "browser"));
 
     private static void MapOrdersApi(WebApplication app)
     {
@@ -78,20 +121,29 @@ public static class Program
         });
     }
 
-    private static void MapAngularApp(WebApplication app)
+    private static string? ResolveAngularRoot(WebApplication app)
     {
-        string angularRoot = Path.GetFullPath(Path.Combine(
-            app.Environment.ContentRootPath,
-            "..",
-            "TestFramework.UI.SampleApp",
-            "dist",
-            "sample-app",
-            "browser"));
+        string angularRoot = app.Configuration[AngularRootSetting] is { Length: > 0 } configured
+            ? Path.GetFullPath(configured)
+            : AngularOutputDirectory(app.Environment.ContentRootPath);
 
-        if (!Directory.Exists(angularRoot))
+        // Optional on purpose: a machine without a Node toolchain can still run everything that does not
+        // need the Angular application, and the test gate skips the rest with its reason.
+        return Directory.Exists(angularRoot) ? angularRoot : null;
+    }
+
+    private static void ServeAngularFiles(WebApplication app, string angularRoot)
+        => app.UseFileServer(new FileServerOptions
         {
-            // The Angular fixture is optional: the hand-written pages carry the suite on a machine
-            // without a Node toolchain, and the gate skips the tests that need this one.
+            FileProvider = new PhysicalFileProvider(angularRoot),
+            RequestPath = AngularPathBase,
+            EnableDefaultFiles = true,
+        });
+
+    private static void MapAngularFallback(WebApplication app, string? angularRoot)
+    {
+        if (angularRoot is null)
+        {
             app.MapGet(AngularPathBase, static () => Results.NotFound(
                 "The Angular sample application has not been built. Run 'npm ci && npm run build' in " +
                 "UnitTests/TestFramework.UI.SampleApp."));
@@ -99,17 +151,8 @@ public static class Program
             return;
         }
 
-        PhysicalFileProvider provider = new PhysicalFileProvider(angularRoot);
-
-        app.UseFileServer(new FileServerOptions
-        {
-            FileProvider = provider,
-            RequestPath = AngularPathBase,
-            EnableDefaultFiles = true,
-        });
-
-        // A single-page application owns its own routing, so anything unresolved under the prefix has
-        // to come back as the shell rather than as a 404.
+        // A single-page application owns its own routing, so a path the file server did not answer has to
+        // come back as the shell rather than as a 404.
         app.MapFallback(AngularPathBase + "/{**path}", async context =>
         {
             context.Response.ContentType = "text/html";

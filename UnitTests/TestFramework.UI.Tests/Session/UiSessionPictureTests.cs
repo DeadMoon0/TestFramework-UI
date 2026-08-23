@@ -15,6 +15,7 @@ public class UiSessionPictureTests
         string? target = null,
         string? via = null,
         int? rank = null,
+        bool fuzzy = false,
         int candidates = 1,
         IReadOnlyList<string>? consoleErrors = null)
         => new UiSessionEntry(
@@ -23,6 +24,7 @@ public class UiSessionPictureTests
             target,
             via,
             rank,
+            fuzzy,
             candidates,
             MatchedSnippet: null,
             Detail: null,
@@ -73,7 +75,7 @@ public class UiSessionPictureTests
             .Add(
             [
                 Entry("checkout", "Click", "button 'Pay'", "RoleExact", rank: 0),
-                Entry("checkout", "Fill", "field 'Email'", "PlaceholderLoose", rank: 4),
+                Entry("checkout", "Fill", "field 'Email'", "PlaceholderLoose", rank: 4, fuzzy: true),
                 Entry("checkout", "Click", "button 'Delete'", "RoleExact", rank: 0, candidates: 3),
             ],
             "http://localhost",
@@ -91,8 +93,8 @@ public class UiSessionPictureTests
             .Add(
             [
                 Entry("checkout", "Click", "button 'Pay'", "RoleExact", rank: 0),
-                Entry("checkout", "Fill", "field 'Email'", "PlaceholderLoose", rank: 4),
-                Entry("checkout", "Click", "button 'Next'", "RoleLoose", rank: 2),
+                Entry("checkout", "Fill", "field 'Email'", "PlaceholderLoose", rank: 4, fuzzy: true),
+                Entry("checkout", "Click", "button 'Next'", "RoleLoose", rank: 2, fuzzy: true),
             ],
             "http://localhost",
             "Shop");

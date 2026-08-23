@@ -18,6 +18,11 @@
 		<ProjectReference Include="..\TestFramework.UI.SampleWebApp\TestFramework.UI.SampleWebApp.csproj" />
 	</ItemGroup>
 
+	<!-- The fixture starts the sample application in this process, so it compiles against the web stack. -->
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<Using Include="Xunit" />
 	</ItemGroup>

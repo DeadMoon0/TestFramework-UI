@@ -78,60 +78,115 @@ internal static class TargetResolver
 
         IReadOnlyList<UiChannelStep> ladder = UiChannelLadder.For(target, context);
         List<UiQuerySpec> tried = new List<UiQuerySpec>();
-        int rank = 0;
 
-        // Sweep one is exact, sweep two is loose. A target asking for an exact match skips the second.
-        bool[] sweeps = target.Exact ? [true] : [true, false];
+        UiResolvedTarget? exactMatch = await SweepAsync(query, target, ladder, scopeSpec, scopeIndex, options, app, url, exact: true, tried, cancellationToken)
+            .ConfigureAwait(false);
 
-        foreach (bool exact in sweeps)
+        if (exactMatch is not null)
         {
-            foreach (UiChannelStep step in ladder)
-            {
-                if (!exact && UiChannelLadder.IsExactOnly(step.Channel))
-                {
-                    // A selector or a test id has no loose form; repeating it would only inflate the
-                    // rank of whatever matches next.
-                    continue;
-                }
-
-                UiQuerySpec spec = new UiQuerySpec(
-                    step.Channel,
-                    Text: TextFor(target, step.Channel),
-                    Exact: exact,
-                    Role: step.Role,
-                    Css: target.Css,
-                    NearText: target.NearText,
-                    Within: scopeSpec,
-                    WithinIndex: scopeIndex);
-
-                tried.Add(spec);
-
-                int count = await query.CountAsync(spec, cancellationToken).ConfigureAwait(false);
-
-                if (count == 0)
-                {
-                    rank++;
-                    continue;
-                }
-
-                if (count == 1)
-                {
-                    return new UiResolvedTarget(spec, 0, rank, 1, await SnippetAsync(query, spec, 0, cancellationToken).ConfigureAwait(false));
-                }
-
-                return await ResolveAmbiguityAsync(
-                    query,
-                    target,
-                    options,
-                    app,
-                    url,
-                    spec,
-                    count,
-                    rank,
-                    cancellationToken).ConfigureAwait(false);
-            }
+            return exactMatch;
         }
 
+        if (target.Exact)
+        {
+            // The test asked for an exact match and there is not one. Guessing here would be the opposite
+            // of what it asked.
+            throw await NotFoundAsync(query, target, ladder, scopeSpec, scopeIndex, options, app, url, tried, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        UiResolvedTarget? fuzzyMatch = await SweepAsync(query, target, ladder, scopeSpec, scopeIndex, options, app, url, exact: false, tried, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (fuzzyMatch is null)
+        {
+            throw await NotFoundAsync(query, target, ladder, scopeSpec, scopeIndex, options, app, url, tried, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        // A page can finish rendering in the middle of a sweep - every channel is a separate round trip -
+        // and then an exact channel that answered "nothing" a moment ago would answer "here it is" now.
+        // Accepting the fuzzy match at that point would report a guess where the test was precise, and
+        // would quietly downgrade the match quality an audit relies on. So a fuzzy win gets a second look
+        // at the exact sweep before it stands.
+        List<UiQuerySpec> secondLook = new List<UiQuerySpec>();
+
+        UiResolvedTarget? confirmed = await SweepAsync(query, target, ladder, scopeSpec, scopeIndex, options, app, url, exact: true, secondLook, cancellationToken)
+            .ConfigureAwait(false);
+
+        return confirmed ?? fuzzyMatch;
+    }
+
+    private static async Task<UiResolvedTarget?> SweepAsync(
+        IUiElementQuery query,
+        UiTarget target,
+        IReadOnlyList<UiChannelStep> ladder,
+        UiQuerySpec? scopeSpec,
+        int scopeIndex,
+        UiResolutionOptions options,
+        string app,
+        string url,
+        bool exact,
+        List<UiQuerySpec> tried,
+        CancellationToken cancellationToken)
+    {
+        // Ranks continue across the sweeps, so a fuzzy win is visibly further down the ladder than any
+        // exact one.
+        int rank = exact ? 0 : ladder.Count;
+
+        foreach (UiChannelStep step in ladder)
+        {
+            if (!exact && UiChannelLadder.IsExactOnly(step.Channel))
+            {
+                // A selector or a test id has no loose form; repeating it would only inflate the rank of
+                // whatever matches next.
+                continue;
+            }
+
+            UiQuerySpec spec = new UiQuerySpec(
+                step.Channel,
+                Text: TextFor(target, step.Channel),
+                Exact: exact,
+                Role: step.Role,
+                Css: target.Css,
+                NearText: target.NearText,
+                Within: scopeSpec,
+                WithinIndex: scopeIndex);
+
+            tried.Add(spec);
+
+            int count = await query.CountAsync(spec, cancellationToken).ConfigureAwait(false);
+
+            if (count == 0)
+            {
+                rank++;
+                continue;
+            }
+
+            if (count == 1)
+            {
+                return new UiResolvedTarget(spec, 0, rank, 1, await SnippetAsync(query, spec, 0, cancellationToken).ConfigureAwait(false));
+            }
+
+            return await ResolveAmbiguityAsync(query, target, options, app, url, spec, count, rank, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        return null;
+    }
+
+    private static async Task<UiTargetNotFoundException> NotFoundAsync(
+        IUiElementQuery query,
+        UiTarget target,
+        IReadOnlyList<UiChannelStep> ladder,
+        UiQuerySpec? scopeSpec,
+        int scopeIndex,
+        UiResolutionOptions options,
+        string app,
+        string url,
+        List<UiQuerySpec> tried,
+        CancellationToken cancellationToken)
+    {
         IReadOnlyList<string> availableNames = await AvailableNamesAsync(
             query,
             ladder,
@@ -140,7 +195,7 @@ internal static class TargetResolver
             options,
             cancellationToken).ConfigureAwait(false);
 
-        throw new UiTargetNotFoundException(app, url, target, tried, availableNames);
+        return new UiTargetNotFoundException(app, url, target, tried, availableNames);
     }
 
     private static async Task<UiResolvedTarget> ResolveAmbiguityAsync(

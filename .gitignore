@@ -434,3 +434,11 @@ local.settings.json
 local.testsettings.json
 !example.local.testsettings.json
 !*.template.json
+
+# The sample application's build output and dependencies.
+UnitTests/TestFramework.UI.SampleApp/dist/
+UnitTests/TestFramework.UI.SampleApp/.angular/
+node_modules/
+
+# What a run writes: screenshots, failure bundles, spilled values.
+TestFrameworkOutput/

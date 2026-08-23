@@ -19,9 +19,13 @@ namespace TestFramework.UI.Session;
 /// <c>button 'Place order'</c>. Null for actions without a target, such as navigation.</param>
 /// <param name="ResolvedVia">The channel that actually matched, for example <c>RoleExact</c> or
 /// <c>LabelFuzzy</c>. Null when the action had no target.</param>
-/// <param name="MatchRank">How strong that match was, where 0 is the strongest channel and larger
-/// numbers are progressively looser. Null when the action had no target. This is what makes a test
-/// that only passes through loose matching visible rather than merely green.</param>
+/// <param name="MatchRank">How far down the ladder the match came from, where 0 is the strongest
+/// channel. Null when the action had no target. A weaker channel is not by itself a problem - a field
+/// with only a placeholder is named by its placeholder - so this is for diagnosis rather than for the
+/// audit.</param>
+/// <param name="MatchWasFuzzy">True when the text matched loosely rather than exactly: the run found
+/// something other than what the test literally said. This, together with
+/// <paramref name="CandidateCount"/>, is what an audit reports on.</param>
 /// <param name="CandidateCount">How many elements the matching channel found. Greater than one means
 /// the run picked among candidates, which only happens when the test allowed it.</param>
 /// <param name="MatchedSnippet">A short excerpt of the element that matched, for reading a trace
@@ -38,6 +42,7 @@ public sealed record UiSessionEntry(
     string? Target,
     string? ResolvedVia,
     int? MatchRank,
+    bool MatchWasFuzzy,
     int CandidateCount,
     string? MatchedSnippet,
     string? Detail,
@@ -46,10 +51,10 @@ public sealed record UiSessionEntry(
     double DurationMs)
 {
     /// <summary>
-    /// True when this entry's target was found through something other than the strongest channel, or
-    /// when more than one element matched - the two cases a resilience audit cares about.
+    /// True when the run matched something other than what the test literally said - the text matched
+    /// loosely, or one of several candidates was chosen.
     /// </summary>
-    public bool IsLooseMatch => (this.MatchRank is > 0) || this.CandidateCount > 1;
+    public bool IsLooseMatch => this.MatchWasFuzzy || this.CandidateCount > 1;
 
     /// <summary>
     /// Renders the entry as one readable line for a log or a failure message.

@@ -20,10 +20,17 @@ internal sealed record UiResolvedTarget(
     string? Snippet)
 {
     /// <summary>
-    /// True when the match came from something other than the strongest channel, or when the lookup
-    /// found more than one element - the two cases a resilience audit reports on.
+    /// True when the run matched something other than what the test literally said: a fuzzy match on the
+    /// text, or a choice made among several candidates.
     /// </summary>
-    public bool IsLoose => this.Rank > 0 || this.CandidateCount > 1;
+    /// <remarks>
+    /// Deliberately not "a weaker channel matched". A field that only has a placeholder is named by its
+    /// placeholder, and matching it there exactly is precise - the test said the right thing and the page
+    /// agreed. Reporting that as loose would fill an audit with entries nobody can act on, and an audit
+    /// that cries wolf is one a suite learns to ignore. <see cref="Rank"/> remains available for a team
+    /// that does want to hold its pages to the strongest channel.
+    /// </remarks>
+    public bool IsLoose => !this.Spec.Exact || this.CandidateCount > 1;
 
     /// <summary>
     /// The channel name to record in the session picture.

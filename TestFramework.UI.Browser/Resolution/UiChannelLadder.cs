@@ -112,12 +112,27 @@ internal static class UiChannelLadder
             _ => throw new InvalidOperationException($"Unknown smart context '{context}'."),
         };
 
+    /// <remarks>
+    /// "Section" means any container a person would point at and name - which on a real page is a landmark
+    /// as often as it is a labelled region. A test scoping to the navigation called "Main" or to the
+    /// dialog called "Cancel order" is doing the same thing as one scoping to a section called "Billing",
+    /// so all of them belong on this ladder.
+    /// </remarks>
     private static IReadOnlyList<UiChannelStep> SectionLadder { get; } =
     [
         Role("region"),
         Role("group"),
         Role("form"),
+        Role("navigation"),
+        Role("main"),
+        Role("article"),
+        Role("complementary"),
+        Role("banner"),
+        Role("contentinfo"),
+        Role("search"),
+        Role("dialog"),
         Role("table"),
+        Role("list"),
         Channel(UiMatchChannel.TestId),
     ];
 

@@ -80,7 +80,8 @@ public sealed record UiSessionPicture(
     /// <returns>The weakest entry, or null when nothing matched loosely.</returns>
     public UiSessionEntry? WeakestMatch()
         => this.LooseMatches()
-            .OrderByDescending(static entry => entry.MatchRank ?? 0)
+            .OrderByDescending(static entry => entry.MatchWasFuzzy)
+            .ThenByDescending(static entry => entry.MatchRank ?? 0)
             .ThenByDescending(static entry => entry.CandidateCount)
             .FirstOrDefault();
 
