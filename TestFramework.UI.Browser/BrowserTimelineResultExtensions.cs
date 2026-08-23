@@ -158,6 +158,143 @@ public static class BrowserTimelineResultExtensions
                 $"The step did not produce a browser result. It produced {Describe(handle.LastResult.Result)}.");
     }
 
+    /// <summary>
+    /// How a structure or table comparison differed from what the test expected.
+    /// </summary>
+    /// <remarks>
+    /// A comparison step already fails on its own when the page does not match, so this is for a test that
+    /// wants to say something more specific about the differences than "there were none".
+    /// </remarks>
+    /// <param name="run">The finished run.</param>
+    /// <param name="label">The comparison step's label.</param>
+    /// <returns>The differences, empty when the page matched.</returns>
+    public static ValueHandle<IReadOnlyList<string>> UiDifferences(this TimelineRun run, string label)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        UiCompareResultContext result = Result<UiCompareResultContext>(run, label, "a structure or table comparison");
+
+        return run.Assert(result.Differences, $"how '{label}' differed");
+    }
+
+    /// <summary>
+    /// What the page actually was, as the comparison saw it.
+    /// </summary>
+    /// <param name="run">The finished run.</param>
+    /// <param name="label">The comparison step's label.</param>
+    /// <returns>The rendered structure or table.</returns>
+    public static ValueHandle<string> UiActualStructure(this TimelineRun run, string label)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        UiCompareResultContext result = Result<UiCompareResultContext>(run, label, "a structure or table comparison");
+
+        return run.Assert(result.Actual, $"what '{label}' found on the page");
+    }
+
+    /// <summary>
+    /// The rows a table step read, each keyed by column name.
+    /// </summary>
+    /// <remarks>
+    /// Keyed rather than positional, so an assertion that says <c>row["Price"]</c> keeps working when a
+    /// column is inserted - which is the whole reason this is not a list of arrays.
+    /// </remarks>
+    /// <param name="run">The finished run.</param>
+    /// <param name="label">The table step's label.</param>
+    /// <returns>The rows.</returns>
+    public static ValueHandle<IReadOnlyList<IReadOnlyDictionary<string, string>>> UiTable(this TimelineRun run, string label)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        UiTableResultContext result = Result<UiTableResultContext>(run, label, "a table read");
+
+        return run.Assert(result.Rows, $"the rows '{label}' read");
+    }
+
+    /// <summary>
+    /// One column of a table a step read.
+    /// </summary>
+    /// <param name="run">The finished run.</param>
+    /// <param name="label">The table step's label.</param>
+    /// <param name="column">The column's header text.</param>
+    /// <returns>The column's values, top to bottom.</returns>
+    public static ValueHandle<IReadOnlyList<string>> UiColumn(this TimelineRun run, string label, string column)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        ArgumentException.ThrowIfNullOrWhiteSpace(column);
+
+        UiTableResultContext result = Result<UiTableResultContext>(run, label, "a table read");
+
+        IReadOnlyList<string> values = result.Rows
+            .Select(row => row.TryGetValue(column, out string? value) ? value : string.Empty)
+            .ToList();
+
+        return run.Assert(values, $"the '{column}' column '{label}' read");
+    }
+
+    /// <summary>
+    /// The structure a capture step recorded.
+    /// </summary>
+    /// <param name="run">The finished run.</param>
+    /// <param name="label">The capture step's label.</param>
+    /// <returns>The recorded structure.</returns>
+    public static ValueHandle<string> UiCapturedStructure(this TimelineRun run, string label)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+
+        UiCaptureResultContext result = Result<UiCaptureResultContext>(run, label, "a structure capture");
+
+        return run.Assert(result.Structure, $"the structure '{label}' recorded");
+    }
+
+    /// <summary>
+    /// What a structure or table comparison step found.
+    /// </summary>
+    /// <param name="handle">The step handle.</param>
+    /// <returns>The comparison result.</returns>
+    public static UiCompareResultContext UiCompare(this StepHandle handle)
+    {
+        ArgumentNullException.ThrowIfNull(handle);
+
+        return handle.LastResult.Result as UiCompareResultContext
+            ?? throw new InvalidOperationException(
+                $"The step is not a comparison. It produced {Describe(handle.LastResult.Result)}.");
+    }
+
+    /// <summary>
+    /// What a table step read.
+    /// </summary>
+    /// <param name="handle">The step handle.</param>
+    /// <returns>The table result.</returns>
+    public static UiTableResultContext UiTableResult(this StepHandle handle)
+    {
+        ArgumentNullException.ThrowIfNull(handle);
+
+        return handle.LastResult.Result as UiTableResultContext
+            ?? throw new InvalidOperationException(
+                $"The step is not a table read. It produced {Describe(handle.LastResult.Result)}.");
+    }
+
+    /// <summary>
+    /// What a capture step recorded.
+    /// </summary>
+    /// <param name="handle">The step handle.</param>
+    /// <returns>The capture result.</returns>
+    public static UiCaptureResultContext UiCapture(this StepHandle handle)
+    {
+        ArgumentNullException.ThrowIfNull(handle);
+
+        return handle.LastResult.Result as UiCaptureResultContext
+            ?? throw new InvalidOperationException(
+                $"The step is not a structure capture. It produced {Describe(handle.LastResult.Result)}.");
+    }
+
+    private static TResult Result<TResult>(TimelineRun run, string label, string what)
+        where TResult : class
+        => run.Step(label).LastResult.Result as TResult
+            ?? throw new InvalidOperationException(
+                $"The step '{label}' is not {what}. It produced {Describe(run.Step(label).LastResult.Result)}.");
+
     private static UiSessionPicture SessionOf(TimelineRun run, WebAppIdentifier app)
     {
         string identifier = UiSessionVariable.For(app);

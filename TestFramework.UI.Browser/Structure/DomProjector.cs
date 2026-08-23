@@ -1,0 +1,192 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Playwright;
+using TestFramework.UI.Structure;
+
+namespace TestFramework.UI.Browser.Structure;
+
+/// <summary>
+/// Takes the picture of a page's structure that a comparison is made against.
+/// </summary>
+/// <remarks>
+/// <para>
+/// One round trip produces the whole subtree, so the comparison is made against a single consistent
+/// moment. Comparing against the live page instead would mean racing it, and a structure that changed
+/// halfway through a comparison would produce differences that describe neither state.
+/// </para>
+/// <para>
+/// What is left out is as deliberate as what is kept. Presentation - <c>class</c>, <c>style</c> - and
+/// framework bookkeeping - Angular's <c>_ngcontent-*</c> markers, <c>ng-reflect-*</c>, and the
+/// <c>ng-pristine</c>/<c>ng-valid</c> state classes - never enter the snapshot. Two reasons: a test about
+/// structure should not fail because somebody restyled a panel, and a snapshot captured for drift
+/// detection would otherwise change on every rebuild and every keystroke in a form, which would make the
+/// comparison worthless within a week. Elements a person cannot see are skipped for the same reason.
+/// </para>
+/// </remarks>
+internal static class DomProjector
+{
+    /// <summary>How deep a snapshot goes before it stops descending.</summary>
+    public const int MaxDepth = 8;
+
+    /// <summary>How many elements a snapshot holds at most.</summary>
+    public const int MaxNodes = 600;
+
+    private const string ProjectScript = """
+        (element, options) => {
+            const skippedTags = new Set(['script', 'style', 'template', 'noscript', 'link', 'meta']);
+            const skippedAttributes = ['class', 'style'];
+            let budget = options.maxNodes;
+
+            const isNoise = name =>
+                name.startsWith('_ng') ||
+                name.startsWith('ng-reflect-') ||
+                name.startsWith('_nghost') ||
+                skippedAttributes.includes(name);
+
+            const isVisible = node => {
+                const style = getComputedStyle(node);
+
+                return style.display !== 'none' && style.visibility !== 'hidden';
+            };
+
+            const project = (node, depth) => {
+                if (budget-- <= 0) {
+                    return null;
+                }
+
+                const attributes = {};
+
+                for (const attribute of node.attributes) {
+                    if (!isNoise(attribute.name)) {
+                        attributes[attribute.name] = attribute.value;
+                    }
+                }
+
+                const children = [];
+
+                if (depth < options.maxDepth) {
+                    for (const child of node.children) {
+                        if (skippedTags.has(child.tagName.toLowerCase()) || !isVisible(child)) {
+                            continue;
+                        }
+
+                        const projected = project(child, depth + 1);
+
+                        if (projected !== null) {
+                            children.push(projected);
+                        }
+                    }
+                }
+
+                return {
+                    tag: node.tagName.toLowerCase(),
+                    attributes,
+                    text: (node.innerText || node.textContent || '').trim(),
+                    children
+                };
+            };
+
+            return project(element, 0);
+        }
+        """;
+
+    /// <summary>
+    /// Takes a snapshot of one element and what is inside it.
+    /// </summary>
+    /// <param name="locator">The element to photograph.</param>
+    /// <param name="cancellationToken">Cancels the projection.</param>
+    /// <returns>The snapshot.</returns>
+    /// <exception cref="PlaywrightException">The element is not there.</exception>
+    public static async Task<UiElementSnapshot> ProjectAsync(ILocator locator, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(locator);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        JsonElement? projected = await locator
+            .EvaluateAsync<JsonElement?>(ProjectScript, new { maxDepth = MaxDepth, maxNodes = MaxNodes })
+            .ConfigureAwait(false);
+
+        if (projected is not { ValueKind: JsonValueKind.Object } root)
+        {
+            throw new PlaywrightException("The element could not be read from the page.");
+        }
+
+        return Read(root);
+    }
+
+    private static UiElementSnapshot Read(JsonElement node)
+    {
+        Dictionary<string, string> attributes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        if (node.TryGetProperty("attributes", out JsonElement attributeElement)
+            && attributeElement.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty attribute in attributeElement.EnumerateObject())
+            {
+                // Playwright's protocol stamps every object it serializes with a "$id" so it can express
+                // back-references. Those are transport bookkeeping, not attributes the page has, and letting
+                // them through would put a number that changes with every render into every captured
+                // structure - which is precisely what makes drift detection worthless.
+                if (attribute.Name.StartsWith('$'))
+                {
+                    continue;
+                }
+
+                attributes[attribute.Name] = attribute.Value.GetString() ?? string.Empty;
+            }
+        }
+
+        List<UiElementSnapshot> children = new List<UiElementSnapshot>();
+
+        if (node.TryGetProperty("children", out JsonElement childrenElement)
+            && childrenElement.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement child in childrenElement.EnumerateArray())
+            {
+                // Anything without a kind is not an element the page had - a serializer back-reference, or a
+                // node the projection ran out of budget for. Reading it would invent a child.
+                if (child.ValueKind == JsonValueKind.Object && child.TryGetProperty("tag", out _))
+                {
+                    children.Add(Read(child));
+                }
+            }
+        }
+
+        return new UiElementSnapshot(
+            node.TryGetProperty("tag", out JsonElement tag) ? tag.GetString() ?? "?" : "?",
+            attributes,
+            UiText.Normalize(node.TryGetProperty("text", out JsonElement text) ? text.GetString() : null),
+            children);
+    }
+
+    /// <summary>
+    /// Renders a snapshot as indented text, for a captured value or a difference message.
+    /// </summary>
+    /// <param name="snapshot">The snapshot.</param>
+    /// <returns>The rendered tree.</returns>
+    public static string Render(UiElementSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        System.Text.StringBuilder builder = new System.Text.StringBuilder();
+
+        Render(snapshot, 0, builder);
+
+        return builder.ToString().TrimEnd();
+    }
+
+    private static void Render(UiElementSnapshot node, int depth, System.Text.StringBuilder builder)
+    {
+        builder.AppendLine(CultureInfo.InvariantCulture, $"{new string(' ', depth * 2)}{node}");
+
+        foreach (UiElementSnapshot child in node.Children)
+        {
+            Render(child, depth + 1, builder);
+        }
+    }
+}

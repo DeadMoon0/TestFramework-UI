@@ -1,8 +1,14 @@
 using System;
 using System.Collections.Generic;
+using TestFramework.Core.Steps;
+using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Steps;
+using TestFramework.UI.Browser.Steps.Inspection;
+using TestFramework.UI.Browser.Structure;
+using TestFramework.UI.Browser.Targeting;
+using TestFramework.UI.Structure;
 
 namespace TestFramework.UI.Browser;
 
@@ -25,9 +31,75 @@ public static class BrowserExt
     public static UiBrowserFlow Session(WebAppIdentifier app) => new UiBrowserFlow(app);
 
     /// <summary>
+    /// Looks at what a page is built like, rather than acting on it.
+    /// </summary>
+    /// <remarks>
+    /// Each of these is its own step, so "the order list is right" is a named thing a run either upheld or
+    /// did not, rather than an assertion buried inside the flow that produced the page.
+    /// </remarks>
+    /// <param name="app">The application to look at.</param>
+    /// <returns>The inspections available on it.</returns>
+    public static PageProxy Page(WebAppIdentifier app) => new PageProxy(app);
+
+    /// <summary>
     /// Things a fixture does around a suite, which are not steps.
     /// </summary>
     public static UiToolingProxy Tooling { get; } = new UiToolingProxy();
+
+    /// <summary>
+    /// The inspections available on one application's page.
+    /// </summary>
+    public sealed class PageProxy
+    {
+        private readonly WebAppIdentifier app;
+
+        internal PageProxy(WebAppIdentifier app)
+        {
+            ArgumentNullException.ThrowIfNull(app);
+
+            this.app = app;
+        }
+
+        /// <summary>
+        /// Checks that a part of the page is built the way a structure says.
+        /// </summary>
+        /// <remarks>
+        /// Retried until the page settles, so a comparison against an application that renders after
+        /// fetching is not a race.
+        /// </remarks>
+        /// <param name="scope">The element to compare, and everything inside it.</param>
+        /// <param name="expected">The structure it should have.</param>
+        /// <returns>The step.</returns>
+        public Step<UiCompareResultContext> CompareStructure(UiTarget scope, WebElementStructure expected)
+            => new CompareStructureStep(this.app, scope, expected);
+
+        /// <summary>
+        /// Checks that a table holds what an expected table says.
+        /// </summary>
+        /// <param name="table">The table element.</param>
+        /// <param name="expected">The rows it should hold.</param>
+        /// <returns>The step.</returns>
+        public Step<UiCompareResultContext> CompareTable(UiTarget table, ExpectedTable expected)
+            => new CompareTableStep(this.app, table, expected);
+
+        /// <summary>
+        /// Reads a table off the page as data.
+        /// </summary>
+        /// <param name="table">The table element.</param>
+        /// <param name="into">A variable to put the rows in, or null to only return them as the step's result.</param>
+        /// <returns>The step.</returns>
+        public Step<UiTableResultContext> ReadTable(UiTarget table, VariableIdentifier? into = null)
+            => new ReadTableStep(this.app, table, into);
+
+        /// <summary>
+        /// Records what a part of the page is built like, so a later run can be told when it changed.
+        /// </summary>
+        /// <param name="scope">The element to record, and everything inside it.</param>
+        /// <param name="name">The variable to record it in.</param>
+        /// <returns>The step.</returns>
+        public Step<UiCaptureResultContext> CaptureStructure(UiTarget scope, string name)
+            => new CaptureStructureStep(this.app, scope, name);
+    }
 
     /// <summary>
     /// Machine preparation, kept out of timelines on purpose.
