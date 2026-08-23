@@ -20,6 +20,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\TestFramework.UI.Browser\TestFramework.UI.Browser.csproj" />
+		<ProjectReference Include="..\..\TestFramework.UI.Web\TestFramework.UI.Web.csproj" />
 		<ProjectReference Include="..\TestFramework.UI.SampleWebApp\TestFramework.UI.SampleWebApp.csproj" />
 	</ItemGroup>
 

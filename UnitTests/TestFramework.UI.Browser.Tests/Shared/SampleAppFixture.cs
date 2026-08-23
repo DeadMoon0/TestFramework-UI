@@ -78,8 +78,10 @@ public sealed class SampleAppFixture : IAsyncLifetime
     /// The services a timeline run needs: the sample application configured under the names the tests use.
     /// </summary>
     /// <param name="device">The device to emulate, or null for the default desktop.</param>
+    /// <param name="customize">Adds whatever else a test needs registered - the bridge tests use it to
+    /// bring in the TestFramework.Web configuration stores and sources.</param>
     /// <returns>The service provider.</returns>
-    public IServiceProvider Services(string? device = null)
+    public IServiceProvider Services(string? device = null, Action<ServiceCollection>? customize = null)
     {
         WebAppConfig shop = new WebAppConfig
         {
@@ -106,7 +108,13 @@ public sealed class SampleAppFixture : IAsyncLifetime
                 BasedOn = "shop",
                 AmbiguityMode = TestFramework.UI.Browser.Resolution.UiAmbiguityMode.FirstMatch,
             },
+
+            // Everything shop has EXCEPT an address: the bridge tests prove that the address can come
+            // from the TestFramework.Web family's configuration instead.
+            ["shop-bridged"] = shop with { BaseUrl = null },
         }));
+
+        customize?.Invoke(services);
 
         return services.BuildServiceProvider();
     }

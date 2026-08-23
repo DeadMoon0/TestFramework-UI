@@ -1,6 +1,5 @@
 using TestFramework.Config.Builder.InstanceBuilder;
 using Microsoft.Extensions.DependencyInjection;
-using TestFramework.UI.Browser.Configuration;
 
 namespace TestFramework.UI.Web;
 
@@ -23,11 +22,7 @@ public static class UiWebBridgeConfigExtension
     /// </remarks>
     public static IConfigInstanceBuilder LoadUIWebBridge(this IConfigInstanceBuilder builder)
     {
-        builder.AddService((services, _) =>
-        {
-            services.AddSingleton<IUiBaseUrlSource, SiteBaseUrlSource>();
-            services.AddSingleton<IUiBaseUrlSource, ApiBaseUrlSource>();
-        });
+        builder.AddService((services, _) => services.AddUiWebBridge());
 
         return builder;
     }
