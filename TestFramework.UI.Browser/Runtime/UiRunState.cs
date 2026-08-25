@@ -1,7 +1,6 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using TestFramework.Core.Variables;
@@ -13,17 +12,21 @@ namespace TestFramework.UI.Browser.Runtime;
 /// </summary>
 /// <remarks>
 /// <para>
-/// A step sees the run only through the arguments of its Execute method, and the variable store is the
-/// one object among them that is the same instance for every step of the same run and already exists
-/// while the plan is being built. So it is the run's identity here, and the table holding this state is
-/// keyed on it - weakly, so a finished run's sessions become collectable without anything having to
-/// remember to clean the table up.
+/// A live browser is not something a variable can hold - it is not data, it has to be closed, and the
+/// point of it is that the page one step leaves behind is the page the next step finds. The engine has a
+/// place for exactly that, one slot per type per run, and this is what goes in it.
+/// </para>
+/// <para>
+/// It used to be a <c>ConditionalWeakTable</c> keyed on the run's variable store, on the reasoning that
+/// the store is the one object every step of a run shares. That was true when it was written and is not
+/// any more: a step is handed a per-attempt view of the store, so keyed on what a step receives, a retry
+/// would have opened a second browser and the cleanup step would have found nothing to close. Which run
+/// this is has to be something the engine says, not something this package infers from what it happens to
+/// be holding.
 /// </para>
 /// </remarks>
 internal sealed class UiRunState
 {
-    private static readonly ConditionalWeakTable<VariableStore, UiRunState> States = new ConditionalWeakTable<VariableStore, UiRunState>();
-
     private readonly Dictionary<string, UiSession> sessions = new Dictionary<string, UiSession>(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim sessionGate = new SemaphoreSlim(1, 1);
     private readonly Lazy<string> runDirectory;
@@ -45,13 +48,18 @@ internal sealed class UiRunState
     /// <summary>
     /// The state of one run, created on first use.
     /// </summary>
-    /// <param name="variableStore">The run's variable store, standing in for the run itself.</param>
+    /// <remarks>
+    /// Takes the store rather than the run's state directly, because the two callers hold different
+    /// things: a step has a context, and the plan-time hook that offers a cleanup step has only the store.
+    /// Both reach the same slot.
+    /// </remarks>
+    /// <param name="variableStore">The run's variables, or a step's view of them.</param>
     /// <returns>The run's state.</returns>
     public static UiRunState For(VariableStore variableStore)
     {
         ArgumentNullException.ThrowIfNull(variableStore);
 
-        return States.GetValue(variableStore, static _ => new UiRunState());
+        return variableStore.RunState.GetOrAdd(static () => new UiRunState());
     }
 
     /// <summary>

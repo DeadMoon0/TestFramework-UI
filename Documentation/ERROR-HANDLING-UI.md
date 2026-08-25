@@ -1,4 +1,4 @@
-# Error Handling In TestFramework.UI
+﻿# Error Handling In TestFramework.UI
 
 The design rule, inherited from the rest of the framework and tightened for the browser: **every
 failure must contain its own diagnosis and the next thing to type.** A browser failure additionally
@@ -19,7 +19,7 @@ message.
 | An action, read or script failed mid-flow | `UiActionFailedException` wrapping the cause |
 | A structure or table comparison never matched | `UiStructureMismatchException` |
 | A layout relation never held | `UiLayoutMismatchException` |
-| A wait event timed out | `TimeoutException` with the event's own message, raised slightly *before* the step timeout so it survives the runner |
+| A wait event timed out | `TimeoutException` with the event's own message: what was watched, where the page was, how many polls |
 | Missing or unresolvable configuration | `UiConfigurationException` |
 | The configured browser is not installed | `UiBrowserNotInstalledException` |
 | `WithRetry` on a flow not starting with `Navigate` | `InvalidOperationException` at **plan time**, before any browser exists |
@@ -27,16 +27,22 @@ message.
 
 ## The Failure Bundle
 
-Every failing flow, inspection and wait writes one self-contained folder under the run's output
-(`TestFrameworkOutput/ui/<run>/failure-<step label>/`), which CI publishes like any other run output:
+A failing step gets one self-contained folder per open application, under the run's output
+(`TestFrameworkOutput/ui/<run>/failure-<step label>-<app>/`, plus `-attempt<n>` from the second attempt
+on so a retry cannot photograph over the first failure), which CI publishes like any other run output:
 
 - `screenshot.png` — the page as it was at the failure
 - `page.html` — the markup, for reading what the locators saw
 - `session-picture.json` — everything the session did up to that point
 - `console.log` — what the application itself complained about
 
-The exception message names the folder. Locally, `TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1` holds the
-browser open at the failure state instead, and `TESTFRAMEWORK_UI_HEADED=1` /
+Writing it is not the step's job. The engine tells whoever is watching a run that a step failed or ran
+out of time, and this package registers one such observer — `.LoadUIConfig()` does it, so a timeline that
+configures the browser has the evidence too. The step names the folder in its own message; the observer
+fills it, and says in the run log where it went or why it could not.
+
+Locally, `TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1` also holds the browser open at the failure state for as
+long as you need it — the run says out loud that it is being held — and `TESTFRAMEWORK_UI_HEADED=1` /
 `TESTFRAMEWORK_UI_SLOWMO=250` replay a run watchably. These are environment overrides, never
 configuration — they belong to a person's machine, not to a suite.
 

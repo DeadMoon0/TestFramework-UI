@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
@@ -11,12 +11,12 @@
 		<PackageTags>Test;UnitTest;IntegrationTest;Framework;Fluent;Timeline;UI;Browser;Playwright;WebUI;E2E</PackageTags>
 		<PackageIcon>Icon.png</PackageIcon>
 		<Description>Drive a local browser from inside a TestFramework timeline. Interactions read as imperative steps (Navigate, Click, Fill, Expect) and address elements the way a person does - by role, label, placeholder or visible text - so a renamed or relocated control does not fail a test that only wanted to press it. Every non-exact match is recorded and assertable, ambiguity fails with the candidates and the dial that resolves it, and expected page structure is declared as a typed, reusable field.</Description>
-		<Version>0.1.0</Version>
+		<Version>0.2.0</Version>
 		<PackageProjectUrl>https://github.com/DeadMoon0/TestFramework-UI</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>First release. Requires TestFramework.Core 0.3.0, TestFramework.Config 0.2.1 and TestFramework.UI 0.1.0.</PackageReleaseNotes>
+		<PackageReleaseNotes>Steps take a RunContext, so a wait reads its own deadline instead of guessing a margin before it. Failure evidence - screenshot, markup, session story, and the held-open browser - moves out of the steps into a step observer the engine drives. The page now hands its answers over as text, parsed with Newtonsoft like the rest of the family. Requires TestFramework.Core 0.4.0, TestFramework.Config 0.3.0 and TestFramework.UI 0.2.0.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -33,11 +33,14 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Playwright" Version="1.62.0" />
+		<!-- Named rather than taken transitively from Core: this package reads the page's answers
+		     itself, so the one JSON library the family uses is a dependency it declares. -->
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-		<PackageReference Include="TestFramework.Config" Version="0.2.1" />
-		<PackageReference Include="TestFramework.Core" Version="0.3.0" />
+		<PackageReference Include="TestFramework.Config" Version="0.3.0" />
+		<PackageReference Include="TestFramework.Core" Version="0.4.0" />
 	</ItemGroup>
 
 	<!--

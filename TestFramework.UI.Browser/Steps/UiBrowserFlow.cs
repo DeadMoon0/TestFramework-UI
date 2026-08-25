@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -479,29 +479,23 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         => new StepInstance<Step<UiFlowResultContext>, UiFlowResultContext>(this);
 
     /// <inheritdoc />
-    public override async Task<UiFlowResultContext?> Execute(
-        IServiceProvider serviceProvider,
-        VariableStore variableStore,
-        ArtifactStore artifactStore,
-        ScopedLogger logger,
-        CancellationToken cancellationToken)
+    public override async Task<UiFlowResultContext?> Execute(RunContext context)
     {
-        ArgumentNullException.ThrowIfNull(serviceProvider);
-        ArgumentNullException.ThrowIfNull(variableStore);
-        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(context);
 
         string label = this.LabelOptions.Label ?? this.Name;
         string sessionVariable = UiSessionVariable.For(this.app);
+        CancellationToken cancellationToken = context.Deadline.Token;
 
-        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(serviceProvider, this.app));
-        UiRunState runState = UiRunState.For(variableStore);
+        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(context.Services, this.app));
+        UiRunState runState = UiRunState.For(context.Variables);
 
-        UiSession session = await serviceProvider
+        UiSession session = await context.Services
             .GetUIComponentFactory()
             .SessionAsync(this.app, config, runState, cancellationToken)
             .ConfigureAwait(false);
 
-        UiSessionPicture picture = variableStore.TryGetVariable(sessionVariable, out UiSessionPicture? existing) && existing is not null
+        UiSessionPicture picture = context.Variables.TryGetVariable(sessionVariable, out UiSessionPicture? existing) && existing is not null
             ? existing
             : UiSessionPicture.Empty(this.app);
 
@@ -523,7 +517,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 try
                 {
                     UiSessionEntry entry = await this
-                        .PerformAsync(action, session, query, resolutionOptions, config, runState, variableStore, label, logger, cancellationToken)
+                        .PerformAsync(action, session, query, resolutionOptions, config, runState, context.Variables, label, context.Logger, cancellationToken)
                         .ConfigureAwait(false);
 
                     entries.Add(entry with { DurationMs = stopwatch.Elapsed.TotalMilliseconds });
@@ -532,14 +526,12 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 {
                     picture = picture.Add(entries, session.Page.Url, await SafeTitleAsync(session).ConfigureAwait(false));
 
-                    throw await this
-                        .FailAsync(action, index, entries, session, runState, picture, sessionVariable, variableStore, logger, exception)
-                        .ConfigureAwait(false);
+                    throw this.Fail(action, index, entries, session, runState, picture, sessionVariable, context, exception);
                 }
             }
 
             picture = picture.Add(entries, session.Page.Url, await SafeTitleAsync(session).ConfigureAwait(false));
-            variableStore.SetVariable(sessionVariable, picture);
+            context.Variables.SetVariable(sessionVariable, picture);
 
             return new UiFlowResultContext(this.app, picture.Url, picture.Title, entries);
         }
@@ -562,7 +554,17 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         return this;
     }
 
-    private async Task<Exception> FailAsync(
+    /// <summary>
+    /// The step's own account of what went wrong.
+    /// </summary>
+    /// <remarks>
+    /// It records the session and names where the evidence goes; it does not gather it. Photographing the
+    /// page, writing its markup and holding the browser open used to happen here, and in the wait and the
+    /// inspection too - three copies of a job that belongs to whoever is watching the run rather than to
+    /// each step that can fail. <see cref="UiFailureBundle.DirectoryFor"/> is the one convention both sides
+    /// ask, so the folder this message names is the folder the observer fills.
+    /// </remarks>
+    private Exception Fail(
         UiActionSpec action,
         int index,
         IReadOnlyList<UiSessionEntry> stepEntries,
@@ -570,8 +572,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         UiRunState runState,
         UiSessionPicture picture,
         string sessionVariable,
-        VariableStore variableStore,
-        ScopedLogger logger,
+        RunContext context,
         Exception inner)
     {
         // Everything the page complained about during this step, not only since the last action. A click
@@ -580,23 +581,10 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         // the application broke.
         List<string> consoleErrors = [.. stepEntries.SelectMany(static entry => entry.ConsoleErrors), .. session.DrainConsoleErrors()];
 
-        // Recorded even on the failing path, so the debugging UI and the next run's comparison both see
-        // how far the session actually got.
+        // Recorded even on the failing path, and before this throws: the debugging UI, the next run's
+        // comparison and the observer about to photograph the page all read the session from here.
         picture = picture with { Entries = [.. picture.Entries] };
-        variableStore.SetVariable(sessionVariable, picture);
-
-        string? bundle = await UiFailureBundle
-            .CaptureAsync(session, runState, this.LabelOptions.Label ?? this.Name, picture, logger)
-            .ConfigureAwait(false);
-
-        if (UiEnvironmentOverrides.PauseOnFailure)
-        {
-            logger.LogWarning(
-                "The browser is being held open on the failure because {0} is set. Inspect the page, then let the run continue.",
-                UiEnvironmentOverrides.PauseOnFailureVariable);
-
-            await session.Page.PauseAsync().ConfigureAwait(false);
-        }
+        context.Variables.SetVariable(sessionVariable, picture);
 
         return new UiActionFailedException(
             this.app,
@@ -605,7 +593,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             this.actions.Count,
             picture,
             consoleErrors,
-            bundle,
+            UiFailureBundle.DirectoryFor(runState, this.LabelOptions.Label ?? this.Name, this.app, context.Attempt?.Number ?? 1),
             inner);
     }
 
@@ -670,15 +658,15 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             // page mid-glide when the next action looks at it, and where the viewport ends up must not
             // depend on styling.
             case UiActionKind.ScrollToTop:
-                await session.Page
-                    .EvaluateAsync("() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })")
+                await PageJson
+                    .EvaluateAsync(session.Page, "() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })")
                     .ConfigureAwait(false);
                 detail = "top";
                 break;
 
             case UiActionKind.ScrollToBottom:
-                await session.Page
-                    .EvaluateAsync("() => window.scrollTo({ top: document.documentElement.scrollHeight, left: 0, behavior: 'instant' })")
+                await PageJson
+                    .EvaluateAsync(session.Page, "() => window.scrollTo({ top: document.documentElement.scrollHeight, left: 0, behavior: 'instant' })")
                     .ConfigureAwait(false);
                 detail = "bottom";
                 break;
@@ -903,7 +891,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             ? null
             : await this.ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken).ConfigureAwait(false);
 
-        System.Text.Json.JsonElement? result = await UiScriptRunner.RunAsync(
+        Newtonsoft.Json.Linq.JToken? result = await UiScriptRunner.RunAsync(
             script,
             session.Page,
             resolved is null ? null : query.Locate(resolved),
@@ -918,7 +906,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         action.ResultBinder!.Bind(variableStore, action.CaptureName!, result, script.Name);
 
         // The raw result, shortened: enough to see what came back without a screen of JSON.
-        return (resolved, $"'{script.Name}' -> {UiText.Truncate(result!.Value.GetRawText(), 80)}");
+        return (resolved, $"'{script.Name}' -> {UiText.Truncate(PageJson.Describe(result!), 80)}");
     }
 
     private Task<UiResolvedTarget> ResolveAsync(

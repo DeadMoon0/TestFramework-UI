@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using TestFramework.Core.Exceptions;
 using TestFramework.Core.Steps;
@@ -12,31 +12,17 @@ using TestFramework.UI.Session;
 namespace TestFramework.UI.Browser.Tests.Events;
 
 /// <summary>
-/// The wait events as declarations: their deadline arithmetic, their IO, and their freezing.
+/// The wait events as declarations: their IO and their freezing.
 /// </summary>
+/// <remarks>
+/// Three cases used to live here, pinning the margin by which a wait cancelled itself before its own
+/// timeout - a sixth, clamped between 200 ms and a second, tuned twice against loaded CI runners. There is
+/// nothing left to pin: the engine now cancels at the deadline and waits a grace window in which a step's
+/// own account is what surfaces, so a wait no longer has to finish first to be heard. What replaced them
+/// is Core's own deadline and grace-window suites.
+/// </remarks>
 public class UiEventModelTests
 {
-    [Fact]
-    public void TheOwnDeadlineIsASixthEarlyWithinItsClamp()
-    {
-        // A sixth of the timeout, never below 200 ms, never above a second - measured margins; smaller
-        // ones were swallowed by loaded CI runners and the generic timeout message won.
-        Assert.Equal(TimeSpan.FromSeconds(5) - TimeSpan.FromMilliseconds(833 + 1.0 / 3), UiEventDeadline.For(TimeSpan.FromSeconds(5)));
-        Assert.Equal(TimeSpan.FromMilliseconds(800), UiEventDeadline.For(TimeSpan.FromSeconds(1)));
-        Assert.Equal(TimeSpan.FromSeconds(59), UiEventDeadline.For(TimeSpan.FromSeconds(60)));
-    }
-
-    [Fact]
-    public void ATimeoutTooShortForTheMarginKeepsAUsableSlice()
-        => Assert.Equal(TimeSpan.FromMilliseconds(50), UiEventDeadline.For(TimeSpan.FromMilliseconds(100)));
-
-    [Fact]
-    public void AnUnboundedTimeoutNeedsNoOwnDeadline()
-    {
-        Assert.Equal(TimeSpan.Zero, UiEventDeadline.For(TimeSpan.Zero));
-        Assert.Equal(TimeSpan.Zero, UiEventDeadline.For(TimeSpan.FromDays(2)));
-    }
-
     [Fact]
     public void AWaitWritesTheSameSessionVariableTheFlowsDo()
     {

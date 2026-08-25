@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -37,10 +37,10 @@ internal sealed record UiProbeOutcome(bool Satisfied, string? ResolvedVia = null
 /// timeline can put the waiting BETWEEN steps, where the actor being waited on is visible in the plan.
 /// </para>
 /// <para>
-/// Each poll is one short, non-throwing look; the loop owns the waiting, and the step's timeout bounds
-/// it. The event gives up slightly before that timeout on purpose, so its own message - what was watched,
-/// where the page was, and the evidence bundle - is the one the reader gets rather than the runner's
-/// generic one.
+/// Each poll is one short, non-throwing look; the loop owns the waiting, and the step's deadline bounds
+/// it. When that deadline is what stopped the wait, this says what was being watched and where the page
+/// was - the engine holds a step's own account above its generic one, so there is nothing to out-run to be
+/// heard.
 /// </para>
 /// </remarks>
 /// <typeparam name="TEvent">The concrete event type.</typeparam>
@@ -142,23 +142,16 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
     }
 
     /// <inheritdoc />
-    public override async Task<UiWaitResultContext?> DoEventPolling(
-        IServiceProvider serviceProvider,
-        VariableStore variableStore,
-        ArtifactStore artifactStore,
-        ScopedLogger logger,
-        CancellationToken cancellationToken)
+    public override async Task<UiWaitResultContext?> DoEventPolling(RunContext context)
     {
-        ArgumentNullException.ThrowIfNull(serviceProvider);
-        ArgumentNullException.ThrowIfNull(variableStore);
-        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(context);
 
-        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(serviceProvider, this.app));
-        UiRunState runState = UiRunState.For(variableStore);
+        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(context.Services, this.app));
+        UiRunState runState = UiRunState.For(context.Variables);
 
-        this.session = await serviceProvider
+        this.session = await context.Services
             .GetUIComponentFactory()
-            .SessionAsync(this.app, config, runState, cancellationToken)
+            .SessionAsync(this.app, config, runState, context.Deadline.Token)
             .ConfigureAwait(false);
 
         this.query = new PlaywrightElementQuery(this.session.Page, config.TestIdAttribute, config.DefaultActionTimeout);
@@ -167,41 +160,34 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
         this.polls = 0;
         this.OnPollingStarting();
 
-        string waited = this.DescribeWaited(variableStore);
-        logger.LogInformation("Waiting for {0} on '{1}'.", waited, this.app.ToString());
-
-        // The step has to give up marginally before its own timeout to say anything useful - the runner
-        // abandons the task the instant the timeout token fires, and an exception raised at that same
-        // moment is never observed.
-        using CancellationTokenSource deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        TimeSpan ownDeadline = UiEventDeadline.For(this.TimeOutOptions.TimeOut.GetValue(variableStore));
-
-        if (ownDeadline > TimeSpan.Zero)
-        {
-            deadline.CancelAfter(ownDeadline);
-        }
+        string waited = this.DescribeWaited(context.Variables);
+        context.Logger.LogInformation("Waiting for {0} on '{1}'.", waited, this.app.ToString());
 
         try
         {
-            UiWaitResultContext? result = await base
-                .DoEventPolling(serviceProvider, variableStore, artifactStore, logger, deadline.Token)
-                .ConfigureAwait(false);
+            UiWaitResultContext? result = await base.DoEventPolling(context).ConfigureAwait(false);
 
             if (result is not null)
             {
-                this.Record(variableStore, result);
+                this.Record(context.Variables, result);
             }
 
             return result;
         }
-        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
-        {
-            UiSessionPicture picture = this.Picture(variableStore);
-            variableStore.SetVariable(UiSessionVariable.For(this.app), picture);
 
-            string? bundle = await UiFailureBundle
-                .CaptureAsync(this.session, runState, this.LabelOptions.Label ?? this.Name, picture, logger)
-                .ConfigureAwait(false);
+        // Only when the time actually ran out. A run cancelled from outside is not the page's fault, and
+        // saying the thing never happened would blame the wrong side. Asked of the deadline rather than
+        // worked out from what is left of it: the arithmetic version reads the edge wrong under load.
+        //
+        // This used to cancel itself a sixth of the timeout early, because the engine abandoned a step the
+        // instant it cancelled it and anything thrown then went unobserved. The margin was tuned twice and
+        // CI lost both attempts. There is a grace window now, so the account below is heard as it is.
+        catch (OperationCanceledException exception) when (context.Deadline.HasExpired)
+        {
+            // Written before this throws, so the observer photographing the page reads a session story that
+            // includes the wait that never ended.
+            UiSessionPicture picture = this.Picture(context.Variables);
+            context.Variables.SetVariable(UiSessionVariable.For(this.app), picture);
 
             // Invariant formatting, because a failure message must read the same on every machine that
             // reproduces it - a German runner printing "2,6s" is a diff in every comparison of two logs.
@@ -211,23 +197,20 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
                     $"{Capitalize(waited)} never happened on '{this.app}'. The page was at {this.session.Page.Url} ") +
                 string.Create(
                     CultureInfo.InvariantCulture,
-                    $"after {this.clock.Elapsed.TotalSeconds:F1}s and {this.polls} poll(s). {this.TimeoutAdvice(variableStore)}") +
-                (bundle is null ? string.Empty : $"\nScreenshot, markup and session story: {bundle}"),
+                    $"after {this.clock.Elapsed.TotalSeconds:F1}s and {this.polls} poll(s). {this.TimeoutAdvice(context.Variables)}") +
+                $"\nScreenshot, markup and session story: {UiFailureBundle.DirectoryFor(runState, this.LabelOptions.Label ?? this.Name, this.app, context.Attempt?.Number ?? 1)}",
                 exception);
         }
     }
 
     /// <inheritdoc />
-    public override async Task<SequentialPollingResult<UiWaitResultContext>> OnSequentialPolling(
-        IServiceProvider serviceProvider,
-        VariableStore variableStore,
-        ArtifactStore artifactStore,
-        ScopedLogger logger,
-        CancellationToken cancellationToken)
+    public override async Task<SequentialPollingResult<UiWaitResultContext>> OnSequentialPolling(RunContext context)
     {
-        ArgumentNullException.ThrowIfNull(variableStore);
+        ArgumentNullException.ThrowIfNull(context);
 
         this.polls++;
+
+        CancellationToken cancellationToken = context.Deadline.Token;
 
         // The page must not be probed while a flow is driving it - the runner is free to reach a wait and
         // a flow of another application at the same time, and the gate is per session.
@@ -238,7 +221,7 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
         try
         {
             outcome = await this
-                .ProbeAsync(this.session, this.query!, this.resolutionOptions!, variableStore, cancellationToken)
+                .ProbeAsync(this.session, this.query!, this.resolutionOptions!, context.Variables, cancellationToken)
                 .ConfigureAwait(false);
         }
         finally
@@ -248,7 +231,7 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
 
         if (!outcome.Satisfied)
         {
-            return new SequentialPollingResult<UiWaitResultContext>(false, null, this.pollDelay.GetValue(variableStore));
+            return new SequentialPollingResult<UiWaitResultContext>(false, null, this.pollDelay.GetValue(context.Variables));
         }
 
         return new SequentialPollingResult<UiWaitResultContext>(
@@ -256,7 +239,7 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
             new UiWaitResultContext(
                 this.app,
                 this.session.Page.Url,
-                this.DescribeWaited(variableStore),
+                this.DescribeWaited(context.Variables),
                 outcome.ResolvedVia,
                 this.clock!.Elapsed.TotalMilliseconds,
                 this.polls),

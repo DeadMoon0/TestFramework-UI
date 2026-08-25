@@ -1,11 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Targeting;
 
 namespace TestFramework.UI.Browser.Resolution;
@@ -236,11 +237,12 @@ internal sealed class PlaywrightElementQuery : IUiElementQuery
         // One round trip per candidate rather than five: this runs while building a failure message, and a
         // failure message should not be slow enough to be noticed.
         //
-        // Read as a JSON element rather than into a record: Playwright's own serializer maps to primitives
+        // Read as a JSON tree rather than into a record: the driver's own serializer maps to primitives
         // and JSON, not to arbitrary .NET types, and asking it for one fails at run time rather than at
         // compile time.
-        JsonElement? described = await element
-            .EvaluateAsync<JsonElement?>(
+        JToken? described = await PageJson
+            .EvaluateAsync(
+                element,
                 """
                 element => {
                     const attributeName = ['data-testid', 'data-test-id', 'data-test'].find(name => element.hasAttribute(name));
@@ -259,7 +261,7 @@ internal sealed class PlaywrightElementQuery : IUiElementQuery
                 """)
             .ConfigureAwait(false);
 
-        if (described is not { ValueKind: JsonValueKind.Object } description)
+        if (described is not JObject description)
         {
             return new UiCandidate(index, "<unknown>");
         }
@@ -272,10 +274,8 @@ internal sealed class PlaywrightElementQuery : IUiElementQuery
             Blank(Text(description, "testId")));
     }
 
-    private static string? Text(JsonElement element, string property)
-        => element.TryGetProperty(property, out JsonElement value) && value.ValueKind == JsonValueKind.String
-            ? value.GetString()
-            : null;
+    private static string? Text(JObject element, string property)
+        => element[property] is { Type: JTokenType.String } value ? value.Value<string>() : null;
 
     private async Task<string?> AccessibleNameAsync(ILocator element)
     {

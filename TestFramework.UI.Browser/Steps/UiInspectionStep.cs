@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -106,24 +106,18 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
     }
 
     /// <inheritdoc />
-    public override async Task<TResult?> Execute(
-        IServiceProvider serviceProvider,
-        VariableStore variableStore,
-        ArtifactStore artifactStore,
-        ScopedLogger logger,
-        CancellationToken cancellationToken)
+    public override async Task<TResult?> Execute(RunContext context)
     {
-        ArgumentNullException.ThrowIfNull(serviceProvider);
-        ArgumentNullException.ThrowIfNull(variableStore);
-        ArgumentNullException.ThrowIfNull(logger);
+        ArgumentNullException.ThrowIfNull(context);
 
         string label = this.LabelOptions.Label ?? this.Name;
         string sessionVariable = UiSessionVariable.For(this.app);
+        CancellationToken cancellationToken = context.Deadline.Token;
 
-        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(serviceProvider, this.app));
-        UiRunState runState = UiRunState.For(variableStore);
+        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(context.Services, this.app));
+        UiRunState runState = UiRunState.For(context.Variables);
 
-        UiSession session = await serviceProvider
+        UiSession session = await context.Services
             .GetUIComponentFactory()
             .SessionAsync(this.app, config, runState, cancellationToken)
             .ConfigureAwait(false);
@@ -149,16 +143,12 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
                 .InspectUntilSettledAsync(query, resolved, config, cancellationToken)
                 .ConfigureAwait(false);
 
-            this.Record(variableStore, sessionVariable, session, label, resolved, detail, stopwatch);
+            this.Record(context.Variables, sessionVariable, session, label, resolved, detail, stopwatch);
 
+            // Recorded first, then thrown: the observer that photographs this reads the session from the
+            // run, so what it captures has to be the story including the look that failed.
             if (this.Verdict(result, stopwatch.Elapsed) is { } verdict)
-            {
-                await UiFailureBundle
-                    .CaptureAsync(session, runState, label, ReadPicture(variableStore, sessionVariable, this.app), logger)
-                    .ConfigureAwait(false);
-
                 throw verdict;
-            }
 
             return result;
         }

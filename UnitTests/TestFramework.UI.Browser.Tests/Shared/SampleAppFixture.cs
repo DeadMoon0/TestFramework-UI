@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.UI.Browser.Configuration;
+using TestFramework.UI.Browser.Extensions;
 using TestFramework.UI.SampleWebApp;
 using Xunit;
 
@@ -113,6 +114,12 @@ public sealed class SampleAppFixture : IAsyncLifetime
             // from the TestFramework.Web family's configuration instead.
             ["shop-bridged"] = shop with { BaseUrl = null },
         }));
+
+        // What .LoadUIConfig() registers beside the store, which is where a real timeline gets it. A
+        // fixture assembling services by hand has to turn the package fully on rather than half on: without
+        // this there is no failure observer, and every test about failure evidence would quietly pass by
+        // finding nothing to check.
+        services.AddUiBrowser();
 
         customize?.Invoke(services);
 

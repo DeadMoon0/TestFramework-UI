@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Structure;
 
 namespace TestFramework.UI.Browser.Structure;
@@ -54,9 +55,9 @@ internal static class DomTableReader
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        JsonElement? read = await locator.EvaluateAsync<JsonElement?>(ReadScript).ConfigureAwait(false);
+        JToken? read = await PageJson.EvaluateAsync(locator, ReadScript).ConfigureAwait(false);
 
-        if (read is not { ValueKind: JsonValueKind.Object } table)
+        if (read is not JObject table)
         {
             throw new PlaywrightException("The table could not be read from the page.");
         }
@@ -64,37 +65,37 @@ internal static class DomTableReader
         return new UiTableSnapshot(Strings(table, "columns"), Rows(table));
     }
 
-    private static List<string> Strings(JsonElement owner, string property)
+    private static List<string> Strings(JObject owner, string property)
     {
         List<string> values = new List<string>();
 
-        if (owner.TryGetProperty(property, out JsonElement array) && array.ValueKind == JsonValueKind.Array)
+        if (owner[property] is JArray array)
         {
-            foreach (JsonElement value in array.EnumerateArray())
+            foreach (JToken value in array)
             {
-                values.Add(UiText.Normalize(value.GetString()) ?? string.Empty);
+                values.Add(UiText.Normalize(value.Value<string>()) ?? string.Empty);
             }
         }
 
         return values;
     }
 
-    private static List<IReadOnlyList<string>> Rows(JsonElement table)
+    private static List<IReadOnlyList<string>> Rows(JObject table)
     {
         List<IReadOnlyList<string>> rows = new List<IReadOnlyList<string>>();
 
-        if (!table.TryGetProperty("rows", out JsonElement array) || array.ValueKind != JsonValueKind.Array)
+        if (table["rows"] is not JArray array)
         {
             return rows;
         }
 
-        foreach (JsonElement row in array.EnumerateArray())
+        foreach (JToken row in array)
         {
             List<string> cells = new List<string>();
 
-            foreach (JsonElement cell in row.EnumerateArray())
+            foreach (JToken cell in row)
             {
-                cells.Add(UiText.Normalize(cell.GetString()) ?? string.Empty);
+                cells.Add(UiText.Normalize(cell.Value<string>()) ?? string.Empty);
             }
 
             rows.Add(cells);

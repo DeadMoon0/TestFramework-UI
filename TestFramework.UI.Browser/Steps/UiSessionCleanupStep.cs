@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -49,17 +49,13 @@ internal sealed class UiSessionCleanupStep : Step<EmptyStepResultContext>
     }
 
     /// <inheritdoc />
-    public override async Task<EmptyStepResultContext?> Execute(
-        IServiceProvider serviceProvider,
-        VariableStore variableStore,
-        ArtifactStore artifactStore,
-        ScopedLogger logger,
-        CancellationToken cancellationToken)
+    public override async Task<EmptyStepResultContext?> Execute(RunContext context)
     {
-        ArgumentNullException.ThrowIfNull(variableStore);
+        ArgumentNullException.ThrowIfNull(context);
 
-        UiRunState runState = UiRunState.For(variableStore);
+        UiRunState runState = UiRunState.For(context.Variables);
         IReadOnlyList<UiSession> sessions = runState.OpenSessions();
+        ScopedLogger logger = context.Logger;
 
         foreach (UiSession session in sessions)
         {

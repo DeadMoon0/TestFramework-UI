@@ -1,7 +1,8 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TestFramework.UI.Browser.Extensions;
 
 namespace TestFramework.UI.Browser.Configuration;
 
@@ -28,5 +29,9 @@ internal sealed class UiConfigLoader
             entries.Add(new KeyValuePair<string, WebAppConfig>(child.Key, child.Get<WebAppConfig>() ?? new WebAppConfig()));
 
         serviceCollection.AddSingleton(new UiConfigStore(entries));
+
+        // The rest of what the package needs at run time, registered here so that loading the browser
+        // configuration and having the browser's failure evidence are one decision rather than two.
+        serviceCollection.AddUiBrowser();
     }
 }

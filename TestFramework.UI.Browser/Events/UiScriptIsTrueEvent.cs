@@ -1,5 +1,5 @@
-using System;
-using System.Text.Json;
+﻿using System;
+using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TestFramework.Core.Steps;
@@ -78,22 +78,21 @@ public sealed class UiScriptIsTrueEvent : UiEvent<UiScriptIsTrueEvent>
         VariableStore variableStore,
         CancellationToken cancellationToken)
     {
-        JsonElement? result = await UiScriptRunner
+        JToken? result = await UiScriptRunner
             .RunAsync(this.script, session.Page, element: null, variableStore, cancellationToken)
             .ConfigureAwait(false);
 
-        return result?.ValueKind switch
+        if (result is { Type: JTokenType.Boolean })
         {
-            JsonValueKind.True => new UiProbeOutcome(true),
-            JsonValueKind.False => new UiProbeOutcome(false),
+            return new UiProbeOutcome(result.Value<bool>());
+        }
 
-            // Not a pending state but a broken question - said now, with the fix, rather than as a
-            // timeout that blames the page.
-            _ => throw new InvalidOperationException(
-                $"The script '{this.script.Name}' returned "
-                + (result is null ? "nothing" : UiText.Truncate(result.Value.GetRawText(), 80))
-                + ", and a wait needs a boolean. Phrase the question so it always has one, for example "
-                + "'() => window.myApp?.ready === true'."),
-        };
+        // Not a pending state but a broken question - said now, with the fix, rather than as a timeout
+        // that blames the page.
+        throw new InvalidOperationException(
+            $"The script '{this.script.Name}' returned "
+            + (result is null ? "nothing" : UiText.Truncate(PageJson.Describe(result), 80))
+            + ", and a wait needs a boolean. Phrase the question so it always has one, for example "
+            + "'() => window.myApp?.ready === true'.");
     }
 }

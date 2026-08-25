@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
@@ -11,12 +11,12 @@
 		<PackageTags>Test;UnitTest;IntegrationTest;Framework;Fluent;Timeline;UI;Structure</PackageTags>
 		<PackageIcon>Icon.png</PackageIcon>
 		<Description>The technology-neutral foundation for UI testing inside a TestFramework timeline: the session picture a run carries from interaction to assertion, expected-structure comparison with missing/surplus reporting, and tolerant cell rules. Contains no browser dependency - pair it with TestFramework.UI.Browser to drive a web UI.</Description>
-		<Version>0.1.0</Version>
+		<Version>0.2.0</Version>
 		<PackageProjectUrl>https://github.com/DeadMoon0/TestFramework-UI</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>First release. Requires TestFramework.Core 0.3.0 and TestFramework.Config 0.2.1.</PackageReleaseNotes>
+		<PackageReleaseNotes>Moves onto the engine's one step contract: steps take a RunContext. Requires TestFramework.Core 0.4.0 and TestFramework.Config 0.3.0.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -29,8 +29,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="TestFramework.Config" Version="0.2.1" />
-		<PackageReference Include="TestFramework.Core" Version="0.3.0" />
+		<PackageReference Include="TestFramework.Config" Version="0.3.0" />
+		<PackageReference Include="TestFramework.Core" Version="0.4.0" />
 	</ItemGroup>
 
 	<ItemGroup>

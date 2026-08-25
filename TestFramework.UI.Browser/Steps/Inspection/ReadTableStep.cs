@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -61,22 +61,17 @@ internal sealed class ReadTableStep : UiInspectionStep<UiTableResultContext>
     }
 
     /// <inheritdoc />
-    public override async Task<UiTableResultContext?> Execute(
-        IServiceProvider serviceProvider,
-        TestFramework.Core.Variables.VariableStore variableStore,
-        TestFramework.Core.Artifacts.ArtifactStore artifactStore,
-        TestFramework.Core.Logging.ScopedLogger logger,
-        CancellationToken cancellationToken)
+    public override async Task<UiTableResultContext?> Execute(RunContext context)
     {
         UiTableResultContext? result = await base
-            .Execute(serviceProvider, variableStore, artifactStore, logger, cancellationToken)
+            .Execute(context)
             .ConfigureAwait(false);
 
         if (result is not null && this.into is { } identifier)
         {
             // The rows become an ordinary variable, so a later step - an API call, a database check - can
             // use what the page showed without anything in between to carry it.
-            Publish(variableStore, identifier, result.Rows);
+            Publish(context.Variables, identifier, result.Rows);
         }
 
         return result;

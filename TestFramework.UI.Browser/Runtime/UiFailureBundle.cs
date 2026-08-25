@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using Newtonsoft.Json;
 using TestFramework.Core.Logging;
 using TestFramework.UI.Session;
 
@@ -21,6 +21,12 @@ namespace TestFramework.UI.Browser.Runtime;
 /// enough to tell "the test looked for the wrong thing" apart from "the application was broken".
 /// </para>
 /// <para>
+/// Where it goes is a separate question from writing it, and deliberately so. The step that failed names
+/// the folder in its own message, because that is the line a reader actually sees; the observer the engine
+/// drives is what puts the evidence there. One convention, asked twice, so the two can never disagree
+/// about the path.
+/// </para>
+/// <para>
 /// Every part of it is best effort. A failing screenshot must never replace the failure it was meant to
 /// explain, so nothing in here is allowed to throw.
 /// </para>
@@ -28,24 +34,44 @@ namespace TestFramework.UI.Browser.Runtime;
 internal static class UiFailureBundle
 {
     /// <summary>
+    /// Where the evidence of one failure belongs.
+    /// </summary>
+    /// <remarks>
+    /// Derived rather than chosen, so the step naming the folder and the observer filling it arrive at the
+    /// same string. The application is in the name because the evidence is of that application's page and a
+    /// run may have two open; the attempt is in it only from the second one on, so a retry cannot
+    /// photograph over the failure that is usually the interesting one.
+    /// </remarks>
+    /// <param name="runState">The run, for the folder it writes into.</param>
+    /// <param name="stepLabel">The step that failed.</param>
+    /// <param name="app">The application whose page this is.</param>
+    /// <param name="attempt">Which attempt at the step, counting from one.</param>
+    /// <returns>The folder path, which may not exist yet.</returns>
+    public static string DirectoryFor(UiRunState runState, string stepLabel, string app, int attempt)
+    {
+        ArgumentNullException.ThrowIfNull(runState);
+
+        string name = $"failure-{UiRunPaths.SafeName(stepLabel, 40)}-{UiRunPaths.SafeName(app, 24)}";
+
+        return Path.Combine(runState.RunDirectory, attempt > 1 ? $"{name}-attempt{attempt.ToString(CultureInfo.InvariantCulture)}" : name);
+    }
+
+    /// <summary>
     /// Collects the evidence of a failure.
     /// </summary>
     /// <param name="session">The session that failed.</param>
-    /// <param name="runState">The run, for where to write.</param>
-    /// <param name="stepLabel">The step that failed, used to name the folder.</param>
+    /// <param name="directory">Where to write it, from <see cref="DirectoryFor"/>.</param>
     /// <param name="picture">The session so far, including the actions that did succeed.</param>
     /// <param name="logger">Where to mention what was written, or why it could not be.</param>
-    /// <returns>The folder, or null when nothing could be written.</returns>
-    public static async Task<string?> CaptureAsync(
+    /// <returns>True when the folder was written.</returns>
+    public static async Task<bool> CaptureAsync(
         UiSession session,
-        UiRunState runState,
-        string stepLabel,
+        string directory,
         UiSessionPicture picture,
         ScopedLogger logger)
     {
         try
         {
-            string directory = Path.Combine(runState.RunDirectory, $"failure-{UiRunPaths.SafeName(stepLabel, 40)}");
             Directory.CreateDirectory(directory);
 
             await TryWriteScreenshotAsync(session, directory).ConfigureAwait(false);
@@ -55,13 +81,15 @@ internal static class UiFailureBundle
 
             logger?.LogInformation("UI failure evidence written to {0}", directory);
 
-            return directory;
+            return true;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or PlaywrightException)
         {
-            logger?.LogWarning("Could not write the UI failure evidence: {0}", exception.Message);
+            // Said out loud, because the failure that caused this names the folder in its own message and a
+            // reader opening an absent one deserves to find out why here.
+            logger?.LogWarning("Could not write the UI failure evidence to {0}: {1}", directory, exception.Message);
 
-            return null;
+            return false;
         }
     }
 
@@ -123,7 +151,7 @@ internal static class UiFailureBundle
 
     private static async Task TryWritePictureAsync(UiSessionPicture picture, string directory)
     {
-        string json = JsonSerializer.Serialize(picture, new JsonSerializerOptions { WriteIndented = true });
+        string json = JsonConvert.SerializeObject(picture, Formatting.Indented);
 
         await File.WriteAllTextAsync(Path.Combine(directory, "session-picture.json"), json).ConfigureAwait(false);
         await File.WriteAllTextAsync(Path.Combine(directory, "session.txt"), picture.ToString()).ConfigureAwait(false);

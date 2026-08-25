@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using TestFramework.Core.Variables;
 using TestFramework.UI.Structure;
 
@@ -29,7 +30,7 @@ internal interface IUiScriptResultBinder
     /// <param name="variable">The variable to write.</param>
     /// <param name="result">What the script returned.</param>
     /// <param name="scriptName">The script's name, for the failure when the result does not fit.</param>
-    void Bind(VariableStore variableStore, string variable, JsonElement? result, string scriptName);
+    void Bind(VariableStore variableStore, string variable, JToken? result, string scriptName);
 }
 
 /// <summary>
@@ -38,24 +39,20 @@ internal interface IUiScriptResultBinder
 /// <typeparam name="T">The type the test asked for.</typeparam>
 internal sealed class UiScriptResultBinder<T> : IUiScriptResultBinder
 {
-    /// <remarks>
-    /// Case-insensitive property names, because the page's objects are camelCased and the test's records
-    /// are PascalCased, and that difference carries no information.
-    /// </remarks>
-    private static readonly JsonSerializerOptions Options = new JsonSerializerOptions
-    {
-        PropertyNameCaseInsensitive = true,
-    };
-
     /// <inheritdoc />
     public Type ResultType => typeof(T);
 
     /// <inheritdoc />
-    public void Bind(VariableStore variableStore, string variable, JsonElement? result, string scriptName)
+    /// <remarks>
+    /// Property names match case-insensitively, which is the serialiser's own fallback rather than a switch
+    /// set here: the page's objects are camelCased and the test's records are PascalCased, and that
+    /// difference carries no information.
+    /// </remarks>
+    public void Bind(VariableStore variableStore, string variable, JToken? result, string scriptName)
     {
         ArgumentNullException.ThrowIfNull(variableStore);
 
-        if (result is null or { ValueKind: JsonValueKind.Null or JsonValueKind.Undefined })
+        if (result is null or { Type: JTokenType.Null or JTokenType.Undefined })
         {
             throw new InvalidOperationException(
                 $"The script '{scriptName}' returned nothing, and the variable '{variable}' needs a " +
@@ -67,13 +64,19 @@ internal sealed class UiScriptResultBinder<T> : IUiScriptResultBinder
 
         try
         {
-            value = result.Value.Deserialize<T>(Options)
-                ?? throw new JsonException("The result deserialized to null.");
+            value = result.ToObject<T>()
+                ?? throw new JsonSerializationException("The result deserialized to null.");
         }
-        catch (JsonException exception)
+
+        // Broader than the serialiser's own exception on purpose. A page can return any shape, and a
+        // conversion that cannot be made surfaces as whatever the underlying converter threw - asking for
+        // an int and getting the text "not a number" raises a FormatException, not a serialisation error.
+        // Every one of these means the same thing to a reader, so every one gets the same answer: here is
+        // what came back, and here is the type the variable was declared as.
+        catch (Exception exception) when (exception is JsonException or FormatException or InvalidCastException or OverflowException or ArgumentException)
         {
             throw new InvalidOperationException(
-                $"The script '{scriptName}' returned {UiText.Truncate(result.Value.GetRawText(), 120)}, " +
+                $"The script '{scriptName}' returned {UiText.Truncate(PageJson.Describe(result), 120)}, " +
                 $"which does not read as the {typeof(T).Name} the variable '{variable}' was declared as.",
                 exception);
         }
@@ -97,7 +100,7 @@ internal static class UiScriptRunner
     /// <param name="cancellationToken">Cancels the run.</param>
     /// <returns>The result, as the page serialized it.</returns>
     /// <exception cref="InvalidOperationException">The page threw, or the result could not leave it.</exception>
-    public static async Task<JsonElement?> RunAsync(
+    public static async Task<JToken?> RunAsync(
         JsScript script,
         IPage page,
         ILocator? element,
@@ -121,8 +124,8 @@ internal static class UiScriptRunner
         try
         {
             return element is null
-                ? await page.EvaluateAsync(script.Source, arguments).ConfigureAwait(false)
-                : await element.EvaluateAsync(script.Source, arguments).ConfigureAwait(false);
+                ? await PageJson.EvaluateAsync(page, script.Source, arguments).ConfigureAwait(false)
+                : await PageJson.EvaluateAsync(element, script.Source, arguments).ConfigureAwait(false);
         }
         catch (PlaywrightException exception)
         {

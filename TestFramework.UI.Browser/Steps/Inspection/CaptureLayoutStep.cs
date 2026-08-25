@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -141,21 +141,16 @@ internal sealed class CaptureLayoutStep : UiInspectionStep<UiCaptureResultContex
     }
 
     /// <inheritdoc />
-    public override async Task<UiCaptureResultContext?> Execute(
-        IServiceProvider serviceProvider,
-        VariableStore variableStore,
-        ArtifactStore artifactStore,
-        ScopedLogger logger,
-        CancellationToken cancellationToken)
+    public override async Task<UiCaptureResultContext?> Execute(RunContext context)
     {
         UiCaptureResultContext? result = await base
-            .Execute(serviceProvider, variableStore, artifactStore, logger, cancellationToken)
+            .Execute(context)
             .ConfigureAwait(false);
 
         if (result is not null)
         {
             // An ordinary variable, which is what the run's value comparison sees.
-            Publish(variableStore, this.captureName, result.Structure);
+            Publish(context.Variables, this.captureName, result.Structure);
         }
 
         return result;

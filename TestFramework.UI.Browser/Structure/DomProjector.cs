@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
+using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Structure;
 
 namespace TestFramework.UI.Browser.Structure;
@@ -107,11 +108,11 @@ internal static class DomProjector
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        JsonElement? projected = await locator
-            .EvaluateAsync<JsonElement?>(ProjectScript, new { maxDepth = MaxDepth, maxNodes = MaxNodes })
+        JToken? projected = await PageJson
+            .EvaluateAsync(locator, ProjectScript, new { maxDepth = MaxDepth, maxNodes = MaxNodes })
             .ConfigureAwait(false);
 
-        if (projected is not { ValueKind: JsonValueKind.Object } root)
+        if (projected is not JObject root)
         {
             throw new PlaywrightException("The element could not be read from the page.");
         }
@@ -119,48 +120,37 @@ internal static class DomProjector
         return Read(root);
     }
 
-    private static UiElementSnapshot Read(JsonElement node)
+    private static UiElementSnapshot Read(JObject node)
     {
         Dictionary<string, string> attributes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        if (node.TryGetProperty("attributes", out JsonElement attributeElement)
-            && attributeElement.ValueKind == JsonValueKind.Object)
+        if (node["attributes"] is JObject attributeObject)
         {
-            foreach (JsonProperty attribute in attributeElement.EnumerateObject())
+            foreach (KeyValuePair<string, JToken?> attribute in attributeObject)
             {
-                // Playwright's protocol stamps every object it serializes with a "$id" so it can express
-                // back-references. Those are transport bookkeeping, not attributes the page has, and letting
-                // them through would put a number that changes with every render into every captured
-                // structure - which is precisely what makes drift detection worthless.
-                if (attribute.Name.StartsWith('$'))
-                {
-                    continue;
-                }
-
-                attributes[attribute.Name] = attribute.Value.GetString() ?? string.Empty;
+                attributes[attribute.Key] = attribute.Value?.Value<string>() ?? string.Empty;
             }
         }
 
         List<UiElementSnapshot> children = new List<UiElementSnapshot>();
 
-        if (node.TryGetProperty("children", out JsonElement childrenElement)
-            && childrenElement.ValueKind == JsonValueKind.Array)
+        if (node["children"] is JArray childArray)
         {
-            foreach (JsonElement child in childrenElement.EnumerateArray())
+            foreach (JToken child in childArray)
             {
-                // Anything without a kind is not an element the page had - a serializer back-reference, or a
-                // node the projection ran out of budget for. Reading it would invent a child.
-                if (child.ValueKind == JsonValueKind.Object && child.TryGetProperty("tag", out _))
+                // The projection returns null for a node it ran out of budget for, and that null travels.
+                // Reading it as a child would invent an element the page does not have.
+                if (child is JObject childObject && childObject["tag"] is not null)
                 {
-                    children.Add(Read(child));
+                    children.Add(Read(childObject));
                 }
             }
         }
 
         return new UiElementSnapshot(
-            node.TryGetProperty("tag", out JsonElement tag) ? tag.GetString() ?? "?" : "?",
+            node["tag"]?.Value<string>() ?? "?",
             attributes,
-            UiText.Normalize(node.TryGetProperty("text", out JsonElement text) ? text.GetString() : null),
+            UiText.Normalize(node["text"]?.Value<string>()),
             children);
     }
 
