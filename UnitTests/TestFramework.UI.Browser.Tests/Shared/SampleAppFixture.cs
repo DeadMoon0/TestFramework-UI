@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Extensions;
+using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.SampleWebApp;
 using Xunit;
 
@@ -40,7 +41,9 @@ public sealed class SampleAppFixture : IAsyncLifetime
             return;
         }
 
-        if (UiTestEnvironmentGate.MayInstallBrowsers)
+        // Only when this machine has nothing of its own. Downloading a browser next to the Edge the gate
+        // already chose would spend a minute to change nothing.
+        if (UiTestEnvironmentGate.MayInstallBrowsers && UiTestEnvironmentGate.Browser is null)
         {
             BrowserExt.Tooling.InstallBrowsers("chromium");
         }
@@ -84,64 +87,50 @@ public sealed class SampleAppFixture : IAsyncLifetime
     /// <returns>The service provider.</returns>
     public IServiceProvider Services(string? device = null, Action<ServiceCollection>? customize = null)
     {
+        // Whatever the gate found - Playwright's own chromium, or the Edge that was already on the
+        // machine. Deriving it here a second time is how the two could disagree about which browser this
+        // run is actually driving.
+        UiAvailableBrowser browser = UiTestEnvironmentGate.Browser
+            ?? throw new InvalidOperationException("Services were built for a run the gate should have skipped.");
+
         WebAppConfig shop = new WebAppConfig
         {
             BaseUrl = this.AppUrl,
-            Browser = BrowserFor(UiTestEnvironmentGate.RequestedBrowser),
-            Channel = ChannelFor(UiTestEnvironmentGate.RequestedBrowser),
+            Browser = browser.Browser,
+            Channel = browser.Channel,
             Headless = true,
             Device = device ?? "Desktop 1080p",
         };
 
         ServiceCollection services = new ServiceCollection();
 
-        services.AddSingleton(new UiConfigStore(new Dictionary<string, WebAppConfig>(StringComparer.OrdinalIgnoreCase)
-        {
-            ["shop"] = shop,
+        // The public road, and the same one a caller without an appsettings file takes. It is deliberately
+        // the only way to declare applications in code: the store behind it is internal, so a fixture
+        // cannot register the applications and forget what drives them - which is what used to leave every
+        // test about failure evidence quietly passing by finding nothing to check.
+        services.AddUiBrowser(apps => apps
+            .Add("shop", shop)
 
             // The same application as a phone sees it, expressed as one line of inheritance rather than a
             // second copy of everything above.
-            ["shop-mobile"] = new WebAppConfig { BasedOn = "shop", Device = "Narrow" },
+            .Add("shop-mobile", new WebAppConfig { BasedOn = "shop", Device = "Narrow" })
 
             // Deliberately lenient, for the test that shows the dial exists.
-            ["shop-lenient"] = new WebAppConfig
+            .Add("shop-lenient", new WebAppConfig
             {
                 BasedOn = "shop",
                 AmbiguityMode = TestFramework.UI.Browser.Resolution.UiAmbiguityMode.FirstMatch,
-            },
+            })
 
             // Everything shop has EXCEPT an address: the bridge tests prove that the address can come
             // from the TestFramework.Web family's configuration instead.
-            ["shop-bridged"] = shop with { BaseUrl = null },
-        }));
-
-        // What .LoadUIConfig() registers beside the store, which is where a real timeline gets it. A
-        // fixture assembling services by hand has to turn the package fully on rather than half on: without
-        // this there is no failure observer, and every test about failure evidence would quietly pass by
-        // finding nothing to check.
-        services.AddUiBrowser();
+            .Add("shop-bridged", shop with { BaseUrl = null }));
 
         customize?.Invoke(services);
 
         return services.BuildServiceProvider();
     }
 
-    private static string BrowserFor(string? requested)
-        => requested?.ToLowerInvariant() switch
-        {
-            "firefox" => "firefox",
-            "webkit" or "safari" => "webkit",
-            _ => "chromium",
-        };
-
-    private static string? ChannelFor(string? requested)
-        => requested?.ToLowerInvariant() switch
-        {
-            // A branded build already on the machine, so nothing has to be downloaded.
-            "msedge" or "edge" => "msedge",
-            "chrome" => "chrome",
-            _ => null,
-        };
 }
 
 /// <summary>

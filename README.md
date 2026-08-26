@@ -1,4 +1,4 @@
-![Icon](https://raw.githubusercontent.com/DeadMoon0/TestFramework-Common/96ef4240c1e55ba95a20b99285219a61407c6355/Assets/Icon.svg)
+﻿![Icon](https://raw.githubusercontent.com/DeadMoon0/TestFramework-Common/96ef4240c1e55ba95a20b99285219a61407c6355/Assets/Icon.svg)
 
 # TestFramework-UI
 
@@ -94,7 +94,12 @@ dotnet build TestFramework.UI.slnx
 dotnet test TestFramework.UI.slnx
 ```
 
-A fresh clone goes green on a bare `dotnet test`: everything needing a real browser skips with its
-reason until `TESTFRAMEWORK_UI_BROWSER` is set (for example `msedge`, `chromium` with
-`TESTFRAMEWORK_UI_AUTOINSTALL=1`, or `firefox`). The browser suite then also needs the sample
-application built once: `npm ci && npm run build` in `UnitTests/TestFramework.UI.SampleApp`.
+The browser suite runs by itself. It looks for a browser this machine already has — Playwright's own
+download first, then an installed Edge or Chrome — and only skips, with its reason, when there is none.
+`TESTFRAMEWORK_UI_BROWSER` still selects one (`msedge`, `chromium`, `firefox`) when the default choice
+is not what you want; it is no longer what turns the suite on. With no browser at all, run once with
+`TESTFRAMEWORK_UI_AUTOINSTALL=1 TESTFRAMEWORK_UI_BROWSER=chromium` to let Playwright download its own.
+
+The browser suite also needs the sample application built once: `npm ci && npm run build` in
+`UnitTests/TestFramework.UI.SampleApp`. A fresh clone still goes green on a bare `dotnet test` either
+way — what is missing skips visibly rather than failing.

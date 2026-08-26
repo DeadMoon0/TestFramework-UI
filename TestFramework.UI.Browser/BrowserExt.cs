@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Variables;
@@ -352,6 +352,32 @@ public static class BrowserExt
 
             return Microsoft.Playwright.Program.Main([.. arguments]);
         }
+
+        /// <summary>
+        /// A browser this machine can already drive, or null when it has none.
+        /// </summary>
+        /// <remarks>
+        /// For a fixture deciding whether to run browser tests at all, and for one that wants to say which
+        /// browser it picked. Playwright's own build is preferred, because its version is pinned by the
+        /// package reference while an installed Edge or Chrome updates itself underneath a suite; an
+        /// installed branded build is the fallback. Nothing here downloads anything - it reports what is
+        /// present.
+        /// </remarks>
+        /// <returns>The browser to drive, or null.</returns>
+        public UiAvailableBrowser? FindAvailableBrowser() => InstalledBrowsers.Find();
+
+        /// <summary>
+        /// The browser named by a channel or engine, when that one specifically is present.
+        /// </summary>
+        /// <remarks>
+        /// For honouring an explicit choice: a suite told to use <c>msedge</c> should skip rather than
+        /// quietly drive something else, because a suite pinned to a branded build is usually pinned for a
+        /// reason.
+        /// </remarks>
+        /// <param name="requested">A channel (<c>msedge</c>, <c>chrome</c>) or an engine
+        /// (<c>chromium</c>, <c>firefox</c>, <c>webkit</c>).</param>
+        /// <returns>The browser, or null when the request cannot be met here.</returns>
+        public UiAvailableBrowser? FindAvailableBrowser(string requested) => InstalledBrowsers.Find(requested);
 
         /// <summary>
         /// The environment variables that change how a browser runs locally, for a fixture that wants to

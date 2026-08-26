@@ -28,10 +28,9 @@ internal sealed class UiConfigLoader
         foreach (IConfigurationSection child in configuration.GetSection(UiSelector).GetChildren())
             entries.Add(new KeyValuePair<string, WebAppConfig>(child.Key, child.Get<WebAppConfig>() ?? new WebAppConfig()));
 
-        serviceCollection.AddSingleton(new UiConfigStore(entries));
-
-        // The rest of what the package needs at run time, registered here so that loading the browser
-        // configuration and having the browser's failure evidence are one decision rather than two.
-        serviceCollection.AddUiBrowser();
+        // The applications and the pieces that drive them go in together, through the same one place the
+        // in-code road uses - so the two roads cannot register different sets, and neither can register
+        // half a set.
+        UiBrowserServiceCollectionExtension.AddApplications(serviceCollection, entries);
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using TestFramework.UI.Browser.Exceptions;
@@ -9,11 +9,19 @@ namespace TestFramework.UI.Browser.Configuration;
 /// The configured web applications of a run, resolved by identifier.
 /// </summary>
 /// <remarks>
+/// <para>
 /// An entry may inherit from another, so a mobile variant of an application is one line rather than a
 /// copy of every setting. Inheritance is resolved on read and the result cached, because a run asks for
 /// the same identifier once per step.
+/// </para>
+/// <para>
+/// Internal on purpose. A caller who could register this by hand could register it <em>alone</em>, and this
+/// package would then be half on: configured applications, and nothing watching the steps that drive them.
+/// Declaring applications goes through <c>AddUiBrowser(...)</c> or <c>.LoadUIConfig()</c>, which is what
+/// makes that impossible to express rather than merely inadvisable.
+/// </para>
 /// </remarks>
-public sealed class UiConfigStore
+internal sealed class UiConfigStore
 {
     private readonly Dictionary<string, WebAppConfig> declared;
     private readonly Dictionary<string, WebAppConfig> resolved = new Dictionary<string, WebAppConfig>(StringComparer.OrdinalIgnoreCase);
@@ -23,7 +31,7 @@ public sealed class UiConfigStore
     /// Creates the store.
     /// </summary>
     /// <param name="configs">The declared entries, keyed by identifier.</param>
-    public UiConfigStore(IEnumerable<KeyValuePair<string, WebAppConfig>> configs)
+    internal UiConfigStore(IEnumerable<KeyValuePair<string, WebAppConfig>> configs)
     {
         ArgumentNullException.ThrowIfNull(configs);
 

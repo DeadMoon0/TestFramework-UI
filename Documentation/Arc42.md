@@ -1,4 +1,4 @@
-# TestFramework-UI - Architecture Notes
+﻿# TestFramework-UI - Architecture Notes
 
 Structured loosely along arc42. Short on purpose: the code carries the detailed reasoning in its
 documentation comments, and the README files carry the usage story. This file holds what neither
@@ -24,10 +24,16 @@ Three goals rank above everything else:
   across repos).
 - Step results and everything in the session picture must be plain serializable data: results travel
   to the debugging UI over a pipe.
-- A fresh clone must go green on a bare `dotnet test`: browser tests gate on
-  `TESTFRAMEWORK_UI_BROWSER` and skip visibly.
-- The Core runner abandons a timed-out step the moment its clock fires: anything with its own story
-  to tell on timeout must finish slightly earlier (the own-deadline pattern).
+- A fresh clone must go green on a bare `dotnet test`, and the browser tests decide that by looking for
+  a browser rather than waiting to be told about one. `TESTFRAMEWORK_UI_BROWSER` selects which; it does
+  not decide whether. Nothing found is a visible skip that names what is missing.
+- A step reads its own deadline from its `RunContext` and can ask whether the time ran out. The engine
+  cancels at the deadline and then waits a grace window in which the step's own account is what
+  surfaces, so nothing here under-cuts its budget to be heard. The own-deadline pattern this document
+  used to prescribe is gone, and `UiEventDeadline` with it.
+- Turning this package on is one call. `AddUiBrowser(...)` registers the applications and everything
+  that drives them together, `.LoadUIConfig()` reaches the same place, and the store behind them is
+  internal so half of it cannot be registered alone.
 
 ## 3. Context
 
