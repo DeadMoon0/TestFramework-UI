@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TestFramework.UI.Browser.Resolution;
 
 namespace TestFramework.UI.Browser.Configuration;
@@ -46,7 +46,21 @@ public sealed record WebAppConfig
     public string? BasedOn { get; init; }
 
     /// <summary>Which browser to drive: <c>chromium</c>, <c>firefox</c> or <c>webkit</c>.</summary>
-    public string Browser { get; init; } = "chromium";
+    public string? Browser { get; init; }
+
+    /// <summary>
+    /// The browser this entry states, for the code that starts one.
+    /// </summary>
+    /// <remarks>
+    /// Everything that reads this comes from <c>UiConfigStore.Get</c>, which refuses an entry that states no
+    /// browser - so reaching here without one is a framework bug rather than a configuration mistake, and it
+    /// says so. One place asserting that instead of four reads each assuming it.
+    /// </remarks>
+    internal string StatedBrowser => this.Browser is { Length: > 0 } browser
+        ? browser
+        : throw new InvalidOperationException(
+            "A web application configuration reached the browser factory without a stated browser. "
+            + "UiConfigStore.Get refuses that, so this is a bug in TestFramework.UI.Browser rather than in a test.");
 
     /// <summary>
     /// A branded build to use instead of the downloaded one, for example <c>msedge</c> or <c>chrome</c>.
@@ -129,7 +143,7 @@ public sealed record WebAppConfig
             BaseUrlFromApi = this.BaseUrlFromApi ?? parent.BaseUrlFromApi,
             BaseUrlFromSite = this.BaseUrlFromSite ?? parent.BaseUrlFromSite,
             BasedOn = null,
-            Browser = this.Browser == Defaults.Browser ? parent.Browser : this.Browser,
+            Browser = this.Browser ?? parent.Browser,
             Channel = this.Channel ?? parent.Channel,
             Headless = this.Headless == Defaults.Headless ? parent.Headless : this.Headless,
             Device = this.Device ?? parent.Device,
@@ -162,7 +176,6 @@ public sealed record WebAppConfig
     /// </summary>
     private static class Defaults
     {
-        public const string Browser = "chromium";
         public const bool Headless = true;
         public const string TestIdAttribute = "data-testid";
         public static readonly TimeSpan ActionTimeout = TimeSpan.FromSeconds(10);

@@ -68,6 +68,32 @@ public sealed class UiConfigurationException : Exception
     }
 
     /// <summary>
+    /// No browser was stated for an application, and none is assumed.
+    /// </summary>
+    /// <remarks>
+    /// Which browser a test drives decides what the test proves, so it is stated rather than guessed: a
+    /// suite that silently fell back to one browser would report a pass for something nobody chose to
+    /// verify. The message names both roads out and, because a reader on a machine that has one browser and
+    /// not another needs to know which, what is actually installed here.
+    /// </remarks>
+    /// <param name="identifier">The application with no browser.</param>
+    /// <returns>The exception.</returns>
+    public static UiConfigurationException MissingBrowser(string identifier)
+    {
+        string available = Runtime.InstalledBrowsers.Find() is { } found
+            ? $"This machine has {found}."
+            : "No browser was found on this machine; 'playwright install chromium' downloads one.";
+
+        return new UiConfigurationException(
+            $"The web application '{identifier}' states no browser, and one is never assumed - which browser "
+            + "a test drives decides what that test proves. State it where the application is declared: "
+            + $"new WebAppConfig {{ Browser = \"chromium\" }}, or 'Ui:{identifier}:Browser' in configuration; "
+            + "or inherit it, with 'BasedOn' naming an entry that states one. Use 'chromium', 'firefox' or "
+            + "'webkit' for Playwright's own builds, or 'chromium' with Channel 'msedge' or 'chrome' for a "
+            + $"branded build already on the machine. {available}");
+    }
+
+    /// <summary>
     /// The application is configured, but nothing says where to reach it.
     /// </summary>
     /// <param name="identifier">The identifier.</param>

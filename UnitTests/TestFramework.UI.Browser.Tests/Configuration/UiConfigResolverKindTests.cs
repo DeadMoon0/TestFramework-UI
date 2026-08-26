@@ -43,7 +43,7 @@ public class UiConfigResolverKindTests
     {
         FakeSource wrongKind = new("kind.a", "target", "http://wrong/");
         FakeSource rightKind = new("kind.b", "target", "http://right/");
-        using ServiceProvider services = BuildServices(new WebAppConfig(), wrongKind, rightKind);
+        using ServiceProvider services = BuildServices(new WebAppConfig { Browser = "chromium" }, wrongKind, rightKind);
 
         // Bridged the way any caller bridges one. The requirement cannot be assigned from outside the
         // record, which is deliberate: it used to travel beside a second member naming the same resource,
@@ -61,7 +61,7 @@ public class UiConfigResolverKindTests
     public void ADeclaredKindNobodyServes_FallsBackToTheKindAgnosticSources()
     {
         FakeSource agnostic = new(null, "target", "http://agnostic/");
-        using ServiceProvider services = BuildServices(new WebAppConfig(), agnostic);
+        using ServiceProvider services = BuildServices(new WebAppConfig { Browser = "chromium" }, agnostic);
 
         WebAppIdentifier identifier = new WebAppIdentifier("shop")
             .BridgedTo(new EnvironmentRequirement("kind.unknown", "target"));
@@ -74,7 +74,7 @@ public class UiConfigResolverKindTests
     {
         FakeSource first = new("kind.a", "shop", "http://first/");
         FakeSource second = new("kind.b", "shop", "http://second/");
-        using ServiceProvider services = BuildServices(new WebAppConfig(), first, second);
+        using ServiceProvider services = BuildServices(new WebAppConfig { Browser = "chromium" }, first, second);
 
         Assert.Equal("http://first/", UiConfigResolver.Resolve(services, new WebAppIdentifier("shop")).BaseUrl);
     }
@@ -85,7 +85,7 @@ public class UiConfigResolverKindTests
         // A declared foreign identifier that nothing answers is a configuration error, not a reason
         // to quietly try the application's own name instead.
         FakeSource ownAnswer = new(null, "shop", "http://own/");
-        using ServiceProvider services = BuildServices(new WebAppConfig { BaseUrlFromSite = "missing" }, ownAnswer);
+        using ServiceProvider services = BuildServices(new WebAppConfig { Browser = "chromium", BaseUrlFromSite = "missing" }, ownAnswer);
 
         Assert.Throws<TestFramework.UI.Browser.Exceptions.UiConfigurationException>(
             () => UiConfigResolver.Resolve(services, new WebAppIdentifier("shop")));

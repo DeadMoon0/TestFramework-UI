@@ -35,7 +35,7 @@ public class UiBrowserRegistrationTests
     {
         ServiceCollection services = new ServiceCollection();
 
-        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { BaseUrl = "http://localhost/" }));
+        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { Browser = "chromium", BaseUrl = "http://localhost/" }));
 
         IServiceProvider provider = services.BuildServiceProvider();
 
@@ -49,7 +49,11 @@ public class UiBrowserRegistrationTests
         // .LoadUIConfig() reaches the same one place, so the two roads cannot register different sets.
         ServiceCollection services = new ServiceCollection();
         IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection([new KeyValuePair<string, string?>("Ui:shop:BaseUrl", "http://localhost/")])
+            .AddInMemoryCollection(
+            [
+                new KeyValuePair<string, string?>("Ui:shop:BaseUrl", "http://localhost/"),
+                new KeyValuePair<string, string?>("Ui:shop:Browser", "chromium"),
+            ])
             .Build();
 
         new UiConfigLoader().LoadAllConfigs(configuration, services);
@@ -66,10 +70,10 @@ public class UiBrowserRegistrationTests
         // A container hands out the last registration, so the first set of applications would vanish and the
         // failure would name an application the fixture can plainly see.
         ServiceCollection services = new ServiceCollection();
-        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { BaseUrl = "http://one/" }));
+        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { Browser = "chromium", BaseUrl = "http://one/" }));
 
         UiConfigurationException failure = Assert.Throws<UiConfigurationException>(
-            () => services.AddUiBrowser(apps => apps.Add("other", new WebAppConfig { BaseUrl = "http://two/" })));
+            () => services.AddUiBrowser(apps => apps.Add("other", new WebAppConfig { Browser = "chromium", BaseUrl = "http://two/" })));
 
         Assert.Contains("already registered", failure.Message, StringComparison.Ordinal);
         Assert.Contains("LoadUIConfig", failure.Message, StringComparison.Ordinal);
@@ -82,8 +86,8 @@ public class UiBrowserRegistrationTests
 
         UiConfigurationException failure = Assert.Throws<UiConfigurationException>(
             () => services.AddUiBrowser(apps => apps
-                .Add("shop", new WebAppConfig { BaseUrl = "http://one/" })
-                .Add("shop", new WebAppConfig { BaseUrl = "http://two/" })));
+                .Add("shop", new WebAppConfig { Browser = "chromium", BaseUrl = "http://one/" })
+                .Add("shop", new WebAppConfig { Browser = "chromium", BaseUrl = "http://two/" })));
 
         Assert.Contains("declared twice", failure.Message, StringComparison.Ordinal);
         Assert.Contains("BasedOn", failure.Message, StringComparison.Ordinal);
@@ -95,7 +99,7 @@ public class UiBrowserRegistrationTests
         // The message is the whole value of this failure: a reader who never configured anything needs to be
         // told the two ways to, not that a store is missing.
         ServiceCollection services = new ServiceCollection();
-        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { BaseUrl = "http://localhost/" }));
+        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { Browser = "chromium", BaseUrl = "http://localhost/" }));
 
         UiConfigurationException failure = Assert.Throws<UiConfigurationException>(
             () => UiConfigResolver.Resolve(services.BuildServiceProvider(), "typo"));
@@ -110,7 +114,7 @@ public class UiBrowserRegistrationTests
         // give up this package's, and should not silently lose theirs either.
         ServiceCollection services = new ServiceCollection();
         services.AddSingleton<IStepObserver, CountingObserver>();
-        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { BaseUrl = "http://localhost/" }));
+        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { Browser = "chromium", BaseUrl = "http://localhost/" }));
 
         IStepObserver[] observers = [.. services.BuildServiceProvider().GetServices<IStepObserver>()];
 
@@ -136,13 +140,61 @@ public class UiBrowserRegistrationTests
     }
 
     [Fact]
+    public void AnApplicationThatStatesNoBrowserIsRefused()
+    {
+        // Which browser a test drives decides what it proves, so there is no fallback to fall into. A suite
+        // that silently got one would report a pass for something nobody chose to verify - the failure mode
+        // a default cannot be told apart from, which is why the value is stated instead.
+        ServiceCollection services = new ServiceCollection();
+        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { BaseUrl = "http://localhost/" }));
+
+        UiConfigurationException failure = Assert.Throws<UiConfigurationException>(
+            () => UiConfigResolver.Resolve(services.BuildServiceProvider(), "shop"));
+
+        Assert.Contains("states no browser", failure.Message, StringComparison.Ordinal);
+
+        // Both roads out, and the options - a reader on a machine with one browser and not another needs to
+        // know which, so the message says what is actually here.
+        Assert.Contains("Ui:shop:Browser", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("BasedOn", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("chromium", failure.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AnInheritedBrowserCounts()
+    {
+        // Stating it once and inheriting it is stating it: the refusal is about a value nobody supplied, not
+        // about where it was written.
+        ServiceCollection services = new ServiceCollection();
+        services.AddUiBrowser(apps => apps
+            .Add("shop", new WebAppConfig { Browser = "firefox", BaseUrl = "http://localhost/" })
+            .Add("shop-mobile", new WebAppConfig { BasedOn = "shop", Device = "Narrow" }));
+
+        Assert.Equal("firefox", UiConfigResolver.Resolve(services.BuildServiceProvider(), "shop-mobile").Browser);
+    }
+
+    [Fact]
+    public void AChildMayOverrideAnInheritedBrowserWithAnyValue()
+    {
+        // The bug this change also closed. The merge used to ask "does this differ from the default?", so a
+        // child that deliberately named the default value was indistinguishable from one that said nothing -
+        // and the parent quietly won. Unset is now null, so an explicit choice is always an explicit choice.
+        ServiceCollection services = new ServiceCollection();
+        services.AddUiBrowser(apps => apps
+            .Add("shop", new WebAppConfig { Browser = "firefox", BaseUrl = "http://localhost/" })
+            .Add("shop-chromium", new WebAppConfig { BasedOn = "shop", Browser = "chromium" }));
+
+        Assert.Equal("chromium", UiConfigResolver.Resolve(services.BuildServiceProvider(), "shop-chromium").Browser);
+    }
+
+    [Fact]
     public void TheBrowserSeamIsStillReplaceable()
     {
         // The seam this package's own suite lives on: a fake factory instead of a real browser. If turning
         // the package on had made its pieces exclusive, this is the test that would have stopped compiling -
         // which is why it is here rather than assumed.
         ServiceCollection services = new ServiceCollection();
-        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { BaseUrl = "http://localhost/" }));
+        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { Browser = "chromium", BaseUrl = "http://localhost/" }));
         services.AddSingleton<IUIComponentFactory, ThrowingFactory>();
 
         Assert.IsType<ThrowingFactory>(services.BuildServiceProvider().GetUIComponentFactory());

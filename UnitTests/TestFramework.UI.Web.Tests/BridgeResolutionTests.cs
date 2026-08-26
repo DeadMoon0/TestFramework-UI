@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Exceptions;
@@ -46,7 +46,7 @@ public class BridgeResolutionTests
     [Fact]
     public void OwnIdentifier_ResolvesFromTheSiteStore_WithNoBridgingCall()
     {
-        using ServiceProvider services = BuildServices(new WebAppConfig(), site: new SiteConfig { BaseUrl = "http://localhost:39001/" });
+        using ServiceProvider services = BuildServices(new WebAppConfig { Browser = "chromium" }, site: new SiteConfig { BaseUrl = "http://localhost:39001/" });
 
         WebAppConfig resolved = UiConfigResolver.Resolve(services, new WebAppIdentifier("shop"));
 
@@ -57,7 +57,7 @@ public class BridgeResolutionTests
     public void AnExplicitBaseUrl_AlwaysWins()
     {
         using ServiceProvider services = BuildServices(
-            new WebAppConfig { BaseUrl = "https://deployed.example/" },
+            new WebAppConfig { Browser = "chromium", BaseUrl = "https://deployed.example/" },
             site: new SiteConfig { BaseUrl = "http://localhost:39001/" });
 
         WebAppConfig resolved = UiConfigResolver.Resolve(services, new WebAppIdentifier("shop"));
@@ -69,7 +69,7 @@ public class BridgeResolutionTests
     public void AnIdentifierInBothStores_ResolvesByTheDeclaredKind()
     {
         using ServiceProvider services = BuildServices(
-            new WebAppConfig(),
+            new WebAppConfig { Browser = "chromium" },
             site: new SiteConfig { BaseUrl = "http://site/" },
             api: new ApiConfig { BaseUrl = "http://api/" });
 
@@ -84,7 +84,7 @@ public class BridgeResolutionTests
     public void BaseUrlFromSite_ResolvesADifferentlyNamedSite()
     {
         using ServiceProvider services = BuildServices(
-            new WebAppConfig { BaseUrlFromSite = "shop-ui" },
+            new WebAppConfig { Browser = "chromium", BaseUrlFromSite = "shop-ui" },
             site: new SiteConfig { BaseUrl = "http://localhost:39001/" },
             siteIdentifier: "shop-ui");
 
@@ -97,7 +97,7 @@ public class BridgeResolutionTests
     public void BaseUrlFromApi_StillMeansTheApiStore()
     {
         using ServiceProvider services = BuildServices(
-            new WebAppConfig { BaseUrlFromApi = "shop-api" },
+            new WebAppConfig { Browser = "chromium", BaseUrlFromApi = "shop-api" },
             api: new ApiConfig { BaseUrl = "http://api/" },
             apiIdentifier: "shop-api");
 
@@ -109,7 +109,7 @@ public class BridgeResolutionTests
     [Fact]
     public void NothingAnswering_FailsWithTheAddressError()
     {
-        using ServiceProvider services = BuildServices(new WebAppConfig());
+        using ServiceProvider services = BuildServices(new WebAppConfig { Browser = "chromium" });
 
         UiConfigurationException exception = Assert.Throws<UiConfigurationException>(
             () => UiConfigResolver.Resolve(services, new WebAppIdentifier("shop")));

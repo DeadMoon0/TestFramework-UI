@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
@@ -65,7 +65,7 @@ internal static class PlaywrightHost
         string key = string.Format(
             CultureInfo.InvariantCulture,
             "{0}|{1}|{2}|{3}",
-            config.Browser.ToLowerInvariant(),
+            config.StatedBrowser.ToLowerInvariant(),
             config.Channel ?? string.Empty,
             config.Headless,
             config.SlowMo.TotalMilliseconds);
@@ -99,13 +99,13 @@ internal static class PlaywrightHost
 
     private static async Task<IBrowser> LaunchAsync(IPlaywright driver, WebAppConfig config)
     {
-        IBrowserType browserType = config.Browser.ToLowerInvariant() switch
+        IBrowserType browserType = config.StatedBrowser.ToLowerInvariant() switch
         {
             "chromium" or "chrome" or "edge" or "msedge" => driver.Chromium,
             "firefox" => driver.Firefox,
             "webkit" or "safari" => driver.Webkit,
             _ => throw new ArgumentException(
-                $"Unknown browser '{config.Browser}'. Use 'chromium', 'firefox' or 'webkit', and name a " +
+                $"Unknown browser '{config.StatedBrowser}'. Use 'chromium', 'firefox' or 'webkit', and name a " +
                 "branded build such as 'msedge' with 'Channel' instead.",
                 nameof(config)),
         };
@@ -125,7 +125,7 @@ internal static class PlaywrightHost
         {
             // Playwright's own message explains the download but not the alternatives, and on a Windows
             // machine the best answer is usually to drive the browser that is already there.
-            throw new UiBrowserNotInstalledException(config.Browser, config.Channel, exception);
+            throw new UiBrowserNotInstalledException(config.StatedBrowser, config.Channel, exception);
         }
     }
 }

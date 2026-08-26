@@ -94,7 +94,7 @@ internal sealed class UiConfigStore
 
         if (config.BasedOn is not { Length: > 0 } parentIdentifier)
         {
-            return config;
+            return Complete(identifier, config);
         }
 
         if (!this.declared.ContainsKey(parentIdentifier))
@@ -106,6 +106,28 @@ internal sealed class UiConfigStore
 
         chain.Add(identifier);
 
-        return config.InheritFrom(this.Resolve(parentIdentifier, chain));
+        return Complete(identifier, config.InheritFrom(this.Resolve(parentIdentifier, chain)));
+    }
+
+    /// <summary>
+    /// Checks that a resolved entry states what may not be assumed.
+    /// </summary>
+    /// <remarks>
+    /// Here rather than earlier, and here rather than later. Not at registration, because inheritance is
+    /// what an entry may be getting its browser from and that is only resolved now; not in the step that
+    /// starts a browser, because by then the same entry has already been reported missing an address from
+    /// this very method - one entry's problems should be reported from one place, in one kind of exception.
+    /// </remarks>
+    /// <param name="identifier">The application being resolved.</param>
+    /// <param name="config">Its configuration, with inheritance applied.</param>
+    /// <returns>The configuration.</returns>
+    private static WebAppConfig Complete(string identifier, WebAppConfig config)
+    {
+        if (config.Browser is not { Length: > 0 })
+        {
+            throw UiConfigurationException.MissingBrowser(identifier);
+        }
+
+        return config;
     }
 }
