@@ -34,7 +34,8 @@ internal static class UiTestEnvironmentGate
     /// <summary>Set to 1 to let the fixture download browsers if they are missing.</summary>
     public const string AutoInstallVariable = "TESTFRAMEWORK_UI_AUTOINSTALL";
 
-    private static readonly Lazy<UiAvailableBrowser?> Available = new Lazy<UiAvailableBrowser?>(Choose);
+    private static readonly Lazy<UiAvailableBrowser?> Present = new Lazy<UiAvailableBrowser?>(Look);
+    private static readonly Lazy<UiAvailableBrowser?> Intended = new Lazy<UiAvailableBrowser?>(Choose);
 
     /// <summary>
     /// What was asked for, when anything was.
@@ -47,13 +48,27 @@ internal static class UiTestEnvironmentGate
     public static bool MayInstallBrowsers => Environment.GetEnvironmentVariable(AutoInstallVariable) is "1" or "true";
 
     /// <summary>
-    /// The browser these tests will drive, or null when this machine has none.
+    /// The browser that is on this machine right now, or null when none is.
     /// </summary>
     /// <remarks>
     /// Resolved once per process. Probing the file system per test attribute would be wasteful, and a
-    /// browser appearing halfway through a run is not a case worth supporting.
+    /// browser appearing halfway through a run is not a case worth supporting - with the one exception
+    /// below, which is a browser this fixture puts there itself.
     /// </remarks>
-    public static UiAvailableBrowser? Browser => Available.Value;
+    public static UiAvailableBrowser? InstalledBrowser => Present.Value;
+
+    /// <summary>
+    /// The browser these tests will drive, counting one this run is allowed to download.
+    /// </summary>
+    /// <remarks>
+    /// The two are separate because of an ordering that is easy to get wrong, and was: a test attribute is
+    /// constructed while tests are being discovered, which is before any fixture has run. So a gate that
+    /// asked only "is a browser installed" would skip every test, and the fixture that was about to download
+    /// one would never get the chance - making <c>TESTFRAMEWORK_UI_AUTOINSTALL</c> dead. A machine that has
+    /// opted into downloading a browser therefore counts as having one, and the fixture is what makes that
+    /// true. If the download then fails, the tests fail loudly, which is right: this machine asked for it.
+    /// </remarks>
+    public static UiAvailableBrowser? Browser => Intended.Value;
 
     /// <summary>
     /// Why the browser tests cannot run here, or null when they can.
@@ -67,7 +82,7 @@ internal static class UiTestEnvironmentGate
                 ? $"{BrowserVariable} asks for '{requested}', which is not installed on this machine. "
                   + $"Install it, name one that is, or set {AutoInstallVariable}=1 with {BrowserVariable}=chromium to download one."
                 : "No browser was found on this machine. Install Edge or Chrome, or run once with "
-                  + $"{AutoInstallVariable}=1 and {BrowserVariable}=chromium to let Playwright download its own.";
+                  + $"{AutoInstallVariable}=1 to let Playwright download its own.";
         }
 
         if (!Directory.Exists(AngularOutput))
@@ -82,10 +97,27 @@ internal static class UiTestEnvironmentGate
     /// <summary>
     /// Honours an explicit request, and otherwise takes what the machine has.
     /// </summary>
-    private static UiAvailableBrowser? Choose()
+    private static UiAvailableBrowser? Look()
         => RequestedBrowser is { } requested
             ? BrowserExt.Tooling.FindAvailableBrowser(requested)
             : BrowserExt.Tooling.FindAvailableBrowser();
+
+    /// <summary>
+    /// What is here, or what this run is allowed to fetch.
+    /// </summary>
+    private static UiAvailableBrowser? Choose()
+    {
+        if (Look() is { } present)
+        {
+            return present;
+        }
+
+        // Only chromium, and only when asked: it is the one Playwright downloads by default, and a machine
+        // that named a branded build wants that build rather than a substitute for it.
+        return MayInstallBrowsers && RequestedBrowser is null or "chromium"
+            ? new UiAvailableBrowser("chromium", null, "chromium (Playwright will download it for this run)")
+            : null;
+    }
 
     /// <summary>
     /// The build output of the Angular sample application, found relative to the test assembly.

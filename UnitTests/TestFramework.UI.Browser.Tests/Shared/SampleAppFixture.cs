@@ -41,9 +41,11 @@ public sealed class SampleAppFixture : IAsyncLifetime
             return;
         }
 
-        // Only when this machine has nothing of its own. Downloading a browser next to the Edge the gate
-        // already chose would spend a minute to change nothing.
-        if (UiTestEnvironmentGate.MayInstallBrowsers && UiTestEnvironmentGate.Browser is null)
+        // Asked of what is actually installed, never of what the gate intends: the gate counts a
+        // downloadable browser as available - it has to, or the tests would already be skipped by the time
+        // this line runs - so checking that instead would make this an unreachable line and the download
+        // would never happen. Nothing to do when the machine already has one.
+        if (UiTestEnvironmentGate.MayInstallBrowsers && UiTestEnvironmentGate.InstalledBrowser is null)
         {
             BrowserExt.Tooling.InstallBrowsers("chromium");
         }
