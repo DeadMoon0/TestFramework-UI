@@ -154,8 +154,8 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
             .SessionAsync(this.app, config, runState, context.Deadline.Token)
             .ConfigureAwait(false);
 
-        this.query = new PlaywrightElementQuery(this.session.Page, config.TestIdAttribute, config.DefaultActionTimeout);
-        this.resolutionOptions = new UiResolutionOptions(config.AmbiguityMode);
+        this.query = new PlaywrightElementQuery(this.session.Page, config.EffectiveTestIdAttribute, config.EffectiveActionTimeout);
+        this.resolutionOptions = new UiResolutionOptions(config.EffectiveAmbiguityMode);
         this.clock = Stopwatch.StartNew();
         this.polls = 0;
         this.OnPollingStarting();

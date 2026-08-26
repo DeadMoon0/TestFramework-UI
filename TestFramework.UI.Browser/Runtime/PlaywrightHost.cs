@@ -65,10 +65,10 @@ internal static class PlaywrightHost
         string key = string.Format(
             CultureInfo.InvariantCulture,
             "{0}|{1}|{2}|{3}",
-            config.StatedBrowser.ToLowerInvariant(),
+            config.EffectiveBrowser.ToLowerInvariant(),
             config.Channel ?? string.Empty,
-            config.Headless,
-            config.SlowMo.TotalMilliseconds);
+            config.EffectiveHeadless,
+            config.EffectiveSlowMo.TotalMilliseconds);
 
         if (Browsers.TryGetValue(key, out IBrowser? cached))
         {
@@ -99,22 +99,22 @@ internal static class PlaywrightHost
 
     private static async Task<IBrowser> LaunchAsync(IPlaywright driver, WebAppConfig config)
     {
-        IBrowserType browserType = config.StatedBrowser.ToLowerInvariant() switch
+        IBrowserType browserType = config.EffectiveBrowser.ToLowerInvariant() switch
         {
             "chromium" or "chrome" or "edge" or "msedge" => driver.Chromium,
             "firefox" => driver.Firefox,
             "webkit" or "safari" => driver.Webkit,
             _ => throw new ArgumentException(
-                $"Unknown browser '{config.StatedBrowser}'. Use 'chromium', 'firefox' or 'webkit', and name a " +
+                $"Unknown browser '{config.EffectiveBrowser}'. Use 'chromium', 'firefox' or 'webkit', and name a " +
                 "branded build such as 'msedge' with 'Channel' instead.",
                 nameof(config)),
         };
 
         BrowserTypeLaunchOptions options = new BrowserTypeLaunchOptions
         {
-            Headless = config.Headless,
+            Headless = config.EffectiveHeadless,
             Channel = config.Channel,
-            SlowMo = config.SlowMo > TimeSpan.Zero ? (float)config.SlowMo.TotalMilliseconds : null,
+            SlowMo = config.EffectiveSlowMo > TimeSpan.Zero ? (float)config.EffectiveSlowMo.TotalMilliseconds : null,
         };
 
         try
@@ -125,7 +125,7 @@ internal static class PlaywrightHost
         {
             // Playwright's own message explains the download but not the alternatives, and on a Windows
             // machine the best answer is usually to drive the browser that is already there.
-            throw new UiBrowserNotInstalledException(config.StatedBrowser, config.Channel, exception);
+            throw new UiBrowserNotInstalledException(config.EffectiveBrowser, config.Channel, exception);
         }
     }
 }

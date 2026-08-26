@@ -122,8 +122,8 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
             .SessionAsync(this.app, config, runState, cancellationToken)
             .ConfigureAwait(false);
 
-        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.TestIdAttribute, config.DefaultActionTimeout);
-        UiResolutionOptions resolutionOptions = new UiResolutionOptions(config.AmbiguityMode);
+        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.EffectiveTestIdAttribute, config.EffectiveActionTimeout);
+        UiResolutionOptions resolutionOptions = new UiResolutionOptions(config.EffectiveAmbiguityMode);
 
         await session.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -205,7 +205,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
         WebAppConfig config,
         CancellationToken cancellationToken)
     {
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.DefaultActionTimeout;
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.EffectiveActionTimeout;
 
         while (true)
         {
@@ -228,7 +228,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
         WebAppConfig config,
         CancellationToken cancellationToken)
     {
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.DefaultCompareTimeout;
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.EffectiveCompareTimeout;
 
         while (true)
         {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,7 +42,7 @@ internal sealed class DefaultUIComponentFactory : IUIComponentFactory
 
         // One place to set the per-action limit, so every interaction fails inside the step's own budget
         // and the failure names the action rather than the step that timed out around it.
-        context.SetDefaultTimeout((float)config.DefaultActionTimeout.TotalMilliseconds);
+        context.SetDefaultTimeout((float)config.EffectiveActionTimeout.TotalMilliseconds);
 
         return await UiSession.CreateAsync(app, config, context).ConfigureAwait(false);
     }
@@ -52,7 +52,7 @@ internal sealed class DefaultUIComponentFactory : IUIComponentFactory
         BrowserNewContextOptions options = new BrowserNewContextOptions
         {
             BaseURL = config.BaseUrl,
-            IgnoreHTTPSErrors = config.IgnoreHttpsErrors,
+            IgnoreHTTPSErrors = config.EffectiveIgnoreHttpsErrors,
             Locale = config.Locale,
             ColorScheme = ParseColorScheme(config.ColorScheme),
         };

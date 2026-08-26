@@ -1,4 +1,5 @@
 ﻿using System;
+using TestFramework.Config.Configuration;
 using TestFramework.UI.Browser.Resolution;
 
 namespace TestFramework.UI.Browser.Configuration;
@@ -14,7 +15,7 @@ namespace TestFramework.UI.Browser.Configuration;
 /// case without a second test, and without a branch inside the first.
 /// </para>
 /// </remarks>
-public sealed record WebAppConfig
+public sealed record WebAppConfig : IInheritsConfig
 {
     /// <summary>
     /// The address the application is reached at. Relative paths in steps resolve against it.
@@ -52,11 +53,12 @@ public sealed record WebAppConfig
     /// The browser this entry states, for the code that starts one.
     /// </summary>
     /// <remarks>
-    /// Everything that reads this comes from <c>UiConfigStore.Get</c>, which refuses an entry that states no
-    /// browser - so reaching here without one is a framework bug rather than a configuration mistake, and it
-    /// says so. One place asserting that instead of four reads each assuming it.
+    /// The one <c>Effective…</c> value with no default behind it, because §5 of the family's architecture
+    /// forbids one here: which browser a test drives decides what it proves. Everything that reads this comes
+    /// from <c>UiConfigStore.Get</c>, which refuses an entry that states no browser - so reaching here
+    /// without one is a framework bug rather than a configuration mistake, and it says so.
     /// </remarks>
-    internal string StatedBrowser => this.Browser is { Length: > 0 } browser
+    internal string EffectiveBrowser => this.Browser is { Length: > 0 } browser
         ? browser
         : throw new InvalidOperationException(
             "A web application configuration reached the browser factory without a stated browser. "
@@ -68,8 +70,8 @@ public sealed record WebAppConfig
     /// </summary>
     public string? Channel { get; init; }
 
-    /// <summary>Whether the browser runs without a visible window.</summary>
-    public bool Headless { get; init; } = true;
+    /// <summary>Whether the browser runs without a visible window. Defaults to true.</summary>
+    public bool? Headless { get; init; }
 
     /// <summary>
     /// A named device to emulate: one of Playwright's descriptors such as <c>iPhone 14</c> or
@@ -104,81 +106,68 @@ public sealed record WebAppConfig
     /// <summary>
     /// How long to slow each interaction down by, for watching a run happen. Zero in a normal run.
     /// </summary>
-    public TimeSpan SlowMo { get; init; }
+    public TimeSpan? SlowMo { get; init; }
 
     /// <summary>
     /// How long a single interaction may take before it fails. Kept well below a step's own timeout so
     /// the failure names the action rather than the step.
     /// </summary>
-    public TimeSpan DefaultActionTimeout { get; init; } = TimeSpan.FromSeconds(10);
+    public TimeSpan? DefaultActionTimeout { get; init; }
 
     /// <summary>
     /// How long a comparison against the live page may keep retrying while the page settles.
     /// </summary>
-    public TimeSpan DefaultCompareTimeout { get; init; } = TimeSpan.FromSeconds(5);
+    public TimeSpan? DefaultCompareTimeout { get; init; }
 
-    /// <summary>The attribute a test id target reads. </summary>
-    public string TestIdAttribute { get; init; } = "data-testid";
+    /// <summary>The attribute a test id target reads. Defaults to <c>data-testid</c>.</summary>
+    public string? TestIdAttribute { get; init; }
 
-    /// <summary>What to do when a name matches several elements.</summary>
-    public UiAmbiguityMode AmbiguityMode { get; init; } = UiAmbiguityMode.Strict;
+    /// <summary>What to do when a name matches several elements. Defaults to refusing.</summary>
+    public UiAmbiguityMode? AmbiguityMode { get; init; }
 
-    /// <summary>Whether to accept certificates a browser would otherwise refuse.</summary>
-    public bool IgnoreHttpsErrors { get; init; }
-
-    /// <summary>
-    /// Fills every value this entry leaves unset from the entry it is based on.
-    /// </summary>
-    /// <param name="parent">The entry to inherit from.</param>
-    /// <returns>The combined configuration.</returns>
-    public WebAppConfig InheritFrom(WebAppConfig parent)
-    {
-        ArgumentNullException.ThrowIfNull(parent);
-
-        // Only values this entry never mentioned are taken over, so a variant that says
-        // "Device: iPhone 14" keeps everything else its parent established.
-        return new WebAppConfig
-        {
-            BaseUrl = this.BaseUrl ?? parent.BaseUrl,
-            BaseUrlFromApi = this.BaseUrlFromApi ?? parent.BaseUrlFromApi,
-            BaseUrlFromSite = this.BaseUrlFromSite ?? parent.BaseUrlFromSite,
-            BasedOn = null,
-            Browser = this.Browser ?? parent.Browser,
-            Channel = this.Channel ?? parent.Channel,
-            Headless = this.Headless == Defaults.Headless ? parent.Headless : this.Headless,
-            Device = this.Device ?? parent.Device,
-            ViewportWidth = this.ViewportWidth ?? parent.ViewportWidth,
-            ViewportHeight = this.ViewportHeight ?? parent.ViewportHeight,
-            UserAgent = this.UserAgent ?? parent.UserAgent,
-            IsMobile = this.IsMobile ?? parent.IsMobile,
-            HasTouch = this.HasTouch ?? parent.HasTouch,
-            DeviceScaleFactor = this.DeviceScaleFactor ?? parent.DeviceScaleFactor,
-            Locale = this.Locale ?? parent.Locale,
-            ColorScheme = this.ColorScheme ?? parent.ColorScheme,
-            SlowMo = this.SlowMo == default ? parent.SlowMo : this.SlowMo,
-            DefaultActionTimeout = this.DefaultActionTimeout == Defaults.ActionTimeout
-                ? parent.DefaultActionTimeout
-                : this.DefaultActionTimeout,
-            DefaultCompareTimeout = this.DefaultCompareTimeout == Defaults.CompareTimeout
-                ? parent.DefaultCompareTimeout
-                : this.DefaultCompareTimeout,
-            TestIdAttribute = this.TestIdAttribute == Defaults.TestIdAttribute
-                ? parent.TestIdAttribute
-                : this.TestIdAttribute,
-            AmbiguityMode = this.AmbiguityMode == UiAmbiguityMode.Strict ? parent.AmbiguityMode : this.AmbiguityMode,
-            IgnoreHttpsErrors = this.IgnoreHttpsErrors || parent.IgnoreHttpsErrors,
-        };
-    }
+    /// <summary>Whether to accept certificates a browser would otherwise refuse. Defaults to false.</summary>
+    public bool? IgnoreHttpsErrors { get; init; }
 
     /// <summary>
-    /// The values a fresh entry starts with, named so inheritance can tell "left unset" from
-    /// "deliberately set to what happens to be the default".
+    /// The values that apply when an entry did not state one.
     /// </summary>
+    /// <remarks>
+    /// Read through the <c>Effective…</c> members below, and applied there rather than in the declaration.
+    /// That is the whole reason inheritance is safe now: a declared value of null means "nobody set this",
+    /// and a default sitting in the declaration would have made that unrepresentable. It is also what these
+    /// used to be for - sentinels the old hand-written merge compared against, which could not tell a
+    /// deliberate choice from silence and quietly preferred the parent. The merge is
+    /// <c>TestFramework.Config</c>'s now, so there is nothing left to compare against.
+    /// </remarks>
     private static class Defaults
     {
         public const bool Headless = true;
         public const string TestIdAttribute = "data-testid";
+        public const UiAmbiguityMode Ambiguity = UiAmbiguityMode.Strict;
+        public const bool IgnoreHttpsErrors = false;
+        public static readonly TimeSpan SlowMo = TimeSpan.Zero;
         public static readonly TimeSpan ActionTimeout = TimeSpan.FromSeconds(10);
         public static readonly TimeSpan CompareTimeout = TimeSpan.FromSeconds(5);
     }
+
+    /// <summary>Whether the browser runs without a visible window, defaulted.</summary>
+    internal bool EffectiveHeadless => this.Headless ?? Defaults.Headless;
+
+    /// <summary>How long to slow each interaction down by, defaulted to not at all.</summary>
+    internal TimeSpan EffectiveSlowMo => this.SlowMo ?? Defaults.SlowMo;
+
+    /// <summary>How long a single interaction may take, defaulted.</summary>
+    internal TimeSpan EffectiveActionTimeout => this.DefaultActionTimeout ?? Defaults.ActionTimeout;
+
+    /// <summary>How long a comparison may keep retrying, defaulted.</summary>
+    internal TimeSpan EffectiveCompareTimeout => this.DefaultCompareTimeout ?? Defaults.CompareTimeout;
+
+    /// <summary>The attribute a test id target reads, defaulted.</summary>
+    internal string EffectiveTestIdAttribute => this.TestIdAttribute is { Length: > 0 } attribute ? attribute : Defaults.TestIdAttribute;
+
+    /// <summary>What to do when a name matches several elements, defaulted to refusing.</summary>
+    internal UiAmbiguityMode EffectiveAmbiguityMode => this.AmbiguityMode ?? Defaults.Ambiguity;
+
+    /// <summary>Whether to accept certificates a browser would otherwise refuse, defaulted.</summary>
+    internal bool EffectiveIgnoreHttpsErrors => this.IgnoreHttpsErrors ?? Defaults.IgnoreHttpsErrors;
 }

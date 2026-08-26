@@ -499,8 +499,8 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             ? existing
             : UiSessionPicture.Empty(this.app);
 
-        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.TestIdAttribute, config.DefaultActionTimeout);
-        UiResolutionOptions resolutionOptions = new UiResolutionOptions(config.AmbiguityMode);
+        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.EffectiveTestIdAttribute, config.EffectiveActionTimeout);
+        UiResolutionOptions resolutionOptions = new UiResolutionOptions(config.EffectiveAmbiguityMode);
         List<UiSessionEntry> entries = new List<UiSessionEntry>();
 
         // The runner is free to reach two steps at once; a page driven from both is not a race to leave
@@ -699,7 +699,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                     session.Page,
                     value ?? throw new ArgumentException("Choosing needs an option to choose."),
                     action.Target!.Describe(),
-                    config.DefaultActionTimeout,
+                    config.EffectiveActionTimeout,
                     cancellationToken).ConfigureAwait(false);
                 break;
 
@@ -934,7 +934,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         WebAppConfig config,
         CancellationToken cancellationToken)
     {
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.DefaultActionTimeout;
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.EffectiveActionTimeout;
 
         while (true)
         {
@@ -963,7 +963,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         CancellationToken cancellationToken)
     {
         UiTarget target = action.Target ?? throw new InvalidOperationException("An absence expectation needs a target.");
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.DefaultActionTimeout;
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.EffectiveActionTimeout;
 
         while (true)
         {
@@ -993,7 +993,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             if (DateTimeOffset.UtcNow >= deadline)
             {
                 throw new TimeoutException(
-                    $"The {target.Describe()} was still on the page after {config.DefaultActionTimeout.TotalSeconds:F0}s, " +
+                    $"The {target.Describe()} was still on the page after {config.EffectiveActionTimeout.TotalSeconds:F0}s, " +
                     $"at {session.Page.Url}. An absence expectation waits for something to go away; if it was never " +
                     "supposed to be there at all, expect the state that replaces it instead.");
             }
