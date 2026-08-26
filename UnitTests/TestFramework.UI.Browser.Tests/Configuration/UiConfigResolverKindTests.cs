@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Core.Environment;
 using TestFramework.UI.Browser.Configuration;
@@ -45,11 +45,11 @@ public class UiConfigResolverKindTests
         FakeSource rightKind = new("kind.b", "target", "http://right/");
         using ServiceProvider services = BuildServices(new WebAppConfig(), wrongKind, rightKind);
 
-        WebAppIdentifier identifier = new WebAppIdentifier("shop") with
-        {
-            BaseUrlFromIdentifier = "target",
-            ExternalRequirement = new EnvironmentRequirement("kind.b", "target"),
-        };
+        // Bridged the way any caller bridges one. The requirement cannot be assigned from outside the
+        // record, which is deliberate: it used to travel beside a second member naming the same resource,
+        // and nothing stopped the two from disagreeing.
+        WebAppIdentifier identifier = new WebAppIdentifier("shop")
+            .BridgedTo(new EnvironmentRequirement("kind.b", "target"));
 
         WebAppConfig resolved = UiConfigResolver.Resolve(services, identifier);
 
@@ -63,11 +63,8 @@ public class UiConfigResolverKindTests
         FakeSource agnostic = new(null, "target", "http://agnostic/");
         using ServiceProvider services = BuildServices(new WebAppConfig(), agnostic);
 
-        WebAppIdentifier identifier = new WebAppIdentifier("shop") with
-        {
-            BaseUrlFromIdentifier = "target",
-            ExternalRequirement = new EnvironmentRequirement("kind.unknown", "target"),
-        };
+        WebAppIdentifier identifier = new WebAppIdentifier("shop")
+            .BridgedTo(new EnvironmentRequirement("kind.unknown", "target"));
 
         Assert.Equal("http://agnostic/", UiConfigResolver.Resolve(services, identifier).BaseUrl);
     }

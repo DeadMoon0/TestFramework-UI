@@ -1,4 +1,4 @@
-using TestFramework.UI.Browser.Identifier;
+﻿using TestFramework.UI.Browser.Identifier;
 using TestFramework.Web;
 using Xunit;
 
@@ -16,7 +16,6 @@ public class WebAppIdentifierBridgeTests
         WebAppIdentifier shop = new WebAppIdentifier("shop").FromWebApi("shop-api");
 
         Assert.Equal("shop", shop.Identifier);
-        Assert.Equal("shop-api", shop.BaseUrlFromIdentifier);
         Assert.Equal(WebEnvironmentResourceKinds.RestApi, shop.ExternalRequirement!.ResourceKind);
         Assert.Equal("shop-api", shop.ExternalRequirement.ResourceIdentifier);
     }
@@ -26,7 +25,6 @@ public class WebAppIdentifierBridgeTests
     {
         WebAppIdentifier shop = new WebAppIdentifier("shop").FromSite("shop-ui");
 
-        Assert.Equal("shop-ui", shop.BaseUrlFromIdentifier);
         Assert.Equal(WebEnvironmentResourceKinds.Site, shop.ExternalRequirement!.ResourceKind);
         Assert.Equal("shop-ui", shop.ExternalRequirement.ResourceIdentifier);
     }
@@ -36,7 +34,6 @@ public class WebAppIdentifierBridgeTests
     {
         WebAppIdentifier shop = new("shop");
 
-        Assert.Null(shop.BaseUrlFromIdentifier);
         Assert.Null(shop.ExternalRequirement);
     }
 }

@@ -57,7 +57,9 @@ Three packages, deliberately layered:
 
 - **TestFramework.UI** — technology-neutral foundation, no Playwright: the session picture
   (`UiSessionPicture`), the comparison algebra (`StructureDiffer`, `ExpectedTable`, `Cell`), text
-  normalization (`UiText`), geometry (`UiBox`, `UiBoxRelations`), and the `IUiBaseUrlSource` seam.
+  normalization (`UiText`), geometry (`UiBox`, `UiBoxRelations`), and the `IUiBaseUrlSource` seam - public
+  on purpose, because a bridge is how another package joins in and no package may need private access to
+  do it.
   A future desktop package builds on this without dragging a browser along.
 - **TestFramework.UI.Browser** — the web implementation: `BrowserExt` facade (`Session`, `Page`,
   `Events`, `Tooling`), the flow step (`UiBrowserFlow` — the flow *is* the step), the two-sweep

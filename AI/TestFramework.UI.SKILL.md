@@ -1,4 +1,4 @@
-<identity>
+﻿<identity>
     <package>TestFramework.UI.Browser</package>
     <role>addon-skill</role>
 </identity>
@@ -67,7 +67,7 @@
     - run.Step(label).UiResult() | UiCompare() | UiTableResult() | UiCapture() for the raw typed results
     - WebAppConfig: BaseUrl, Browser, Channel, Headless, Device, BasedOn, ViewportWidth/Height, UserAgent, IsMobile, HasTouch, DeviceScaleFactor, Locale, ColorScheme, SlowMo, DefaultActionTimeout, DefaultCompareTimeout, TestIdAttribute, AmbiguityMode, IgnoreHttpsErrors, BaseUrlFromSite, BaseUrlFromApi
     - Exceptions: UiConfigurationException, UiTargetNotFoundException, UiAmbiguousTargetException, UiActionFailedException, UiStructureMismatchException, UiLayoutMismatchException, UiBrowserNotInstalledException
-    - Extension points: IUIComponentFactory (browser/session lifetime), IUiBaseUrlSource (address bridging)
+    - Extension points, both public: IUiBaseUrlSource (supply an application's address from another package's configuration) and WebAppIdentifier.BridgedTo (point an application at a resource another package provisions). Where a browser comes from is deliberately NOT one - it is internal, because a session's lifetime is this package's to own.
     - TestFramework.UI.Web: identifier.FromWebApi(apiId) | FromSite(siteId), .LoadUIWebBridge() on the config builder, services.AddUiWebBridge() for hand-built services
     - BrowserExt.Tooling.InstallBrowsers("chromium") - a fixture helper, deliberately not a step
 </api_hints>

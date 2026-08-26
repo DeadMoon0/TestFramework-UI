@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.UI.Browser.Exceptions;
@@ -37,7 +37,9 @@ internal static class UiConfigResolver
             return config;
         }
 
-        string? foreignIdentifier = identifier.BaseUrlFromIdentifier ?? config.BaseUrlFromSite ?? config.BaseUrlFromApi;
+        // The bridged name comes off the requirement, which is the only thing that carries it now: a
+        // separate member holding the same string was one the four bridge sites had to keep in step by hand.
+        string? foreignIdentifier = identifier.ExternalRequirement?.ResourceIdentifier ?? config.BaseUrlFromSite ?? config.BaseUrlFromApi;
 
         if (foreignIdentifier is { Length: > 0 }
             && TryResolveForeignBaseUrl(serviceProvider, foreignIdentifier, identifier.ExternalRequirement?.ResourceKind) is { Length: > 0 } foreignBaseUrl)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TestFramework.Core.Environment;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.Web;
@@ -31,11 +31,7 @@ public static class WebAppIdentifierExtensions
         ArgumentNullException.ThrowIfNull(identifier);
         ArgumentException.ThrowIfNullOrWhiteSpace(apiIdentifier);
 
-        return identifier with
-        {
-            BaseUrlFromIdentifier = apiIdentifier,
-            ExternalRequirement = new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, apiIdentifier),
-        };
+        return identifier.BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, apiIdentifier));
     }
 
     /// <summary>
@@ -49,10 +45,6 @@ public static class WebAppIdentifierExtensions
         ArgumentNullException.ThrowIfNull(identifier);
         ArgumentException.ThrowIfNullOrWhiteSpace(siteIdentifier);
 
-        return identifier with
-        {
-            BaseUrlFromIdentifier = siteIdentifier,
-            ExternalRequirement = new EnvironmentRequirement(WebEnvironmentResourceKinds.Site, siteIdentifier),
-        };
+        return identifier.BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.Site, siteIdentifier));
     }
 }

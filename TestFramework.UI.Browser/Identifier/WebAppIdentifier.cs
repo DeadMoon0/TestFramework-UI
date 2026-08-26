@@ -1,3 +1,4 @@
+using System;
 using TestFramework.Core.Environment;
 
 namespace TestFramework.UI.Browser.Identifier;
@@ -31,18 +32,40 @@ public record WebAppIdentifier(string Identifier)
     public override string ToString() => this.Identifier;
 
     /// <summary>
-    /// The environment requirement this application declares instead of its own, when a bridge pointed
-    /// it at a resource another package provisions.
+    /// The resource another package provisions that this application is really the front door of, when a
+    /// bridge pointed it at one.
     /// </summary>
     /// <remarks>
-    /// It rides on the identifier because environment requirements are collected while the plan is
-    /// built, where there is no service provider to look a mapping up in.
+    /// <para>
+    /// It rides on the identifier because environment requirements are collected while the plan is built,
+    /// where there is no service provider to look a mapping up in. Two things come from it: the requirement
+    /// the browser steps declare instead of their own, and the name whose configuration supplies the
+    /// address at run time.
+    /// </para>
+    /// <para>
+    /// Settable only through <see cref="BridgedTo"/>, which is why the setter is private. Those two things
+    /// used to be two members set side by side, and every one of the four places that set them had to
+    /// remember to set them to the same name; nothing checked it, and a pair that disagreed would have
+    /// declared a requirement for one resource while reading its address from another.
+    /// </para>
     /// </remarks>
-    internal EnvironmentRequirement? ExternalRequirement { get; init; }
+    public EnvironmentRequirement? ExternalRequirement { get; private init; }
 
     /// <summary>
-    /// The foreign identifier whose configuration supplies this application's base address at run time,
-    /// when a bridge pointed it at one.
+    /// Points this application at a resource another package provisions.
     /// </summary>
-    internal string? BaseUrlFromIdentifier { get; init; }
+    /// <remarks>
+    /// The one way to bridge an application, and public so that it is genuinely one way: any package may
+    /// teach an identifier where its application really lives, not only the ones this package was built
+    /// alongside. <c>TestFramework.UI.Web</c> uses it for <c>FromWebApi</c> and <c>FromSite</c>, and reaches
+    /// it through this surface like anybody else would.
+    /// </remarks>
+    /// <param name="requirement">The resource, by kind and name, that serves this application.</param>
+    /// <returns>An identifier bridged to that resource.</returns>
+    public WebAppIdentifier BridgedTo(EnvironmentRequirement requirement)
+    {
+        ArgumentNullException.ThrowIfNull(requirement);
+
+        return this with { ExternalRequirement = requirement };
+    }
 }
