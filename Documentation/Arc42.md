@@ -57,7 +57,7 @@ Three packages, deliberately layered:
 
 - **TestFramework.UI** — technology-neutral foundation, no Playwright: the session picture
   (`UiSessionPicture`), the comparison algebra (`StructureDiffer`, `ExpectedTable`, `Cell`), text
-  normalization (`UiText`), geometry (`UiBox`, `UiBoxRelations`), and the `IUiBaseUrlSource` seam - public
+  normalization (`UiText`) and geometry (`UiBox`, `UiBoxRelations`) - public
   on purpose, because a bridge is how another package joins in and no package may need private access to
   do it.
   A future desktop package builds on this without dragging a browser along.

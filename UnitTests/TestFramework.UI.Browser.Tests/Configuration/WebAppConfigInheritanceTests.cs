@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using Microsoft.Extensions.DependencyInjection;
+using TestFramework.Core.Steps;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Extensions;
 using TestFramework.UI.Browser.Resolution;
@@ -136,6 +137,6 @@ public class WebAppConfigInheritanceTests
             .Add("parent", parent)
             .Add("child", child with { BasedOn = "parent" }));
 
-        return UiConfigResolver.Resolve(services.BuildServiceProvider(), "child");
+        return UiConfigResolver.Resolve(RunContext.Detached(services.BuildServiceProvider()), "child");
     }
 }

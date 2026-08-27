@@ -125,7 +125,7 @@ geometry.
 
 An identifier has no configuration, or no road to an address. The message lists the identifiers that
 *are* registered, and — with the bridge — which stores were asked. Recovery: add the
-`Ui:<identifier>` entry, or register the bridge (`.LoadUIWebBridge()`) so a `Site:`/`Api:` entry can
+`Ui:<identifier>` entry, or load the Web configuration (`.LoadWebConfig()`) so a `Site:`/`Api:` entry can
 answer, or let the environment publish it.
 
 ## UiBrowserNotInstalledException

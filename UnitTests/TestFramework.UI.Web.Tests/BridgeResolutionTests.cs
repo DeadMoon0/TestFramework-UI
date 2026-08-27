@@ -1,119 +1,194 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TestFramework.Core.Exceptions;
+using TestFramework.Core.Steps;
+using TestFramework.Core.Steps.Options;
+using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Configuration;
-using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Identifier;
-using TestFramework.Web.Configuration;
-using TestFramework.Web.Site;
+using TestFramework.Web;
+using TestFramework.Web.Extensions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace TestFramework.UI.Web.Tests;
 
 /// <summary>
-/// Covers the whole address resolution through the real bridge sources: the same identifier and the
-/// same stores serve a deployed and a containerized run, because the environment is just another
-/// writer of the configuration.
+/// A browser finding the address of an application the TestFramework.Web family configures.
 /// </summary>
-public class BridgeResolutionTests
+/// <remarks>
+/// <para>
+/// The <c>shop</c> entry deliberately has no address of its own. Where its address comes from - a site
+/// under its own name, an API it was pointed at, or a differently named entry - is what these prove, and
+/// they now prove it through the run's resources rather than through a bridge that read Web's configuration
+/// stores directly. The declaration goes in the way a user's would, through Web's own loader, so the
+/// section, the store and the graph cannot come to different conclusions about it.
+/// </para>
+/// <para>
+/// Same cases as before the bridge was deleted, with one added: two kinds answering to one name is now a
+/// refusal that names both, where registration order used to decide.
+/// </para>
+/// </remarks>
+public class BridgeResolutionTests(ITestOutputHelper output)
 {
-    private static ServiceProvider BuildServices(
-        WebAppConfig shopEntry,
-        SiteConfig? site = null,
-        ApiConfig? api = null,
-        string siteIdentifier = "shop",
-        string apiIdentifier = "shop")
-    {
-        ServiceCollection services = new();
-        services.AddSingleton(new UiConfigStore([new("shop", shopEntry)]));
-
-        WebConfigStore<SiteConfig> siteStore = new();
-        if (site is not null)
-            siteStore.AddConfig(siteIdentifier, site);
-        services.AddSingleton(siteStore);
-
-        WebConfigStore<ApiConfig> apiStore = new();
-        if (api is not null)
-            apiStore.AddConfig(apiIdentifier, api);
-        services.AddSingleton(apiStore);
-
-        // Registered the way LoadUIWebBridge registers them: site first.
-        services.AddSingleton<IUiBaseUrlSource, SiteBaseUrlSource>();
-        services.AddSingleton<IUiBaseUrlSource, ApiBaseUrlSource>();
-
-        return services.BuildServiceProvider();
-    }
-
     [Fact]
-    public void OwnIdentifier_ResolvesFromTheSiteStore_WithNoBridgingCall()
+    public async Task OwnIdentifierResolvesFromTheSiteSectionWithNoBridgingCall()
     {
-        using ServiceProvider services = BuildServices(new WebAppConfig { Browser = "chromium" }, site: new SiteConfig { BaseUrl = "http://localhost:39001/" });
-
-        WebAppConfig resolved = UiConfigResolver.Resolve(services, new WebAppIdentifier("shop"));
-
-        Assert.Equal("http://localhost:39001/", resolved.BaseUrl);
-    }
-
-    [Fact]
-    public void AnExplicitBaseUrl_AlwaysWins()
-    {
-        using ServiceProvider services = BuildServices(
-            new WebAppConfig { Browser = "chromium", BaseUrl = "https://deployed.example/" },
-            site: new SiteConfig { BaseUrl = "http://localhost:39001/" });
-
-        WebAppConfig resolved = UiConfigResolver.Resolve(services, new WebAppIdentifier("shop"));
-
-        Assert.Equal("https://deployed.example/", resolved.BaseUrl);
-    }
-
-    [Fact]
-    public void AnIdentifierInBothStores_ResolvesByTheDeclaredKind()
-    {
-        using ServiceProvider services = BuildServices(
+        TimelineRun run = await Run(
+            new WebAppIdentifier("shop"),
             new WebAppConfig { Browser = "chromium" },
-            site: new SiteConfig { BaseUrl = "http://site/" },
-            api: new ApiConfig { BaseUrl = "http://api/" });
+            ("Site:shop:BaseUrl", "http://localhost:39001/"));
 
-        WebAppConfig viaSite = UiConfigResolver.Resolve(services, new WebAppIdentifier("shop").FromSite("shop"));
-        WebAppConfig viaApi = UiConfigResolver.Resolve(services, new WebAppIdentifier("shop").FromWebApi("shop"));
+        run.EnsureRanToCompletion();
 
-        Assert.Equal("http://site/", viaSite.BaseUrl);
-        Assert.Equal("http://api/", viaApi.BaseUrl);
+        Assert.Equal("http://localhost:39001/", run.VariableStore.GetVariable<string>("address"));
     }
 
     [Fact]
-    public void BaseUrlFromSite_ResolvesADifferentlyNamedSite()
+    public async Task AnExplicitBaseUrlAlwaysWins()
     {
-        using ServiceProvider services = BuildServices(
+        TimelineRun run = await Run(
+            new WebAppIdentifier("shop"),
+            new WebAppConfig { Browser = "chromium", BaseUrl = "https://deployed.example/" },
+            ("Site:shop:BaseUrl", "http://localhost:39001/"));
+
+        run.EnsureRanToCompletion();
+
+        Assert.Equal("https://deployed.example/", run.VariableStore.GetVariable<string>("address"));
+    }
+
+    [Fact]
+    public async Task AnIdentifierInBothSectionsResolvesByTheDeclaredKind()
+    {
+        // FromSite and FromWebApi both put a kind on the requirement, which is the whole reason they exist
+        // rather than a bare name - and it is the only thing that can tell these two entries apart.
+        TimelineRun viaSite = await Run(
+            new WebAppIdentifier("shop").FromSite("shop"),
+            new WebAppConfig { Browser = "chromium" },
+            ("Site:shop:BaseUrl", "http://site/"),
+            ("Api:shop:BaseUrl", "http://api/"));
+
+        TimelineRun viaApi = await Run(
+            new WebAppIdentifier("shop").FromWebApi("shop"),
+            new WebAppConfig { Browser = "chromium" },
+            ("Site:shop:BaseUrl", "http://site/"),
+            ("Api:shop:BaseUrl", "http://api/"));
+
+        viaSite.EnsureRanToCompletion();
+        viaApi.EnsureRanToCompletion();
+
+        Assert.Equal("http://site/", viaSite.VariableStore.GetVariable<string>("address"));
+        Assert.Equal("http://api/", viaApi.VariableStore.GetVariable<string>("address"));
+    }
+
+    [Fact]
+    public async Task AnIdentifierInBothSectionsWithoutAKindIsARefusal()
+    {
+        // New, and the reason the two behaviour changes were worth taking: the old bridge asked its sources
+        // in registration order, so which application a browser opened depended on which package registered
+        // first. Ambiguity is now a sentence naming both candidates.
+        TimelineRun run = await Run(
+            new WebAppIdentifier("shop"),
+            new WebAppConfig { Browser = "chromium" },
+            ("Site:shop:BaseUrl", "http://site/"),
+            ("Api:shop:BaseUrl", "http://api/"));
+
+        TimelineRunFailedException failure = Assert.Throws<TimelineRunFailedException>(run.EnsureRanToCompletion);
+
+        Assert.Contains(WebEnvironmentResourceKinds.Site, failure.ToString(), StringComparison.Ordinal);
+        Assert.Contains(WebEnvironmentResourceKinds.RestApi, failure.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task BaseUrlFromSiteResolvesADifferentlyNamedSite()
+    {
+        TimelineRun run = await Run(
+            new WebAppIdentifier("shop"),
             new WebAppConfig { Browser = "chromium", BaseUrlFromSite = "shop-ui" },
-            site: new SiteConfig { BaseUrl = "http://localhost:39001/" },
-            siteIdentifier: "shop-ui");
+            ("Site:shop-ui:BaseUrl", "http://localhost:39001/"));
 
-        WebAppConfig resolved = UiConfigResolver.Resolve(services, new WebAppIdentifier("shop"));
+        run.EnsureRanToCompletion();
 
-        Assert.Equal("http://localhost:39001/", resolved.BaseUrl);
+        Assert.Equal("http://localhost:39001/", run.VariableStore.GetVariable<string>("address"));
     }
 
     [Fact]
-    public void BaseUrlFromApi_StillMeansTheApiStore()
+    public async Task BaseUrlFromApiResolvesADifferentlyNamedApi()
     {
-        using ServiceProvider services = BuildServices(
+        // Named for what it does rather than for a store it reads. Neither of these two members ever
+        // restricted the search to a kind - only FromSite and FromWebApi do that - so the old name promised
+        // something the code did not deliver; see the debt ledger.
+        TimelineRun run = await Run(
+            new WebAppIdentifier("shop"),
             new WebAppConfig { Browser = "chromium", BaseUrlFromApi = "shop-api" },
-            api: new ApiConfig { BaseUrl = "http://api/" },
-            apiIdentifier: "shop-api");
+            ("Api:shop-api:BaseUrl", "http://api/"));
 
-        WebAppConfig resolved = UiConfigResolver.Resolve(services, new WebAppIdentifier("shop"));
+        run.EnsureRanToCompletion();
 
-        Assert.Equal("http://api/", resolved.BaseUrl);
+        Assert.Equal("http://api/", run.VariableStore.GetVariable<string>("address"));
     }
 
     [Fact]
-    public void NothingAnswering_FailsWithTheAddressError()
+    public async Task NothingAnsweringFailsWithTheAddressError()
     {
-        using ServiceProvider services = BuildServices(new WebAppConfig { Browser = "chromium" });
+        TimelineRun run = await Run(new WebAppIdentifier("shop"), new WebAppConfig { Browser = "chromium" });
 
-        UiConfigurationException exception = Assert.Throws<UiConfigurationException>(
-            () => UiConfigResolver.Resolve(services, new WebAppIdentifier("shop")));
+        TimelineRunFailedException failure = Assert.Throws<TimelineRunFailedException>(run.EnsureRanToCompletion);
 
-        Assert.Contains("has no address", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("has no address", failure.ToString(), StringComparison.Ordinal);
+    }
+
+    private async Task<TimelineRun> Run(WebAppIdentifier app, WebAppConfig entry, params (string Key, string Value)[] configured)
+    {
+        List<KeyValuePair<string, string?>> entries = [];
+
+        foreach ((string key, string value) in configured)
+        {
+            entries.Add(new KeyValuePair<string, string?>(key, value));
+        }
+
+        IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection(entries).Build();
+
+        ServiceCollection services = new ServiceCollection();
+        services.AddSingleton(configuration);
+        services.AddSingleton(new UiConfigStore([new(app.Identifier, entry)]));
+
+        // Both sections, because the point is that a reader does not care which one an identifier came from.
+        services.LoadWebConfigs(configuration);
+        services.LoadWebSiteConfigs(configuration);
+
+        Timeline timeline = Timeline.Create()
+            .Trigger(new ResolvesAppStep(app)).Name("resolves")
+            .Build();
+
+        return await timeline.SetupRun(services.BuildServiceProvider(), output).RunAsync();
+    }
+
+    /// <summary>Resolves the application the way every browser step now does.</summary>
+    private sealed class ResolvesAppStep(WebAppIdentifier app) : Step<EmptyStepResultContext>
+    {
+        public override string Name => "Resolves an application";
+
+        public override string Description => "Resolves a web application's configuration through the run.";
+
+        public override bool DoesReturn => false;
+
+        public override Step<EmptyStepResultContext> Clone() => new ResolvesAppStep(app).WithClonedOptions(this);
+
+        public override StepInstance<Step<EmptyStepResultContext>, EmptyStepResultContext> GetInstance() => new(this);
+
+        public override void DeclareIO(StepIOContract contract)
+        {
+        }
+
+        public override Task<EmptyStepResultContext?> Execute(RunContext context)
+        {
+            context.Variables.SetVariable("address", UiConfigResolver.Resolve(context, app).BaseUrl);
+
+            return Task.FromResult<EmptyStepResultContext?>(EmptyStepResultContext.Instance);
+        }
     }
 }

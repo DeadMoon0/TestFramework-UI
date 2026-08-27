@@ -487,7 +487,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         string sessionVariable = UiSessionVariable.For(this.app);
         CancellationToken cancellationToken = context.Deadline.Token;
 
-        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(context.Services, this.app));
+        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(context, this.app));
         UiRunState runState = UiRunState.For(context.Variables);
 
         UiSession session = await context.Services

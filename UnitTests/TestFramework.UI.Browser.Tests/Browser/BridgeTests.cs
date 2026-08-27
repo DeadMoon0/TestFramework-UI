@@ -1,14 +1,15 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Tests.Shared;
 using TestFramework.UI.Web;
 using TestFramework.Web;
-using TestFramework.Web.Configuration;
-using TestFramework.Web.Site;
+using TestFramework.Web.Extensions;
 using Xunit.Abstractions;
 
 namespace TestFramework.UI.Browser.Tests.Browser;
@@ -32,11 +33,11 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
         // into the site store under the site's name. Nothing on the identifier, nothing bridged by hand.
         IServiceProvider services = fixture.Services(customize: registrations =>
         {
-            WebConfigStore<SiteConfig> sites = new();
-            sites.AddConfig("shop-bridged", new SiteConfig { BaseUrl = fixture.AppUrl });
-            registrations.AddSingleton(sites);
-
-            registrations.AddUiWebBridge();
+            // Through the Web package's own loader, which is what puts a site into the run's resources.
+            // A hand-built store would be a declaration nothing reads: the run is what answers now.
+            IConfiguration configuration = Configured(("Site:shop-bridged:BaseUrl", fixture.AppUrl));
+            registrations.AddSingleton(configuration);
+            registrations.LoadWebSiteConfigs(configuration);
         });
 
         Timeline timeline = Timeline.Create()
@@ -59,11 +60,9 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
         // said once, on the identifier, with FromWebApi.
         IServiceProvider services = fixture.Services(customize: registrations =>
         {
-            WebConfigStore<ApiConfig> apis = new();
-            apis.AddConfig("shop-api", new ApiConfig { BaseUrl = fixture.BaseUrl });
-            registrations.AddSingleton(apis);
-
-            registrations.AddUiWebBridge();
+            IConfiguration configuration = Configured(("Api:shop-api:BaseUrl", fixture.BaseUrl));
+            registrations.AddSingleton(configuration);
+            registrations.LoadWebConfigs(configuration);
         });
 
         WebAppIdentifier app = new WebAppIdentifier("shop-bridged").FromWebApi("shop-api");
@@ -87,11 +86,9 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
         // configured once - so an environment that provisions it once serves both doors.
         IServiceProvider services = fixture.Services(customize: registrations =>
         {
-            WebConfigStore<ApiConfig> apis = new();
-            apis.AddConfig("shop-api", new ApiConfig { BaseUrl = fixture.BaseUrl });
-            registrations.AddSingleton(apis);
-
-            registrations.AddUiWebBridge();
+            IConfiguration configuration = Configured(("Api:shop-api:BaseUrl", fixture.BaseUrl));
+            registrations.AddSingleton(configuration);
+            registrations.LoadWebConfigs(configuration);
         });
 
         WebAppIdentifier app = new WebAppIdentifier("shop-bridged").FromWebApi("shop-api");
@@ -113,5 +110,20 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
 
         run.ApiStatus("api-orders").Should().Be(HttpStatusCode.OK);
         run.ApiBody("api-orders").Should().Contain("Anvil");
+    }
+
+    /// <summary>
+    /// One in-memory configuration section, read by the same provider a real appsettings file goes through.
+    /// </summary>
+    private static IConfiguration Configured(params (string Key, string Value)[] values)
+    {
+        List<KeyValuePair<string, string?>> entries = [];
+
+        foreach ((string key, string value) in values)
+        {
+            entries.Add(new KeyValuePair<string, string?>(key, value));
+        }
+
+        return new ConfigurationBuilder().AddInMemoryCollection(entries).Build();
     }
 }

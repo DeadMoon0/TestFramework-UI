@@ -146,7 +146,7 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(context.Services, this.app));
+        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(context, this.app));
         UiRunState runState = UiRunState.For(context.Variables);
 
         this.session = await context.Services

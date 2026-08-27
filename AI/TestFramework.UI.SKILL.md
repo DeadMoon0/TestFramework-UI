@@ -67,8 +67,8 @@
     - run.Step(label).UiResult() | UiCompare() | UiTableResult() | UiCapture() for the raw typed results
     - WebAppConfig: BaseUrl, Browser, Channel, Headless, Device, BasedOn, ViewportWidth/Height, UserAgent, IsMobile, HasTouch, DeviceScaleFactor, Locale, ColorScheme, SlowMo, DefaultActionTimeout, DefaultCompareTimeout, TestIdAttribute, AmbiguityMode, IgnoreHttpsErrors, BaseUrlFromSite, BaseUrlFromApi
     - Exceptions: UiConfigurationException, UiTargetNotFoundException, UiAmbiguousTargetException, UiActionFailedException, UiStructureMismatchException, UiLayoutMismatchException, UiBrowserNotInstalledException
-    - Extension points, both public: IUiBaseUrlSource (supply an application's address from another package's configuration) and WebAppIdentifier.BridgedTo (point an application at a resource another package provisions). Where a browser comes from is deliberately NOT one - it is internal, because a session's lifetime is this package's to own.
-    - TestFramework.UI.Web: identifier.FromWebApi(apiId) | FromSite(siteId), .LoadUIWebBridge() on the config builder, services.AddUiWebBridge() for hand-built services
+    - Extension point, public: WebAppIdentifier.BridgedTo (point an application at a resource another package provisions - a kind plus an identifier, which the run then answers for). Where a browser comes from is deliberately NOT one - it is internal, because a session's lifetime is this package's to own. There used to be an IUiBaseUrlSource seam here as well; it is gone, because asking the run is what it was a hand-built version of.
+    - TestFramework.UI.Web: identifier.FromWebApi(apiId) | FromSite(siteId). No registration to add: .LoadWebConfig() puts a site's or an API's address into the run and a browser step reads it there. .LoadUIWebBridge() and services.AddUiWebBridge() still compile but are obsolete no-ops - delete them.
     - BrowserExt.Tooling.InstallBrowsers("chromium") - a fixture helper, deliberately not a step
 </api_hints>
 

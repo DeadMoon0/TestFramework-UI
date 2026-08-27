@@ -1,5 +1,5 @@
+﻿using System;
 using TestFramework.Config.Builder.InstanceBuilder;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace TestFramework.UI.Web;
 
@@ -10,19 +10,18 @@ namespace TestFramework.UI.Web;
 public static class UiWebBridgeConfigExtension
 {
     /// <summary>
-    /// Registers the sources that answer a web application's address from the Site and Api
-    /// configuration stores.
+    /// Does nothing. The run answers a web application's address now.
     /// </summary>
     /// <param name="builder">The config instance builder.</param>
     /// <returns>The builder for fluent chaining.</returns>
     /// <remarks>
-    /// Add it alongside <c>.LoadUIConfig()</c> and <c>.LoadWebConfig()</c>. The site source is
-    /// registered first: an application's own identifier is a site before it is anything else, while
-    /// the API road stays selected by <c>FromWebApi</c> or <c>BaseUrlFromApi</c>.
+    /// See <see cref="UiWebBridgeServiceCollectionExtension.AddUiWebBridge"/>. Keeping <c>.LoadWebConfig()</c>
+    /// is what puts a site's or an API's address into the run; this call added nothing to that.
     /// </remarks>
+    [Obsolete(UiWebBridgeServiceCollectionExtension.ObsoleteMessage)]
     public static IConfigInstanceBuilder LoadUIWebBridge(this IConfigInstanceBuilder builder)
     {
-        builder.AddService((services, _) => services.AddUiWebBridge());
+        ArgumentNullException.ThrowIfNull(builder);
 
         return builder;
     }

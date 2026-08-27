@@ -39,7 +39,7 @@ public class UiBrowserRegistrationTests
 
         IServiceProvider provider = services.BuildServiceProvider();
 
-        Assert.Equal("http://localhost/", UiConfigResolver.Resolve(provider, "shop").BaseUrl);
+        Assert.Equal("http://localhost/", UiConfigResolver.Resolve(RunContext.Detached(provider), "shop").BaseUrl);
         Assert.IsType<UiFailureObserver>(Assert.Single(provider.GetServices<IStepObserver>()));
     }
 
@@ -60,7 +60,7 @@ public class UiBrowserRegistrationTests
 
         IServiceProvider provider = services.BuildServiceProvider();
 
-        Assert.Equal("http://localhost/", UiConfigResolver.Resolve(provider, "shop").BaseUrl);
+        Assert.Equal("http://localhost/", UiConfigResolver.Resolve(RunContext.Detached(provider), "shop").BaseUrl);
         Assert.IsType<UiFailureObserver>(Assert.Single(provider.GetServices<IStepObserver>()));
     }
 
@@ -102,7 +102,7 @@ public class UiBrowserRegistrationTests
         services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { Browser = "chromium", BaseUrl = "http://localhost/" }));
 
         UiConfigurationException failure = Assert.Throws<UiConfigurationException>(
-            () => UiConfigResolver.Resolve(services.BuildServiceProvider(), "typo"));
+            () => UiConfigResolver.Resolve(RunContext.Detached(services.BuildServiceProvider()), "typo"));
 
         Assert.Contains("'shop'", failure.Message, StringComparison.Ordinal);
     }
@@ -149,7 +149,7 @@ public class UiBrowserRegistrationTests
         services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { BaseUrl = "http://localhost/" }));
 
         UiConfigurationException failure = Assert.Throws<UiConfigurationException>(
-            () => UiConfigResolver.Resolve(services.BuildServiceProvider(), "shop"));
+            () => UiConfigResolver.Resolve(RunContext.Detached(services.BuildServiceProvider()), "shop"));
 
         Assert.Contains("states no browser", failure.Message, StringComparison.Ordinal);
 
@@ -170,7 +170,7 @@ public class UiBrowserRegistrationTests
             .Add("shop", new WebAppConfig { Browser = "firefox", BaseUrl = "http://localhost/" })
             .Add("shop-mobile", new WebAppConfig { BasedOn = "shop", Device = "Narrow" }));
 
-        Assert.Equal("firefox", UiConfigResolver.Resolve(services.BuildServiceProvider(), "shop-mobile").Browser);
+        Assert.Equal("firefox", UiConfigResolver.Resolve(RunContext.Detached(services.BuildServiceProvider()), "shop-mobile").Browser);
     }
 
     [Fact]
@@ -184,7 +184,7 @@ public class UiBrowserRegistrationTests
             .Add("shop", new WebAppConfig { Browser = "firefox", BaseUrl = "http://localhost/" })
             .Add("shop-chromium", new WebAppConfig { BasedOn = "shop", Browser = "chromium" }));
 
-        Assert.Equal("chromium", UiConfigResolver.Resolve(services.BuildServiceProvider(), "shop-chromium").Browser);
+        Assert.Equal("chromium", UiConfigResolver.Resolve(RunContext.Detached(services.BuildServiceProvider()), "shop-chromium").Browser);
     }
 
     [Fact]

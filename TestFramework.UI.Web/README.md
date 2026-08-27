@@ -1,4 +1,4 @@
-# TestFramework.UI.Web
+﻿# TestFramework.UI.Web
 
 Lets browser steps resolve the application they drive from the **TestFramework.Web** family's
 configuration, so one timeline goes in through the UI and verifies through the API, the database and
@@ -23,7 +23,7 @@ Timeline.Create()
 ConfigInstance config = ConfigInstance.Create()
     .LoadWebConfig()        // Api, Sql, Stub and Site stores
     .LoadUIConfig()         // the Ui section: browser, viewport, timeouts
-    .LoadUIWebBridge()      // lets browser steps read the Web stores
+    // no bridge call: .LoadWebConfig() puts a site's address into the run, and browser steps read it there
     .Build();
 ```
 

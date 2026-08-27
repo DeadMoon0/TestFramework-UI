@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
+using TestFramework.Core.Environment.Graph;
+using TestFramework.Core.Steps;
 using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Identifier;
 
@@ -9,21 +10,38 @@ namespace TestFramework.UI.Browser.Configuration;
 /// <summary>
 /// Turns an application identifier into the configuration a step runs with.
 /// </summary>
+/// <remarks>
+/// <para>
+/// An application's address has two possible homes and only one of them is this package's. A browser opens
+/// the same application another package configured as a site or as a REST API, and one a container started
+/// answers on a port the operating system chose. So the address is asked of the <em>run</em>: whatever
+/// declared or started the thing published it there, and this package never learns which.
+/// </para>
+/// <para>
+/// That replaced a bridge. There used to be an <c>IUiBaseUrlSource</c> seam with an implementation per
+/// foreign package, each reading that package's configuration store, plus rules here for which
+/// implementation got asked first. Every part of it was a hand-built version of what the run's resource
+/// resolution does - including the interesting part, kind disambiguation, which it did worse: two packages
+/// answering to one identifier were settled by registration order, where the run refuses and says both
+/// names. The seam existed because this package must not depend on Web; asking the run needs no such
+/// dependency, because a kind is a string the requirement already carries.
+/// </para>
+/// </remarks>
 internal static class UiConfigResolver
 {
     /// <summary>
-    /// Resolves the configuration, including an address that lives in another package's configuration.
+    /// Resolves the configuration, including an address that belongs to another package's resource.
     /// </summary>
-    /// <param name="serviceProvider">The run's services.</param>
+    /// <param name="context">The run.</param>
     /// <param name="identifier">The application.</param>
     /// <returns>The configuration, with a usable base address.</returns>
     /// <exception cref="UiConfigurationException">The application is not configured, or has no address.</exception>
-    public static WebAppConfig Resolve(IServiceProvider serviceProvider, WebAppIdentifier identifier)
+    public static WebAppConfig Resolve(RunContext context, WebAppIdentifier identifier)
     {
-        ArgumentNullException.ThrowIfNull(serviceProvider);
+        ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(identifier);
 
-        UiConfigStore? store = serviceProvider.GetService<UiConfigStore>();
+        UiConfigStore? store = context.Services.GetService<UiConfigStore>();
 
         if (store is null)
         {
@@ -42,7 +60,7 @@ internal static class UiConfigResolver
         string? foreignIdentifier = identifier.ExternalRequirement?.ResourceIdentifier ?? config.BaseUrlFromSite ?? config.BaseUrlFromApi;
 
         if (foreignIdentifier is { Length: > 0 }
-            && TryResolveForeignBaseUrl(serviceProvider, foreignIdentifier, identifier.ExternalRequirement?.ResourceKind) is { Length: > 0 } foreignBaseUrl)
+            && Address(context, foreignIdentifier, identifier.ExternalRequirement?.ResourceKind) is { Length: > 0 } foreignBaseUrl)
         {
             return config with { BaseUrl = foreignBaseUrl };
         }
@@ -51,7 +69,7 @@ internal static class UiConfigResolver
         // application publishes its address under the same name, whether a container started it or a
         // configuration file named a deployed one. Deployed and containerized runs both land here.
         if (foreignIdentifier is null
-            && TryResolveForeignBaseUrl(serviceProvider, identifier.Identifier, requiredKind: null) is { Length: > 0 } ownBaseUrl)
+            && Address(context, identifier.Identifier, requiredKind: null) is { Length: > 0 } ownBaseUrl)
         {
             return config with { BaseUrl = ownBaseUrl };
         }
@@ -59,33 +77,27 @@ internal static class UiConfigResolver
         throw UiConfigurationException.MissingBaseUrl(identifier);
     }
 
-    private static string? TryResolveForeignBaseUrl(IServiceProvider serviceProvider, string foreignIdentifier, string? requiredKind)
+    /// <summary>
+    /// The address the run holds for a resource, from the viewpoint of the process opening the browser.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The host viewpoint, because the browser runs here. A container-side address would open in a browser
+    /// that cannot route to it, and the two really do differ once a container serves the application - which
+    /// is precisely what a single <c>BaseUrl</c> in somebody's configuration store could not say.
+    /// </para>
+    /// <para>
+    /// Without a kind the run answers by identifier alone and refuses if two kinds claim the same name,
+    /// naming both. That refusal is the behaviour the bridge could not have: it asked its sources in
+    /// registration order and returned the first answer.
+    /// </para>
+    /// </remarks>
+    private static string? Address(RunContext context, string resourceIdentifier, string? requiredKind)
     {
-        // Several bridges may be registered. An identifier that carries a kind is answered by the
-        // matching-kind sources first, then by the kind-agnostic ones; without a kind, registration
-        // order decides. None of them answering is a configuration error rather than a silent
-        // fallback.
-        if (requiredKind is not null)
-        {
-            return AskSources(serviceProvider, foreignIdentifier, source => string.Equals(source.ResourceKind, requiredKind, StringComparison.Ordinal))
-                ?? AskSources(serviceProvider, foreignIdentifier, source => source.ResourceKind is null);
-        }
+        ValueRef reference = requiredKind is { Length: > 0 } kind
+            ? ValueRef.For(kind, resourceIdentifier, ValueNames.BaseUrl)
+            : ValueRef.AnyKind(resourceIdentifier, ValueNames.BaseUrl);
 
-        return AskSources(serviceProvider, foreignIdentifier, _ => true);
-    }
-
-    private static string? AskSources(IServiceProvider serviceProvider, string foreignIdentifier, Func<IUiBaseUrlSource, bool> filter)
-    {
-        foreach (IUiBaseUrlSource source in serviceProvider.GetServices<IUiBaseUrlSource>())
-        {
-            if (filter(source)
-                && source.TryGetBaseUrl(serviceProvider, foreignIdentifier, out string? baseUrl)
-                && baseUrl is { Length: > 0 })
-            {
-                return baseUrl;
-            }
-        }
-
-        return null;
+        return context.Values.TryGet(reference, ResourceVantage.Host, out string? baseUrl) ? baseUrl : null;
     }
 }
