@@ -1,3 +1,4 @@
+﻿using TestFramework.UI.Browser.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -53,7 +54,7 @@ internal sealed class CompareTableStep : UiInspectionStep<UiCompareResultContext
     {
         ArgumentNullException.ThrowIfNull(locator);
 
-        UiTableSnapshot snapshot = await DomTableReader.ReadAsync(locator, cancellationToken).ConfigureAwait(false);
+        UiTableSnapshot snapshot = await DomTableReader.ReadAsync(locator, ProbeBudget.Unbounded, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<UiDifference> differences = this.expected.Compare(snapshot);
 
         UiCompareResultContext result = new UiCompareResultContext(

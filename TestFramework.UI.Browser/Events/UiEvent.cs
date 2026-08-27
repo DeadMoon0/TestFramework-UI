@@ -98,6 +98,7 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken);
 
     /// <inheritdoc />
@@ -221,8 +222,18 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
         try
         {
             outcome = await this
-                .ProbeAsync(this.session, this.query!, this.resolutionOptions!, context.Variables, cancellationToken)
+                .ProbeAsync(this.session, this.query!, this.resolutionOptions!, context.Variables, ProbeBudget.For(context.Deadline), cancellationToken)
                 .ConfigureAwait(false);
+        }
+
+        // The element did not answer in the time this poll had, which is the same news as "not there yet"
+        // and deliberately not an error: the budget is what is left of the step, so a poll that spends it
+        // is a poll that reached the deadline. Playwright signals this as a plain TimeoutException, and it
+        // is the only thing inside a probe that raises one - a bad selector or a closed page arrives as a
+        // PlaywrightException instead, and those must still fail loudly rather than wait out the clock.
+        catch (TimeoutException)
+        {
+            outcome = new UiProbeOutcome(false);
         }
         finally
         {

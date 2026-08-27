@@ -1,4 +1,5 @@
-﻿using System;
+﻿using TestFramework.UI.Browser.Events;
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using System.Threading;
@@ -47,15 +48,16 @@ internal static class DomTableReader
     /// Reads the table an element represents.
     /// </summary>
     /// <param name="locator">The table element.</param>
+    /// <param name="budget">How long a browser call may take before the step needs the time back.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The table's columns and rows.</returns>
-    public static async Task<UiTableSnapshot> ReadAsync(ILocator locator, CancellationToken cancellationToken)
+    public static async Task<UiTableSnapshot> ReadAsync(ILocator locator, ProbeBudget budget, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(locator);
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        JToken? read = await PageJson.EvaluateAsync(locator, ReadScript).ConfigureAwait(false);
+        JToken? read = await PageJson.EvaluateAsync(locator, ReadScript, argument: null, budget.Milliseconds).ConfigureAwait(false);
 
         if (read is not JObject table)
         {

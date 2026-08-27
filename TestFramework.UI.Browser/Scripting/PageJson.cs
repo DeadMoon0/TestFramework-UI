@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -56,12 +56,21 @@ internal static class PageJson
     /// <param name="element">The element, which the function receives first.</param>
     /// <param name="source">The function, called as <c>(el, args)</c>.</param>
     /// <param name="argument">The argument object, or null to call it without one.</param>
+    /// <param name="timeoutMilliseconds">What is left of the caller's deadline, or null to leave Playwright's default alone.</param>
     /// <returns>The parsed answer, or null when the script returned nothing.</returns>
-    public static async Task<JToken?> EvaluateAsync(ILocator element, string source, object? argument = null)
+    public static async Task<JToken?> EvaluateAsync(ILocator element, string source, object? argument = null, float? timeoutMilliseconds = null)
     {
         ArgumentNullException.ThrowIfNull(element);
 
-        return Read(await element.EvaluateAsync<string?>(Wrap(source, "el, args", "el, args"), argument).ConfigureAwait(false));
+        // Evaluating against a locator waits for the element first, so this carries the caller's remaining
+        // budget when it has one. Null leaves Playwright's own default in place, which is what a call with
+        // no deadline behind it wants.
+        return Read(await element
+            .EvaluateAsync<string?>(
+                Wrap(source, "el, args", "el, args"),
+                argument,
+                new LocatorEvaluateOptions { Timeout = timeoutMilliseconds })
+            .ConfigureAwait(false));
     }
 
     /// <summary>

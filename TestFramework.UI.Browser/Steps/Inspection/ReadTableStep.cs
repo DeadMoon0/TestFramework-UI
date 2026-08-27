@@ -1,4 +1,5 @@
-﻿using System;
+﻿using TestFramework.UI.Browser.Events;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -84,7 +85,7 @@ internal sealed class ReadTableStep : UiInspectionStep<UiTableResultContext>
     {
         ArgumentNullException.ThrowIfNull(locator);
 
-        UiTableSnapshot snapshot = await DomTableReader.ReadAsync(locator, cancellationToken).ConfigureAwait(false);
+        UiTableSnapshot snapshot = await DomTableReader.ReadAsync(locator, ProbeBudget.Unbounded, cancellationToken).ConfigureAwait(false);
 
         // Rows keyed by column name rather than by position, because an assertion that says
         // row["Price"] survives a column being inserted and row[3] does not.

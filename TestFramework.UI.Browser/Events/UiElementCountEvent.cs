@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TestFramework.Core.Steps;
@@ -81,6 +81,7 @@ public sealed class UiElementCountEvent : UiEvent<UiElementCountEvent>
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         (int count, UiQuerySpec? spec) = await TargetResolver.CountAsync(

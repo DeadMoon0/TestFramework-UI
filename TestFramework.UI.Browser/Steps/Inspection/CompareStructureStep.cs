@@ -1,3 +1,4 @@
+﻿using TestFramework.UI.Browser.Events;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,7 +58,7 @@ internal sealed class CompareStructureStep : UiInspectionStep<UiCompareResultCon
     {
         ArgumentNullException.ThrowIfNull(locator);
 
-        UiElementSnapshot snapshot = await DomProjector.ProjectAsync(locator, cancellationToken).ConfigureAwait(false);
+        UiElementSnapshot snapshot = await DomProjector.ProjectAsync(locator, ProbeBudget.Unbounded, cancellationToken).ConfigureAwait(false);
         IReadOnlyList<UiDifference> differences = StructureDiffer.Compare(this.expected, snapshot);
 
         UiCompareResultContext result = new UiCompareResultContext(

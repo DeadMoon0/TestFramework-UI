@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -60,10 +60,12 @@ public abstract class UiShapeEvent<TEvent> : UiEvent<TEvent>
     /// Compares the resolved scope against the expectation.
     /// </summary>
     /// <param name="element">The scope element.</param>
+    /// <param name="budget">How long a browser call may take before the step needs the time back.</param>
     /// <param name="cancellationToken">Cancels the look.</param>
     /// <returns>The differences, and the expectation that would pass, for the timeout.</returns>
     private protected abstract Task<(IReadOnlyList<string> Differences, string SuggestedCode)> CompareAsync(
         ILocator element,
+        ProbeBudget budget,
         CancellationToken cancellationToken);
 
     /// <inheritdoc />
@@ -95,6 +97,7 @@ public abstract class UiShapeEvent<TEvent> : UiEvent<TEvent>
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         (int count, UiQuerySpec? spec) = await TargetResolver.CountAsync(
@@ -127,7 +130,7 @@ public abstract class UiShapeEvent<TEvent> : UiEvent<TEvent>
         try
         {
             (IReadOnlyList<string> differences, string suggested) = await this
-                .CompareAsync(query.Locate(new UiResolvedTarget(spec, 0, 0, count, null)), cancellationToken)
+                .CompareAsync(query.Locate(new UiResolvedTarget(spec, 0, 0, count, null)), budget, cancellationToken)
                 .ConfigureAwait(false);
 
             this.lastDifferences = differences;
@@ -191,9 +194,10 @@ public sealed class UiStructureMatchesEvent : UiShapeEvent<UiStructureMatchesEve
     /// <inheritdoc />
     private protected override async Task<(IReadOnlyList<string> Differences, string SuggestedCode)> CompareAsync(
         ILocator element,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
-        UiElementSnapshot snapshot = await DomProjector.ProjectAsync(element, cancellationToken).ConfigureAwait(false);
+        UiElementSnapshot snapshot = await DomProjector.ProjectAsync(element, budget, cancellationToken).ConfigureAwait(false);
 
         return (
             StructureDiffer.Compare(this.expected, snapshot).Select(static difference => difference.ToString()).ToList(),
@@ -239,9 +243,10 @@ public sealed class UiTableMatchesEvent : UiShapeEvent<UiTableMatchesEvent>
     /// <inheritdoc />
     private protected override async Task<(IReadOnlyList<string> Differences, string SuggestedCode)> CompareAsync(
         ILocator element,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
-        UiTableSnapshot snapshot = await DomTableReader.ReadAsync(element, cancellationToken).ConfigureAwait(false);
+        UiTableSnapshot snapshot = await DomTableReader.ReadAsync(element, budget, cancellationToken).ConfigureAwait(false);
 
         return (
             this.expected.Compare(snapshot).Select(static difference => difference.ToString()).ToList(),

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using TestFramework.UI.Browser.Events;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -97,6 +98,7 @@ internal static class UiScriptRunner
     /// <param name="page">The page.</param>
     /// <param name="element">The element to run it on, or null to run it on the page.</param>
     /// <param name="variableStore">The run's variables, for the script's arguments.</param>
+    /// <param name="budget">How long a browser call may take before the step needs the time back.</param>
     /// <param name="cancellationToken">Cancels the run.</param>
     /// <returns>The result, as the page serialized it.</returns>
     /// <exception cref="InvalidOperationException">The page threw, or the result could not leave it.</exception>
@@ -105,6 +107,7 @@ internal static class UiScriptRunner
         IPage page,
         ILocator? element,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(script);
@@ -125,7 +128,7 @@ internal static class UiScriptRunner
         {
             return element is null
                 ? await PageJson.EvaluateAsync(page, script.Source, arguments).ConfigureAwait(false)
-                : await PageJson.EvaluateAsync(element, script.Source, arguments).ConfigureAwait(false);
+                : await PageJson.EvaluateAsync(element, script.Source, arguments, budget.Milliseconds).ConfigureAwait(false);
         }
         catch (PlaywrightException exception)
         {

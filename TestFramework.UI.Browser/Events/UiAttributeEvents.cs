@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -86,10 +86,11 @@ public sealed class UiAttributeEqualsEvent : UiEvent<UiAttributeEqualsEvent>
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         AttributeLook look = await AttributeProbe
-            .LookAsync(query, this.target, this.attribute, options, this.App, session, cancellationToken)
+            .LookAsync(query, this.target, this.attribute, options, this.App, session, budget, cancellationToken)
             .ConfigureAwait(false);
 
         if (!look.Found)
@@ -177,10 +178,11 @@ public sealed class UiAttributeChangedEvent : UiEvent<UiAttributeChangedEvent>
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         AttributeLook look = await AttributeProbe
-            .LookAsync(query, this.target, this.attribute, options, this.App, session, cancellationToken)
+            .LookAsync(query, this.target, this.attribute, options, this.App, session, budget, cancellationToken)
             .ConfigureAwait(false);
 
         if (!look.Found)
@@ -222,6 +224,7 @@ internal static class AttributeProbe
         UiResolutionOptions options,
         string app,
         UiSession session,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         // The counting form of the ladder, like the other waits: several matches are not an ambiguity
@@ -242,7 +245,13 @@ internal static class AttributeProbe
         }
 
         ILocator element = query.Locate(new UiResolvedTarget(spec, 0, 0, count, null));
-        string? value = await element.GetAttributeAsync(attribute).ConfigureAwait(false);
+
+        // Bounded by what is left of the step. Reading an attribute waits for the element to be attached,
+        // and unbounded it waits for the page's default - ten seconds out of the box - which is how a
+        // three-second wait ended up still inside Playwright when its own grace window closed.
+        string? value = await element
+            .GetAttributeAsync(attribute, new LocatorGetAttributeOptions { Timeout = budget.Milliseconds })
+            .ConfigureAwait(false);
 
         return new AttributeLook(true, value, spec.DescribeMatch());
     }

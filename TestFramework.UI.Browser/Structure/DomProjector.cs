@@ -1,4 +1,5 @@
-﻿using System;
+﻿using TestFramework.UI.Browser.Events;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Newtonsoft.Json.Linq;
@@ -99,17 +100,18 @@ internal static class DomProjector
     /// Takes a snapshot of one element and what is inside it.
     /// </summary>
     /// <param name="locator">The element to photograph.</param>
+    /// <param name="budget">How long a browser call may take before the step needs the time back.</param>
     /// <param name="cancellationToken">Cancels the projection.</param>
     /// <returns>The snapshot.</returns>
     /// <exception cref="PlaywrightException">The element is not there.</exception>
-    public static async Task<UiElementSnapshot> ProjectAsync(ILocator locator, CancellationToken cancellationToken)
+    public static async Task<UiElementSnapshot> ProjectAsync(ILocator locator, ProbeBudget budget, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(locator);
 
         cancellationToken.ThrowIfCancellationRequested();
 
         JToken? projected = await PageJson
-            .EvaluateAsync(locator, ProjectScript, new { maxDepth = MaxDepth, maxNodes = MaxNodes })
+            .EvaluateAsync(locator, ProjectScript, new { maxDepth = MaxDepth, maxNodes = MaxNodes }, budget.Milliseconds)
             .ConfigureAwait(false);
 
         if (projected is not JObject root)

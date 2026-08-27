@@ -76,10 +76,11 @@ public sealed class UiScriptIsTrueEvent : UiEvent<UiScriptIsTrueEvent>
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         JToken? result = await UiScriptRunner
-            .RunAsync(this.script, session.Page, element: null, variableStore, cancellationToken)
+            .RunAsync(this.script, session.Page, element: null, variableStore, budget, cancellationToken)
             .ConfigureAwait(false);
 
         if (result is { Type: JTokenType.Boolean })

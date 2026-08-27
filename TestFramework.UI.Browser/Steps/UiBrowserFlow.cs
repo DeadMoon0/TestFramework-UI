@@ -1,4 +1,5 @@
-﻿using System;
+﻿using TestFramework.UI.Browser.Events;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -896,6 +897,10 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             session.Page,
             resolved is null ? null : query.Locate(resolved),
             variableStore,
+
+            // A flow acts once rather than polling, so it keeps the page's action timeout. The budget is
+            // for the waits, whose deadline has a grace window to protect.
+            ProbeBudget.Unbounded,
             cancellationToken).ConfigureAwait(false);
 
         if (action.Kind == UiActionKind.Execute)

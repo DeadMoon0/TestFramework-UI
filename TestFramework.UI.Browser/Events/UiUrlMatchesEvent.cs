@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -92,6 +92,7 @@ public sealed class UiUrlMatchesEvent : UiEvent<UiUrlMatchesEvent>
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         string wanted = this.pattern.GetValue(variableStore)

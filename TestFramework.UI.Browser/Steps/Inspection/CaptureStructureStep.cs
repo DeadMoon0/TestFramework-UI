@@ -1,4 +1,5 @@
-﻿using System;
+﻿using TestFramework.UI.Browser.Events;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -71,7 +72,7 @@ internal sealed class CaptureStructureStep : UiInspectionStep<UiCaptureResultCon
     {
         ArgumentNullException.ThrowIfNull(locator);
 
-        UiElementSnapshot snapshot = await DomProjector.ProjectAsync(locator, cancellationToken).ConfigureAwait(false);
+        UiElementSnapshot snapshot = await DomProjector.ProjectAsync(locator, ProbeBudget.Unbounded, cancellationToken).ConfigureAwait(false);
         string rendered = DomProjector.Render(snapshot);
 
         UiCaptureResultContext result = new UiCaptureResultContext(

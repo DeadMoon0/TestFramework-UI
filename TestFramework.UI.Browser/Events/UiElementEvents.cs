@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using TestFramework.Core.Steps;
@@ -58,6 +58,7 @@ public sealed class UiElementVisibleEvent : UiEvent<UiElementVisibleEvent>
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
         => await ElementProbe.VisibleAsync(query, this.target, options, this.App, session, cancellationToken).ConfigureAwait(false);
 }
@@ -110,6 +111,7 @@ public sealed class UiElementHiddenEvent : UiEvent<UiElementHiddenEvent>
         PlaywrightElementQuery query,
         UiResolutionOptions options,
         VariableStore variableStore,
+        ProbeBudget budget,
         CancellationToken cancellationToken)
     {
         UiProbeOutcome visible = await ElementProbe
