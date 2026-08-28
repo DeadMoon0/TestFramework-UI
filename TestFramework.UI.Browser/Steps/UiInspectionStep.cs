@@ -114,7 +114,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
         string sessionVariable = UiSessionVariable.For(this.app);
         CancellationToken cancellationToken = context.Deadline.Token;
 
-        WebAppConfig config = UiEnvironmentOverrides.Apply(UiConfigResolver.Resolve(context, this.app));
+        WebAppConfig config = UiConfigResolver.ResolveEffective(context, this.app);
         UiRunState runState = UiRunState.For(context.Variables);
 
         UiSession session = await context.Services

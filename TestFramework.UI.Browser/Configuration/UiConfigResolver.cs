@@ -1,4 +1,5 @@
-﻿using System;
+﻿using TestFramework.UI.Browser.Runtime;
+using System;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Core.Environment.Graph;
 using TestFramework.Core.Steps;
@@ -32,6 +33,46 @@ internal static class UiConfigResolver
     /// <summary>
     /// Resolves the configuration, including an address that belongs to another package's resource.
     /// </summary>
+    /// <summary>
+    /// The configuration a step actually runs with, recorded on the run as it is resolved.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The three callers all did the same two things - resolve, then apply the environment overrides - and
+    /// the second one can change the browser, so anything recording what a run drove had to happen after
+    /// both. Doing it here rather than at each call site is what keeps one answer: three places recording
+    /// the same fact is three chances for them to disagree about what it is called.
+    /// </para>
+    /// <para>
+    /// What it records is what &#167;5 asks of every default: not what the run did, but what it did it with.
+    /// A suite that passes on two machines with different browsers now says so on each run, instead of both
+    /// runs looking identical and neither naming the browser that proved it.
+    /// </para>
+    /// </remarks>
+    /// <param name="context">The run.</param>
+    /// <param name="identifier">The application.</param>
+    /// <returns>The configuration, with overrides applied.</returns>
+    public static WebAppConfig ResolveEffective(RunContext context, WebAppIdentifier identifier)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(identifier);
+
+        WebAppConfig config = UiEnvironmentOverrides.Apply(Resolve(context, identifier));
+
+        context.EffectiveSettings.Record(Source, $"{identifier.Identifier}:Browser", config.EffectiveBrowser);
+        context.EffectiveSettings.Record(Source, $"{identifier.Identifier}:Headless", config.EffectiveHeadless ? "true" : "false");
+
+        if (config.Channel is { Length: > 0 } channel)
+        {
+            context.EffectiveSettings.Record(Source, $"{identifier.Identifier}:Channel", channel);
+        }
+
+        return config;
+    }
+
+    /// <summary>Who recorded it, so another package's "Browser" is a different entry rather than a clash.</summary>
+    private const string Source = "TestFramework.UI.Browser";
+
     /// <param name="context">The run.</param>
     /// <param name="identifier">The application.</param>
     /// <returns>The configuration, with a usable base address.</returns>
