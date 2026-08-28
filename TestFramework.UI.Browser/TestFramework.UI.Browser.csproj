@@ -16,7 +16,7 @@
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>First release. Steps take a RunContext, so a wait reads its own deadline instead of guessing a margin before it. Failure evidence - screenshot, markup, session story, and the held-open browser - moves out of the steps into a step observer the engine drives. The page now hands its answers over as text, parsed with Newtonsoft like the rest of the family. Requires TestFramework.Core 0.4.0, TestFramework.Config 0.3.0 and TestFramework.UI 0.1.0. Bridge a differently-named application with BridgedTo, naming the kind the serving package defines.</PackageReleaseNotes>
+		<PackageReleaseNotes>First release. Steps take a RunContext, so a wait reads its own deadline instead of guessing a margin before it. Failure evidence - screenshot, markup, session story, and the held-open browser - moves out of the steps into a step observer the engine drives. The page now hands its answers over as text, parsed with Newtonsoft like the rest of the family. Requires TestFramework.Core 0.4.0 and TestFramework.Config 0.3.0. Bridge a differently-named application with BridgedTo, naming the kind the serving package defines.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -47,7 +47,6 @@
 	  to the project.
 	-->
 	<ItemGroup>
-		<ProjectReference Include="..\TestFramework.UI\TestFramework.UI.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

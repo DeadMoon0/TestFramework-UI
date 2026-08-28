@@ -53,24 +53,27 @@ suite can assert on it.
 
 ## 5. Building Block View
 
-Three packages, deliberately layered:
+One package, and the reason there is only one:
 
-- **TestFramework.UI** — technology-neutral foundation, no Playwright: the session picture
-  (`UiSessionPicture`), the comparison algebra (`StructureDiffer`, `ExpectedTable`, `Cell`), text
-  normalization (`UiText`) and geometry (`UiBox`, `UiBoxRelations`) - public
-  on purpose, because a bridge is how another package joins in and no package may need private access to
-  do it.
-  A future desktop package builds on this without dragging a browser along.
 - **TestFramework.UI.Browser** — the web implementation: `BrowserExt` facade (`Session`, `Page`,
   `Events`, `Tooling`), the flow step (`UiBrowserFlow` — the flow *is* the step), the two-sweep
   `TargetResolver` over `IUiElementQuery`, typed reads (`Value.*`), named scripts (`Js.*`),
   inspections (structure, table, layout, captures), wait events, device profiles, and the
   Playwright runtime (`PlaywrightHost` process pool → per-run contexts → per-app sessions).
+
 There is no package between `.Browser` and the Web family. A browser step asks the run where its
 application is, and whatever configured or started that application published the address there; a
 name mismatch is said once on the identifier with `BridgedTo`, naming the kind the serving package
 defines. A `TestFramework.UI.Web` once held two helpers for that and was removed when bridging
 became one public operation — the introduction it performed is no longer needed.
+
+The technology-neutral half — the session picture (`UiSessionPicture`), the comparison algebra
+(`StructureDiffer`, `ExpectedTable`, `Cell`), text normalization (`UiText`) and geometry (`UiBox`,
+`UiBoxRelations`) — lives here too, under the `TestFramework.UI.*` namespaces it has always had. It
+was once its own package, justified by a desktop package that does not exist; that is the speculation
+the rule below forbids, and the taxonomy has no role for a piece with no outside field of its own.
+Keeping the namespaces means a second UI technology can still extract them later without breaking a
+consumer, through `[TypeForwardedTo]`.
 
 Shared targeting abstractions stay in `.Browser` until a second UI technology exists — rule of
 three, not speculation.

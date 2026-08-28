@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
@@ -14,7 +14,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\TestFramework.UI\TestFramework.UI.csproj" />
+		<ProjectReference Include="..\..\TestFramework.UI.Browser\TestFramework.UI.Browser.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,5 +1,4 @@
 ﻿<Solution>
-  <Project Path="TestFramework.UI/TestFramework.UI.csproj" />
   <Project Path="TestFramework.UI.Browser/TestFramework.UI.Browser.csproj" />
   <Project Path="UnitTests/TestFramework.UI.SampleWebApp/TestFramework.UI.SampleWebApp.csproj" />
   <Project Path="UnitTests/TestFramework.UI.Tests/TestFramework.UI.Tests.csproj" />

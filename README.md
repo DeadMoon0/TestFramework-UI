@@ -60,7 +60,6 @@ packages:
 
 - [TestFramework.UI.Browser/README.md](./TestFramework.UI.Browser/README.md) — driving, reading,
   waiting, structure and layout checks, devices, scripts, and the failure evidence.
-- [TestFramework.UI/README.md](./TestFramework.UI/README.md) — the technology-neutral foundation.
 - [Documentation/ERROR-HANDLING-UI.md](./Documentation/ERROR-HANDLING-UI.md) — every failure, what
   it captures, and the way out.
 - [Documentation/Arc42.md](./Documentation/Arc42.md) — architecture notes.
@@ -80,7 +79,6 @@ several in one timeline.
 
 ## Repository Layout
 
-- `TestFramework.UI` — technology-neutral foundation (session picture, comparison algebra, geometry).
 - `TestFramework.UI.Browser` — the web-browser implementation, driven through Playwright.
 - `UnitTests/` — browser-free tests, the gated browser suite, and the sample application they run
   against.

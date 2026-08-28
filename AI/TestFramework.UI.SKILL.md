@@ -105,7 +105,6 @@
 
 <grounding_files>
     - TestFramework.UI.Browser/README.md
-    - TestFramework.UI/README.md
     - Documentation/ERROR-HANDLING-UI.md
     - Documentation/Arc42.md
 </grounding_files>
@@ -122,7 +121,7 @@
     - TestFramework.UI.Browser/Events/UiEvent.cs
     - TestFramework.UI.Browser/Configuration/WebAppConfig.cs
     - TestFramework.UI.Browser/BrowserTimelineResultExtensions.cs
-    - TestFramework.UI/Session/UiSessionPicture.cs
-    - TestFramework.UI/Structure/ExpectedTable.cs
-    - TestFramework.UI/Layout/UiBox.cs
+    - TestFramework.UI.Browser/Session/UiSessionPicture.cs
+    - TestFramework.UI.Browser/Structure/ExpectedTable.cs
+    - TestFramework.UI.Browser/Layout/UiBox.cs
 </sources>

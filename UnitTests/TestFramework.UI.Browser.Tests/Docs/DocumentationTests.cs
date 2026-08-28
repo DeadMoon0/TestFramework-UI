@@ -52,9 +52,7 @@ public class DocumentationTests
         IEnumerable<Type> exceptionTypes = new[]
             {
                 typeof(UiActionFailedException).Assembly,           // TestFramework.UI.Browser
-                typeof(TestFramework.UI.UiText).Assembly,          // TestFramework.UI
             }
-            .Distinct()
             .SelectMany(static assembly => assembly.GetExportedTypes())
             .Where(static type => typeof(Exception).IsAssignableFrom(type));
 
