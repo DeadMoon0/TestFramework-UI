@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -9,12 +9,13 @@ using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Identifier;
+using TestFramework.UI.Web;
 using TestFramework.Web;
 using TestFramework.Web.Extensions;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace TestFramework.UI.Web.Tests;
+namespace TestFramework.UI.Browser.Tests.Configuration;
 
 /// <summary>
 /// A browser finding the address of an application the TestFramework.Web family configures.
@@ -30,6 +31,13 @@ namespace TestFramework.UI.Web.Tests;
 /// <para>
 /// Same cases as before the bridge was deleted, with one added: two kinds answering to one name is now a
 /// refusal that names both, where registration order used to decide.
+/// </para>
+/// <para>
+/// <strong>Why these live here rather than in <c>TestFramework.UI.Web.Tests</c>.</strong> What they exercise
+/// is this package's resolver, so this is the suite that owns them - a suite reaching into another package's
+/// internals needed a grant, and a grant between packages is the private handshake the family forbids. The
+/// bridging calls arrive the way a user's would, through <c>TestFramework.UI.Web</c>'s public DSL, and what
+/// that DSL puts on an identifier is pinned by its own suite, on its own public surface.
 /// </para>
 /// </remarks>
 public class BridgeResolutionTests(ITestOutputHelper output)
