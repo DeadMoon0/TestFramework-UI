@@ -122,7 +122,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
             .SessionAsync(this.app, config, runState, cancellationToken)
             .ConfigureAwait(false);
 
-        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.EffectiveTestIdAttribute, config.EffectiveActionTimeout);
+        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.EffectiveTestIdAttribute);
         UiResolutionOptions resolutionOptions = new UiResolutionOptions(config.EffectiveAmbiguityMode);
 
         await session.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -205,7 +205,9 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
         WebAppConfig config,
         CancellationToken cancellationToken)
     {
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.EffectiveActionTimeout;
+        // Stopwatch, not wall clock: one clock per deadline, and this budget must not jump with the
+        // system time. The loop stays bounded by the step token either way.
+        Stopwatch budget = Stopwatch.StartNew();
 
         while (true)
         {
@@ -215,7 +217,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
                     .ResolveAsync(query, this.target!, UiSmartContext.Section, resolutionOptions, this.app, session.Page.Url, cancellationToken)
                     .ConfigureAwait(false);
             }
-            catch (UiTargetNotFoundException) when (DateTimeOffset.UtcNow < deadline)
+            catch (UiTargetNotFoundException) when (budget.Elapsed < config.EffectiveActionTimeout)
             {
                 await Task.Delay(TimeSpan.FromMilliseconds(120), cancellationToken).ConfigureAwait(false);
             }
@@ -228,7 +230,9 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
         WebAppConfig config,
         CancellationToken cancellationToken)
     {
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.EffectiveCompareTimeout;
+        // Stopwatch, not wall clock: one clock per deadline, and this budget must not jump with the
+        // system time. The loop stays bounded by the step token either way.
+        Stopwatch budget = Stopwatch.StartNew();
 
         while (true)
         {
@@ -236,7 +240,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
                 .InspectAsync(resolved is null ? null : query.Locate(resolved), cancellationToken)
                 .ConfigureAwait(false);
 
-            if (!this.ShouldRetry(result) || DateTimeOffset.UtcNow >= deadline)
+            if (!this.ShouldRetry(result) || budget.Elapsed >= config.EffectiveCompareTimeout)
             {
                 return (result, detail);
             }

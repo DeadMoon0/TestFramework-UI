@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -151,7 +152,9 @@ internal static class UiChooser
         TimeSpan timeout,
         CancellationToken cancellationToken)
     {
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + timeout;
+        // Stopwatch, not wall clock: one clock per deadline, and this budget must not jump with the
+        // system time. The loop stays bounded by the step token either way.
+        Stopwatch budget = Stopwatch.StartNew();
 
         while (true)
         {
@@ -192,7 +195,7 @@ internal static class UiChooser
                     "does not say which one belongs to it, so choosing would be a guess.");
             }
 
-            if (DateTimeOffset.UtcNow >= deadline)
+            if (budget.Elapsed >= timeout)
             {
                 throw new TimeoutException(
                     $"The {describeTarget} was clicked, but no listbox appeared within {timeout.TotalSeconds:F0}s. " +

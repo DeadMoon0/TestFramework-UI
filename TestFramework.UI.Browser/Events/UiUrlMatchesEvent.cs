@@ -98,8 +98,10 @@ public sealed class UiUrlMatchesEvent : UiEvent<UiUrlMatchesEvent>
         string wanted = this.pattern.GetValue(variableStore)
             ?? throw new InvalidOperationException("The address pattern resolved to nothing.");
 
+        // The match timeout is the same rule the table cells apply: a pathological pattern polled in a
+        // loop must fail as a stated regex problem, never hold the poll hostage.
         bool matches = this.asRegex
-            ? Regex.IsMatch(session.Page.Url, wanted)
+            ? Regex.IsMatch(session.Page.Url, wanted, RegexOptions.None, TimeSpan.FromSeconds(1))
             : session.Page.Url.Contains(wanted, StringComparison.Ordinal);
 
         return Task.FromResult(new UiProbeOutcome(matches));

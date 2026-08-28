@@ -101,10 +101,9 @@ public sealed class UiConfigurationException : Exception
     public static UiConfigurationException MissingBaseUrl(string identifier)
         => new UiConfigurationException(
             $"The web application '{identifier}' has no address. Set 'BaseUrl' for it; or configure a site " +
-            $"or REST API under the same identifier '{identifier}' and load the bridge with .LoadUIWebBridge() " +
-            "(TestFramework.UI.Web package), so the address resolves from there whether a configuration " +
-            "entry or a container environment supplied it; or name a differently-named resource with " +
-            "'BaseUrlFromSite' / 'BaseUrlFromApi'.");
+            $"or REST API under the same identifier '{identifier}' with LoadWebConfig(), so the address " +
+            "resolves through the run whether a configuration entry or a container environment supplied " +
+            "it; or name a differently-named resource with 'BaseUrlFromSite' / 'BaseUrlFromApi'.");
 
     /// <summary>
     /// An entry inherits from another that does not exist, or from a chain that loops.

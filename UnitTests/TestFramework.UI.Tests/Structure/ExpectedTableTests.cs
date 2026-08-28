@@ -163,4 +163,20 @@ public class ExpectedTableTests
     public void CellsAreComparedNormalized()
         => Assert.Empty(ExpectedTable.WithHeader("Order").Row("A-1001").Compare(
             new UiTableSnapshot(["Order"], [["  A-1001\n "]])));
+
+    [Fact]
+    public void ATableFreezesOnFirstUse()
+    {
+        // Like its two structure siblings: a table shared by several timelines must not be editable by
+        // one of them after another has started comparing against it, or what the frozen run proved
+        // would change with no write ever throwing.
+        ExpectedTable expected = ExpectedTable.WithHeader("Order").Row("A-1001");
+
+        expected.Compare(new UiTableSnapshot(["Order"], [["A-1001"]]));
+
+        Assert.Throws<InvalidOperationException>(() => expected.Row("A-1002"));
+        Assert.Throws<InvalidOperationException>(() => expected.AllowExtraRows());
+        Assert.Throws<InvalidOperationException>(() => expected.InOrder());
+        Assert.Throws<InvalidOperationException>(() => expected.KeyedBy("Order"));
+    }
 }

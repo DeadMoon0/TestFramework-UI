@@ -40,11 +40,21 @@ internal sealed class DefaultUIComponentFactory : IUIComponentFactory
         BrowserNewContextOptions options = await BuildContextOptionsAsync(driver, config).ConfigureAwait(false);
         IBrowserContext context = await browser.NewContextAsync(options).ConfigureAwait(false);
 
-        // One place to set the per-action limit, so every interaction fails inside the step's own budget
-        // and the failure names the action rather than the step that timed out around it.
-        context.SetDefaultTimeout((float)config.EffectiveActionTimeout.TotalMilliseconds);
+        try
+        {
+            // One place to set the per-action limit, so every interaction fails inside the step's own budget
+            // and the failure names the action rather than the step that timed out around it.
+            context.SetDefaultTimeout((float)config.EffectiveActionTimeout.TotalMilliseconds);
 
-        return await UiSession.CreateAsync(app, config, context).ConfigureAwait(false);
+            return await UiSession.CreateAsync(app, config, context).ConfigureAwait(false);
+        }
+        catch
+        {
+            // A context whose session never came to be belongs to nobody: without this, the pooled
+            // browser kept it alive until process exit.
+            await context.CloseAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
     private static Task<BrowserNewContextOptions> BuildContextOptionsAsync(IPlaywright driver, WebAppConfig config)

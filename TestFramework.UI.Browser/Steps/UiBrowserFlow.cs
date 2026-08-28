@@ -120,6 +120,20 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     public UiBrowserFlow Type(UiTarget field, VariableReference<string> text)
         => this.Add(new UiActionSpec(UiActionKind.Type, field, text));
 
+    /// <summary>
+    /// Types keystroke-wise without the value ever appearing in a log, a trace or a failure message.
+    /// </summary>
+    /// <remarks>
+    /// The sensitive twin of <see cref="Type"/>, for a password behind an input mask or an
+    /// autocomplete - the cases <see cref="Type"/>'s own doc recommends it for, which are also the
+    /// cases where the value is a credential. <see cref="FillSensitive"/> is the one-motion form.
+    /// </remarks>
+    /// <param name="field">The field.</param>
+    /// <param name="text">What to type, character by character.</param>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow TypeSensitive(UiTarget field, VariableReference<string> text)
+        => this.Add(new UiActionSpec(UiActionKind.Type, field, text, Sensitive: true));
+
     /// <summary>Chooses an option from a list.</summary>
     /// <param name="field">The list.</param>
     /// <param name="option">The option's value or visible text.</param>
@@ -500,7 +514,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             ? existing
             : UiSessionPicture.Empty(this.app);
 
-        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.EffectiveTestIdAttribute, config.EffectiveActionTimeout);
+        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.EffectiveTestIdAttribute);
         UiResolutionOptions resolutionOptions = new UiResolutionOptions(config.EffectiveAmbiguityMode);
         List<UiSessionEntry> entries = new List<UiSessionEntry>();
 
@@ -528,6 +542,19 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                     picture = picture.Add(entries, session.Page.Url, await SafeTitleAsync(session).ConfigureAwait(false));
 
                     throw this.Fail(action, index, entries, session, runState, picture, sessionVariable, context, exception);
+                }
+                catch (OperationCanceledException exception) when (context.Deadline.HasExpired)
+                {
+                    // The story of what DID happen survives the timeout: these entries lived only in
+                    // this local list, so the observer photographed the page against a pre-step story
+                    // and the frozen run missed the step entirely. Same catch the wait events carry,
+                    // and the account names which action was running when the time ran out.
+                    picture = picture.Add(entries, session.Page.Url, await SafeTitleAsync(session).ConfigureAwait(false));
+                    context.Variables.SetVariable(sessionVariable, picture);
+
+                    throw new TimeoutException(
+                        $"Action {index + 1} of {this.actions.Count} on '{this.app}' ({action.Describe()}) was still running when the step's time ran out.",
+                        exception);
                 }
             }
 
@@ -651,7 +678,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
 
             case UiActionKind.Screenshot:
                 detail = await UiFailureBundle
-                    .ScreenshotAsync(session, runState, action.CaptureName ?? "screenshot")
+                    .ScreenshotAsync(session, runState, action.CaptureName ?? "screenshot", logger)
                     .ConfigureAwait(false);
                 break;
 
@@ -939,7 +966,9 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         WebAppConfig config,
         CancellationToken cancellationToken)
     {
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.EffectiveActionTimeout;
+        // Stopwatch, not wall clock: one clock per deadline, and this budget must not jump with the
+        // system time. The loop stays bounded by the step token either way.
+        Stopwatch budget = Stopwatch.StartNew();
 
         while (true)
         {
@@ -949,7 +978,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                     .ResolveAsync(query, target, context, resolutionOptions, this.app, session.Page.Url, cancellationToken)
                     .ConfigureAwait(false);
             }
-            catch (UiTargetNotFoundException) when (DateTimeOffset.UtcNow < deadline)
+            catch (UiTargetNotFoundException) when (budget.Elapsed < config.EffectiveActionTimeout)
             {
                 // Not found may simply mean not yet: an application that renders after fetching data is
                 // normal, and waiting for it is the framework's job rather than the test's. Ambiguity is
@@ -968,7 +997,10 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         CancellationToken cancellationToken)
     {
         UiTarget target = action.Target ?? throw new InvalidOperationException("An absence expectation needs a target.");
-        DateTimeOffset deadline = DateTimeOffset.UtcNow + config.EffectiveActionTimeout;
+
+        // Stopwatch, not wall clock: one clock per deadline, and this budget must not jump with the
+        // system time. The loop stays bounded by the step token either way.
+        Stopwatch budget = Stopwatch.StartNew();
 
         while (true)
         {
@@ -995,7 +1027,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 return;
             }
 
-            if (DateTimeOffset.UtcNow >= deadline)
+            if (budget.Elapsed >= config.EffectiveActionTimeout)
             {
                 throw new TimeoutException(
                     $"The {target.Describe()} was still on the page after {config.EffectiveActionTimeout.TotalSeconds:F0}s, " +

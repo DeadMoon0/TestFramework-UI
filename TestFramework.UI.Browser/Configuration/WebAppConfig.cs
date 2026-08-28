@@ -29,14 +29,15 @@ public sealed record WebAppConfig : IInheritsConfig
 
     /// <summary>
     /// The identifier of a REST API whose configured address to use instead, for an application the
-    /// TestFramework.Web family serves itself. Requires the bridge package.
+    /// TestFramework.Web family serves itself. Resolves through the run; no bridge package involved.
     /// </summary>
     public string? BaseUrlFromApi { get; init; }
 
     /// <summary>
     /// The identifier of a configured site whose address to use instead, when it differs from this
-    /// application's own identifier. Requires the bridge package. With matching names nothing has to
-    /// be set: the application's own identifier is looked up in the site configuration by itself.
+    /// application's own identifier. Resolves through the run; no bridge package involved. With
+    /// matching names nothing has to be set: the application's own identifier is looked up in the
+    /// site configuration by itself.
     /// </summary>
     public string? BaseUrlFromSite { get; init; }
 
@@ -110,12 +111,13 @@ public sealed record WebAppConfig : IInheritsConfig
 
     /// <summary>
     /// How long a single interaction may take before it fails. Kept well below a step's own timeout so
-    /// the failure names the action rather than the step.
+    /// the failure names the action rather than the step. Defaults to 10 seconds.
     /// </summary>
     public TimeSpan? DefaultActionTimeout { get; init; }
 
     /// <summary>
     /// How long a comparison against the live page may keep retrying while the page settles.
+    /// Defaults to 5 seconds.
     /// </summary>
     public TimeSpan? DefaultCompareTimeout { get; init; }
 

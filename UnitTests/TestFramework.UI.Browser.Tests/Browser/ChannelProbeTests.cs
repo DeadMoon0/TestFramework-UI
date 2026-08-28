@@ -39,7 +39,7 @@ public class ChannelProbeTests(SampleAppFixture fixture, ITestOutputHelper outpu
         await page.GotoAsync(fixture.AppUrl + "checkout");
         await page.GetByRole(AriaRole.Heading, new PageGetByRoleOptions { Name = "Checkout" }).WaitForAsync();
 
-        PlaywrightElementQuery query = new PlaywrightElementQuery(page, "data-testid", TimeSpan.FromSeconds(2));
+        PlaywrightElementQuery query = new PlaywrightElementQuery(page, "data-testid");
 
         Dictionary<(string Name, UiMatchChannel Channel, bool Exact), int> counts = new();
 

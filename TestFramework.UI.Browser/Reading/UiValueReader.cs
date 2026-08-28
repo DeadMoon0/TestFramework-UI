@@ -32,6 +32,9 @@ internal static class UiValueReader
     /// <summary>How many existing names a failure lists at most.</summary>
     private const int MaxNamed = 15;
 
+    /// <summary>What the trace shows in place of a value that must not be echoed.</summary>
+    private const string SensitiveDetail = "•••";
+
     /// <summary>
     /// Reads one value.
     /// </summary>
@@ -223,7 +226,10 @@ internal static class UiValueReader
 
         if (value is not null)
         {
-            return Result(value, resolved: null);
+            // The variable is the one channel the value travels; the trace shows a placeholder.
+            // Local storage is where tokens live, and the trace detail reaches the run log, the
+            // session picture, failure messages and the evidence bundle.
+            return new UiReadResult(value, SensitiveDetail, Resolved: null);
         }
 
         IReadOnlyList<string> keys = await page
@@ -251,7 +257,11 @@ internal static class UiValueReader
         {
             if (string.Equals(cookie.Name, source.Argument, StringComparison.Ordinal))
             {
-                return Result(cookie.Value, resolved: null);
+                // The variable is the one channel the value travels; the trace shows a placeholder.
+                // This source's own doc names an HttpOnly cookie - a session token, typically - as
+                // the primary use, so echoing the value into the trace printed the token into logs
+                // and evidence by construction.
+                return new UiReadResult(cookie.Value, SensitiveDetail, Resolved: null);
             }
         }
 

@@ -35,16 +35,17 @@ internal sealed class PlaywrightElementQuery : IUiElementQuery
 
     private readonly IPage page;
     private readonly string testIdAttribute;
-    private readonly float probeTimeoutMs;
 
-    public PlaywrightElementQuery(IPage page, string testIdAttribute, TimeSpan probeTimeout)
+    // Deliberately no timeout parameter: probes are bounded by the context's default timeout, set
+    // once when the session is created. A probeTimeout parameter used to be accepted here and
+    // silently ignored, which read as if it bounded these calls.
+    public PlaywrightElementQuery(IPage page, string testIdAttribute)
     {
         ArgumentNullException.ThrowIfNull(page);
         ArgumentException.ThrowIfNullOrWhiteSpace(testIdAttribute);
 
         this.page = page;
         this.testIdAttribute = testIdAttribute;
-        this.probeTimeoutMs = (float)probeTimeout.TotalMilliseconds;
     }
 
     /// <inheritdoc />

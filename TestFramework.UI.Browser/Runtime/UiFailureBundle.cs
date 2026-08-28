@@ -99,8 +99,9 @@ internal static class UiFailureBundle
     /// <param name="session">The session to photograph.</param>
     /// <param name="runState">The run, for where to write.</param>
     /// <param name="name">What the screenshot is of.</param>
+    /// <param name="logger">Where a failed capture says why; null keeps it silent.</param>
     /// <returns>The file's path, or null when it could not be taken.</returns>
-    public static async Task<string?> ScreenshotAsync(UiSession session, UiRunState runState, string name)
+    public static async Task<string?> ScreenshotAsync(UiSession session, UiRunState runState, string name, ScopedLogger? logger = null)
     {
         try
         {
@@ -114,6 +115,10 @@ internal static class UiFailureBundle
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or PlaywrightException)
         {
+            // Best effort stays best effort, but a capture the test asked for by name must not vanish
+            // without a trace: the session entry carries no path, and this line says why.
+            logger?.LogWarning("The screenshot '{0}' could not be taken: {1}", name, exception.Message);
+
             return null;
         }
     }
@@ -151,10 +156,18 @@ internal static class UiFailureBundle
 
     private static async Task TryWritePictureAsync(UiSessionPicture picture, string directory)
     {
-        string json = JsonConvert.SerializeObject(picture, Formatting.Indented);
+        // The serializer is inside the try like everything else here: evidence gathering promises not
+        // to throw, and a picture that cannot be serialized costs the json file, never the run.
+        try
+        {
+            string json = JsonConvert.SerializeObject(picture, Formatting.Indented);
 
-        await File.WriteAllTextAsync(Path.Combine(directory, "session-picture.json"), json).ConfigureAwait(false);
-        await File.WriteAllTextAsync(Path.Combine(directory, "session.txt"), picture.ToString()).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(directory, "session-picture.json"), json).ConfigureAwait(false);
+            await File.WriteAllTextAsync(Path.Combine(directory, "session.txt"), picture.ToString()).ConfigureAwait(false);
+        }
+        catch (JsonException)
+        {
+        }
     }
 
     private static async Task TryWriteConsoleAsync(UiSessionPicture picture, string directory)

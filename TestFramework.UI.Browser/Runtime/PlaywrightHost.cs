@@ -27,7 +27,11 @@ namespace TestFramework.UI.Browser.Runtime;
 internal static class PlaywrightHost
 {
     private static readonly SemaphoreSlim BrowserGate = new SemaphoreSlim(1, 1);
-    private static readonly Dictionary<string, IBrowser> Browsers = new Dictionary<string, IBrowser>(StringComparer.Ordinal);
+
+    // Concurrent, because the fast-path read above the gate is deliberately lock-free: two parallel
+    // steps launching different browsers would otherwise read a plain dictionary mid-resize. The gate
+    // still serializes the launches; the dictionary's own safety covers the reads.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, IBrowser> Browsers = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Started once per process, and deliberately not behind the same gate the browsers use.

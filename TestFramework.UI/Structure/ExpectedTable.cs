@@ -27,6 +27,7 @@ public sealed class ExpectedTable
     private string? keyColumn;
     private bool allowExtraRows;
     private bool inOrder;
+    private bool frozen;
 
     private ExpectedTable(IEnumerable<string> columns)
     {
@@ -58,6 +59,7 @@ public sealed class ExpectedTable
     public ExpectedTable Row(params CellRule[] cells)
     {
         ArgumentNullException.ThrowIfNull(cells);
+        this.EnsureNotFrozen();
 
         if (cells.Length != this.columns.Count)
         {
@@ -85,6 +87,7 @@ public sealed class ExpectedTable
     public ExpectedTable KeyedBy(string column)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(column);
+        this.EnsureNotFrozen();
 
         if (!this.columns.Contains(column, StringComparer.OrdinalIgnoreCase))
         {
@@ -104,6 +107,7 @@ public sealed class ExpectedTable
     /// <returns>The same table, for chaining.</returns>
     public ExpectedTable AllowExtraRows()
     {
+        this.EnsureNotFrozen();
         this.allowExtraRows = true;
 
         return this;
@@ -115,6 +119,7 @@ public sealed class ExpectedTable
     /// <returns>The same table, for chaining.</returns>
     public ExpectedTable InOrder()
     {
+        this.EnsureNotFrozen();
         this.inOrder = true;
 
         return this;
@@ -128,6 +133,11 @@ public sealed class ExpectedTable
     public IReadOnlyList<UiDifference> Compare(UiTableSnapshot actual)
     {
         ArgumentNullException.ThrowIfNull(actual);
+
+        // Frozen on first use, like its two siblings: a table shared by several timelines cannot be
+        // edited by one of them after another has started comparing against it, or what the frozen
+        // run proved would change with no write ever throwing.
+        this.frozen = true;
 
         List<UiDifference> differences = new List<UiDifference>();
 
@@ -244,6 +254,17 @@ public sealed class ExpectedTable
         }
 
         return -1;
+    }
+
+    private void EnsureNotFrozen()
+    {
+        if (this.frozen)
+        {
+            throw new InvalidOperationException(
+                "This expected table has already been used by a run, so it can no longer be changed: a table " +
+                "shared by several timelines cannot be edited by one of them after another has started " +
+                "comparing against it. Build a new ExpectedTable for the changed expectation.");
+        }
     }
 
     private int KeyIndex()

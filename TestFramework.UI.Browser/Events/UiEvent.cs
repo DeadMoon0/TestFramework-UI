@@ -155,7 +155,7 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
             .SessionAsync(this.app, config, runState, context.Deadline.Token)
             .ConfigureAwait(false);
 
-        this.query = new PlaywrightElementQuery(this.session.Page, config.EffectiveTestIdAttribute, config.EffectiveActionTimeout);
+        this.query = new PlaywrightElementQuery(this.session.Page, config.EffectiveTestIdAttribute);
         this.resolutionOptions = new UiResolutionOptions(config.EffectiveAmbiguityMode);
         this.clock = Stopwatch.StartNew();
         this.polls = 0;
@@ -185,8 +185,10 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
         // CI lost both attempts. There is a grace window now, so the account below is heard as it is.
         catch (OperationCanceledException exception) when (context.Deadline.HasExpired)
         {
-            // Written before this throws, so the observer photographing the page reads a session story that
-            // includes the wait that never ended.
+            // Written before this throws, so the observer photographing the page reads the session
+            // story as this event last left it. The timed-out wait itself is not an entry - only a
+            // completed wait records one - so what this buys is the story up to it, and a first-step
+            // wait materializes the empty picture the observer would otherwise not find at all.
             UiSessionPicture picture = this.Picture(context.Variables);
             context.Variables.SetVariable(UiSessionVariable.For(this.app), picture);
 

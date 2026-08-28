@@ -108,9 +108,12 @@ internal sealed class UiSession : IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        this.Gate.Dispose();
-
+        // The context first, the gate last: a straggling waiter that acquires the gate mid-teardown
+        // meets a closed page - an honest Playwright error naming the page - where a disposed gate
+        // threw ObjectDisposedException from inside the framework instead.
         await this.Context.CloseAsync().ConfigureAwait(false);
+
+        this.Gate.Dispose();
     }
 
     private void Record(string message)

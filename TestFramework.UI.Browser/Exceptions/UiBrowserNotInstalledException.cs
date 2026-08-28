@@ -48,8 +48,8 @@ public sealed class UiBrowserNotInstalledException : Exception
               3. Install them from a terminal, in the test project's output folder:
                      pwsh bin/Debug/net8.0/playwright.ps1 install chromium
 
-            Tests that drive a browser are meant to opt in through the TESTFRAMEWORK_UI_BROWSER
-            environment variable, so a clone with no browser installed still goes green by skipping them.
+            On a machine with any browser installed, the tests find and use it on their own - the
+            TESTFRAMEWORK_UI_BROWSER environment variable only overrides WHICH one, never whether.
             """;
     }
 }

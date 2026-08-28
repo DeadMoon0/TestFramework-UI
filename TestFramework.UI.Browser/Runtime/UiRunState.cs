@@ -27,7 +27,12 @@ namespace TestFramework.UI.Browser.Runtime;
 /// </remarks>
 internal sealed class UiRunState
 {
-    private readonly Dictionary<string, UiSession> sessions = new Dictionary<string, UiSession>(StringComparer.OrdinalIgnoreCase);
+    // Concurrent, because the dictionary used to be touched under two different primitives - the
+    // gate on the create path, lock(sessions) on the read paths - which exclude nothing from each
+    // other: the failure observer enumerating open sessions while a parallel step's create wrote was
+    // a concurrent enumeration/mutation. One dictionary, one rule: its own thread safety covers every
+    // touch, and the gate keeps doing the only job it ever had - one browser launch per application.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, UiSession> sessions = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim sessionGate = new SemaphoreSlim(1, 1);
     private readonly Lazy<string> runDirectory;
     private int cleanupClaimed;
@@ -132,21 +137,11 @@ internal sealed class UiRunState
     /// </summary>
     /// <returns>The sessions.</returns>
     public IReadOnlyList<UiSession> OpenSessions()
-    {
-        lock (this.sessions)
-        {
-            return new List<UiSession>(this.sessions.Values);
-        }
-    }
+        => new List<UiSession>(this.sessions.Values);
 
     /// <summary>
     /// Forgets every session, after they have been closed.
     /// </summary>
     public void Clear()
-    {
-        lock (this.sessions)
-        {
-            this.sessions.Clear();
-        }
-    }
+        => this.sessions.Clear();
 }
