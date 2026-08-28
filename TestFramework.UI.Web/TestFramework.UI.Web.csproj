@@ -11,12 +11,12 @@
 		<PackageTags>Test;UnitTest;IntegrationTest;Framework;Fluent;Timeline;UI;Browser;Playwright;Web;Rest;Api</PackageTags>
 		<PackageIcon>Icon.png</PackageIcon>
 		<Description>Points browser steps at the application the TestFramework.Web package family already configures. A web app identifier can take its base address from a configured REST API identifier, and the browser step declares the same environment requirement as the API steps - so one provisioned application serves both doors of the same timeline.</Description>
-		<Version>0.2.0</Version>
+		<Version>0.1.0</Version>
 		<PackageProjectUrl>https://github.com/DeadMoon0/TestFramework-UI</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>First release. Browser steps resolve their application from the Web family's configuration: an identifier shared with a configured site resolves by itself, FromWebApi covers an application the API process serves, FromSite covers a name mismatch. Requires TestFramework.UI.Browser 0.2.0 and TestFramework.Web 0.4.0.</PackageReleaseNotes>
+		<PackageReleaseNotes>First release. Browser steps resolve their application from the Web family's configuration: an identifier shared with a configured site resolves by itself, FromWebApi covers an application the API process serves, FromSite covers a name mismatch. Requires TestFramework.UI.Browser 0.1.0 and TestFramework.Web 0.5.0.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
