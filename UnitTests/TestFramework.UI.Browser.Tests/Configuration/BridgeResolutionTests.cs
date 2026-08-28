@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
@@ -8,8 +8,8 @@ using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Configuration;
+using TestFramework.Core.Environment;
 using TestFramework.UI.Browser.Identifier;
-using TestFramework.UI.Web;
 using TestFramework.Web;
 using TestFramework.Web.Extensions;
 using Xunit;
@@ -33,11 +33,11 @@ namespace TestFramework.UI.Browser.Tests.Configuration;
 /// refusal that names both, where registration order used to decide.
 /// </para>
 /// <para>
-/// <strong>Why these live here rather than in <c>TestFramework.UI.Web.Tests</c>.</strong> What they exercise
-/// is this package's resolver, so this is the suite that owns them - a suite reaching into another package's
-/// internals needed a grant, and a grant between packages is the private handshake the family forbids. The
-/// bridging calls arrive the way a user's would, through <c>TestFramework.UI.Web</c>'s public DSL, and what
-/// that DSL puts on an identifier is pinned by its own suite, on its own public surface.
+/// <strong>Why a bridge needs no package between the two.</strong> What these exercise is this package's
+/// resolver, and the bridging calls arrive the way a user's would - <c>BridgedTo</c> with the kind the
+/// serving package defines. There was once a <c>TestFramework.UI.Web</c> holding two three-line helpers for
+/// exactly that; once bridging became one public operation taking a requirement, the package in between had
+/// nothing left to do and was removed.
 /// </para>
 /// </remarks>
 public class BridgeResolutionTests(ITestOutputHelper output)
@@ -71,16 +71,16 @@ public class BridgeResolutionTests(ITestOutputHelper output)
     [Fact]
     public async Task AnIdentifierInBothSectionsResolvesByTheDeclaredKind()
     {
-        // FromSite and FromWebApi both put a kind on the requirement, which is the whole reason they exist
-        // rather than a bare name - and it is the only thing that can tell these two entries apart.
+        // A bridge puts a kind on the requirement, which is the whole reason it takes one rather than a bare
+        // name - and it is the only thing that can tell these two entries apart.
         TimelineRun viaSite = await Run(
-            new WebAppIdentifier("shop").FromSite("shop"),
+            new WebAppIdentifier("shop").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.Site, "shop")),
             new WebAppConfig { Browser = "chromium" },
             ("Site:shop:BaseUrl", "http://site/"),
             ("Api:shop:BaseUrl", "http://api/"));
 
         TimelineRun viaApi = await Run(
-            new WebAppIdentifier("shop").FromWebApi("shop"),
+            new WebAppIdentifier("shop").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, "shop")),
             new WebAppConfig { Browser = "chromium" },
             ("Site:shop:BaseUrl", "http://site/"),
             ("Api:shop:BaseUrl", "http://api/"));
@@ -127,7 +127,7 @@ public class BridgeResolutionTests(ITestOutputHelper output)
     public async Task BaseUrlFromApiResolvesADifferentlyNamedApi()
     {
         // Named for what it does rather than for a store it reads. Neither of these two members ever
-        // restricted the search to a kind - only FromSite and FromWebApi do that - so the old name promised
+        // restricted the search to a kind - only a bridged requirement does that - so the old name promised
         // something the code did not deliver; see the debt ledger.
         TimelineRun run = await Run(
             new WebAppIdentifier("shop"),

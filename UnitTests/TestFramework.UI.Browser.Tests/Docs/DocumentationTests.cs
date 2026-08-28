@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -53,7 +53,6 @@ public class DocumentationTests
             {
                 typeof(UiActionFailedException).Assembly,           // TestFramework.UI.Browser
                 typeof(TestFramework.UI.UiText).Assembly,          // TestFramework.UI
-                typeof(TestFramework.UI.Web.UiWebBridgeConfigExtension).Assembly, // TestFramework.UI.Web
             }
             .Distinct()
             .SelectMany(static assembly => assembly.GetExportedTypes())

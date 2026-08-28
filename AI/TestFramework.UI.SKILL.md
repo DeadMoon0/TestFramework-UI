@@ -9,7 +9,7 @@
 
 <package_scope>
     Covers BrowserExt.Session(...) interaction flows, BrowserExt.Page(...) inspections (structure, table, layout, captures), BrowserExt.Events waits, the Target model and two-sweep resolution, typed value reads (Value.*), named JavaScript execution (Js.*), device profiles and configuration, the session picture, and the failure evidence.
-    Also covers TestFramework.UI.Web: resolving the application's address from the TestFramework.Web family's Site and Api configuration.
+    Also covers resolving the application's address from the TestFramework.Web family's Site and Api configuration.
     Does not cover starting or hosting the application, its database or its stubs; browser steps declare requirements (ui.webapp, or the bridged kind) and an environment satisfies them.
 </package_scope>
 
@@ -32,7 +32,7 @@
     A retried flow replays its actions against whatever the failed attempt left behind, so WithRetry on a flow is refused at plan time unless its first action is Navigate.
     Every failure carries its own diagnosis and the next thing to type, plus an evidence bundle on disk: screenshot, page markup, session story and console log, in the run's output folder that CI publishes. Console errors and page exceptions ride along in the session picture, so a crashed application is never misdiagnosed as a locator problem.
     Sessions are pooled browsers with per-run contexts: one run never sees another run's cookies or storage, and the first browser step of a run claims the one cleanup step that closes its sessions.
-    With TestFramework.UI.Web, an application configured or provisioned as a Site under its own identifier resolves with no bridging call at all; FromWebApi(apiIdentifier) covers the application its API process serves, and carries that requirement so one provisioned container serves API steps and browser steps alike.
+    An application configured or provisioned as a Site under its own identifier resolves with no bridging call at all; BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, apiId)) covers the application its API process serves, and carries that requirement so one provisioned container serves API steps and browser steps alike.
 </key_concepts>
 
 <best_practices>
@@ -68,7 +68,7 @@
     - WebAppConfig: BaseUrl, Browser, Channel, Headless, Device, BasedOn, ViewportWidth/Height, UserAgent, IsMobile, HasTouch, DeviceScaleFactor, Locale, ColorScheme, SlowMo, DefaultActionTimeout, DefaultCompareTimeout, TestIdAttribute, AmbiguityMode, IgnoreHttpsErrors, BaseUrlFromSite, BaseUrlFromApi
     - Exceptions: UiConfigurationException, UiTargetNotFoundException, UiAmbiguousTargetException, UiActionFailedException, UiStructureMismatchException, UiLayoutMismatchException, UiBrowserNotInstalledException
     - Extension point, public: WebAppIdentifier.BridgedTo (point an application at a resource another package provisions - a kind plus an identifier, which the run then answers for). Where a browser comes from is deliberately NOT one - it is internal, because a session's lifetime is this package's to own. There used to be an IUiBaseUrlSource seam here as well; it is gone, because asking the run is what it was a hand-built version of.
-    - TestFramework.UI.Web: identifier.FromWebApi(apiId) | FromSite(siteId). No registration to add: .LoadWebConfig() puts a site's or an API's address into the run and a browser step reads it there. .LoadUIWebBridge() and services.AddUiWebBridge() still compile but are obsolete no-ops - delete them.
+    - Bridging: identifier.BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi | .Site, id)). No registration to add: .LoadWebConfig() puts a site's or an API's address into the run and a browser step reads it there. There is no TestFramework.UI.Web package - it held two helpers for this and was removed.
     - BrowserExt.Tooling.InstallBrowsers("chromium") - a fixture helper, deliberately not a step
 </api_hints>
 
@@ -105,7 +105,6 @@
 
 <grounding_files>
     - TestFramework.UI.Browser/README.md
-    - TestFramework.UI.Web/README.md
     - TestFramework.UI/README.md
     - Documentation/ERROR-HANDLING-UI.md
     - Documentation/Arc42.md
@@ -126,5 +125,4 @@
     - TestFramework.UI/Session/UiSessionPicture.cs
     - TestFramework.UI/Structure/ExpectedTable.cs
     - TestFramework.UI/Layout/UiBox.cs
-    - TestFramework.UI.Web/WebAppIdentifierExtensions.cs
 </sources>

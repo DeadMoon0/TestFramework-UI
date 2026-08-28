@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Core.Timelines;
+using TestFramework.Core.Environment;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Tests.Shared;
-using TestFramework.UI.Web;
 using TestFramework.Web;
 using TestFramework.Web.Extensions;
 using Xunit.Abstractions;
@@ -57,7 +57,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AnApplicationServedByItsApiIsReachedThroughTheApisName()
     {
         // The API process serves the application itself, so the API's address IS the application's -
-        // said once, on the identifier, with FromWebApi.
+        // said once, on the identifier, by bridging it to the API resource.
         IServiceProvider services = fixture.Services(customize: registrations =>
         {
             IConfiguration configuration = Configured(("Api:shop-api:BaseUrl", fixture.BaseUrl));
@@ -65,7 +65,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
             registrations.LoadWebConfigs(configuration);
         });
 
-        WebAppIdentifier app = new WebAppIdentifier("shop-bridged").FromWebApi("shop-api");
+        WebAppIdentifier app = new WebAppIdentifier("shop-bridged").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, "shop-api"));
 
         Timeline timeline = Timeline.Create()
             .Trigger(BrowserExt.Session(app)
@@ -91,7 +91,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
             registrations.LoadWebConfigs(configuration);
         });
 
-        WebAppIdentifier app = new WebAppIdentifier("shop-bridged").FromWebApi("shop-api");
+        WebAppIdentifier app = new WebAppIdentifier("shop-bridged").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, "shop-api"));
 
         Timeline timeline = Timeline.Create()
             // The back door: what the API says the orders are.

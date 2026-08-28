@@ -66,9 +66,11 @@ Three packages, deliberately layered:
   `TargetResolver` over `IUiElementQuery`, typed reads (`Value.*`), named scripts (`Js.*`),
   inspections (structure, table, layout, captures), wait events, device profiles, and the
   Playwright runtime (`PlaywrightHost` process pool → per-run contexts → per-app sessions).
-- **TestFramework.UI.Web** — the bridge: browser steps resolve their address from the Web family's
-  `Site:`/`Api:` configuration (`FromSite`, `FromWebApi`, own-identifier resolution), so one
-  provisioned application serves API steps and browser steps alike.
+There is no package between `.Browser` and the Web family. A browser step asks the run where its
+application is, and whatever configured or started that application published the address there; a
+name mismatch is said once on the identifier with `BridgedTo`, naming the kind the serving package
+defines. A `TestFramework.UI.Web` once held two helpers for that and was removed when bridging
+became one public operation — the introduction it performed is no longer needed.
 
 Shared targeting abstractions stay in `.Browser` until a second UI technology exists — rule of
 three, not speculation.

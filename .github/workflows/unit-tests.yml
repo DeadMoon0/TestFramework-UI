@@ -1,4 +1,4 @@
-name: Unit Tests
+﻿name: Unit Tests
 
 # The browser tests gate themselves: without TESTFRAMEWORK_UI_BROWSER they skip with a visible
 # reason, so a bare runner is green on the browser-free suite - which is the fresh-clone promise.
@@ -41,5 +41,3 @@ jobs:
       - name: Browser package tests
         run: dotnet test UnitTests/TestFramework.UI.Browser.Tests/TestFramework.UI.Browser.Tests.csproj --configuration Release --logger "trx"
 
-      - name: Web bridge tests
-        run: dotnet test UnitTests/TestFramework.UI.Web.Tests/TestFramework.UI.Web.Tests.csproj --configuration Release --logger "trx"

@@ -1,9 +1,7 @@
-<Solution>
+﻿<Solution>
   <Project Path="TestFramework.UI/TestFramework.UI.csproj" />
   <Project Path="TestFramework.UI.Browser/TestFramework.UI.Browser.csproj" />
-  <Project Path="TestFramework.UI.Web/TestFramework.UI.Web.csproj" />
   <Project Path="UnitTests/TestFramework.UI.SampleWebApp/TestFramework.UI.SampleWebApp.csproj" />
   <Project Path="UnitTests/TestFramework.UI.Tests/TestFramework.UI.Tests.csproj" />
   <Project Path="UnitTests/TestFramework.UI.Browser.Tests/TestFramework.UI.Browser.Tests.csproj" />
-  <Project Path="UnitTests/TestFramework.UI.Web.Tests/TestFramework.UI.Web.Tests.csproj" />
 </Solution>

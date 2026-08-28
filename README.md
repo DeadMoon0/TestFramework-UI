@@ -17,8 +17,9 @@ the system under test, next to the API, the database and the stubs.
   started yourself): configure `Ui:<identifier>:BaseUrl` and write steps. With Microsoft Edge on the
   machine, set `"Channel": "msedge"` and nothing needs to be downloaded.
 - **The application is the one your API serves**, or a site the TestFramework.Web family configures:
-  add `TestFramework.UI.Web` and the browser resolves its address from the same configuration the
-  API and stub steps use — one identifier, both doors.
+  name it under the same identifier and the browser resolves its address from the same configuration
+  the API and stub steps use — one identifier, both doors. When the names differ, say so once with
+  `BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.Site, "..."))`.
 - **You want the same test as desktop and as phone**: point it at a second configuration entry with
   a `Device` — the browser environment is configuration, never test code.
 - **You need the site booted for you**: that is the container lane's job. Browser steps declare what
@@ -59,8 +60,6 @@ packages:
 
 - [TestFramework.UI.Browser/README.md](./TestFramework.UI.Browser/README.md) — driving, reading,
   waiting, structure and layout checks, devices, scripts, and the failure evidence.
-- [TestFramework.UI.Web/README.md](./TestFramework.UI.Web/README.md) — resolving the application
-  from the TestFramework.Web family's configuration.
 - [TestFramework.UI/README.md](./TestFramework.UI/README.md) — the technology-neutral foundation.
 - [Documentation/ERROR-HANDLING-UI.md](./Documentation/ERROR-HANDLING-UI.md) — every failure, what
   it captures, and the way out.
@@ -83,7 +82,6 @@ several in one timeline.
 
 - `TestFramework.UI` — technology-neutral foundation (session picture, comparison algebra, geometry).
 - `TestFramework.UI.Browser` — the web-browser implementation, driven through Playwright.
-- `TestFramework.UI.Web` — the bridge to the TestFramework.Web family's configuration.
 - `UnitTests/` — browser-free tests, the gated browser suite, and the sample application they run
   against.
 
