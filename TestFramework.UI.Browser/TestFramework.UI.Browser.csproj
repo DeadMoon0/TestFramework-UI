@@ -11,12 +11,13 @@
 		<PackageTags>Test;UnitTest;IntegrationTest;Framework;Fluent;Timeline;UI;Browser;Playwright;WebUI;E2E</PackageTags>
 		<PackageIcon>Icon.png</PackageIcon>
 		<Description>Drive a local browser from inside a TestFramework timeline. Interactions read as imperative steps (Navigate, Click, Fill, Expect) and address elements the way a person does - by role, label, placeholder or visible text - so a renamed or relocated control does not fail a test that only wanted to press it. Every non-exact match is recorded and assertable, ambiguity fails with the candidates and the dial that resolves it, and expected page structure is declared as a typed, reusable field.</Description>
-		<Version>0.1.0</Version>
+		<Version>0.2.0</Version>
 		<PackageProjectUrl>https://github.com/DeadMoon0/TestFramework-UI</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>First release. Steps take a RunContext, so a wait reads its own deadline instead of guessing a margin before it. Failure evidence - screenshot, markup, session story, and the held-open browser - moves out of the steps into a step observer the engine drives. The page now hands its answers over as text, parsed with Newtonsoft like the rest of the family. Requires TestFramework.Core 0.4.0 and TestFramework.Config 0.3.0. Bridge a differently-named application with BridgedTo, naming the kind the serving package defines.</PackageReleaseNotes>
+		<PackageReleaseNotes>New in 0.2.0: browser evidence is recorded as the run's own widgets rather than into a folder of the pack's own. A screenshot, the markup behind it and the session's story are attributed to the step and the attempt that produced them, and the pack's failure folder - named after a timestamp and a fresh identifier, sharing no key with the run that produced it - is gone. A paused run can also be asked to show itself: every session the run has open is photographed on request, unless the browser is being held open for a person to look at, which is said out loud rather than waited on. The capture policy a run resolved is recorded with the rest of what it resolved. Requires TestFramework.Core 0.5.0 and TestFramework.Config 0.3.0.
+Earlier: First release. Steps take a RunContext, so a wait reads its own deadline instead of guessing a margin before it. Failure evidence - screenshot, markup, session story, and the held-open browser - moves out of the steps into a step observer the engine drives. The page now hands its answers over as text, parsed with Newtonsoft like the rest of the family. Requires TestFramework.Core 0.4.0 and TestFramework.Config 0.3.0. Bridge a differently-named application with BridgedTo, naming the kind the serving package defines.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -38,7 +39,7 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
 		<PackageReference Include="TestFramework.Config" Version="0.3.0" />
-		<PackageReference Include="TestFramework.Core" Version="0.4.0" />
+		<PackageReference Include="TestFramework.Core" Version="0.5.0" />
 	</ItemGroup>
 
 	<!--

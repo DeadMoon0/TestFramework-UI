@@ -58,12 +58,8 @@ internal sealed class UiFailureObserver : IStepObserver
 
         foreach (UiSession session in sessions)
         {
-            await UiFailureBundle
-                .CaptureAsync(
-                    session,
-                    UiFailureBundle.DirectoryFor(runState, observation.Label, session.App, observation.Attempt),
-                    PictureOf(run.Variables, session.App),
-                    run.Logger)
+            await UiEvidence
+                .CaptureFailureAsync(session, run, PictureOf(run.Variables, session.App), observation.Label)
                 .ConfigureAwait(false);
         }
 

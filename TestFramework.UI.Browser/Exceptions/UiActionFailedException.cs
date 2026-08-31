@@ -32,7 +32,10 @@ public sealed class UiActionFailedException : Exception
         this.ActionNumber = actionNumber;
         this.ActionCount = actionCount;
         this.ConsoleErrors = consoleErrors;
+
+#pragma warning disable CS0618 // Set once, here, so the obsolete member keeps its declared meaning of "nothing".
         this.FailureBundlePath = failureBundlePath;
+#pragma warning restore CS0618
     }
 
     /// <summary>The application being driven.</summary>
@@ -50,7 +53,16 @@ public sealed class UiActionFailedException : Exception
     /// <summary>What the page complained about while this step ran.</summary>
     public IReadOnlyList<string> ConsoleErrors { get; }
 
-    /// <summary>The folder holding the screenshot, markup and session story.</summary>
+    /// <summary>
+    /// Always null. The evidence is recorded with the run instead.
+    /// </summary>
+    /// <remarks>
+    /// The screenshot, the markup, the session story and the console now go to the run's own widgets,
+    /// where the debugging tool draws them, a build publishes them and the run's summary lists them.
+    /// There is no folder to name here because there is nothing to name yet: the step throws, and
+    /// whoever is watching the run photographs the page afterwards.
+    /// </remarks>
+    [Obsolete("The evidence is recorded as run widgets; this is always null. Read the run's widgets, or the Widgets section of its summary.")]
     public string? FailureBundlePath { get; }
 
     private static string BuildMessage(
@@ -99,11 +111,8 @@ public sealed class UiActionFailedException : Exception
         message.AppendLine();
         message.AppendLine(inner.Message);
 
-        if (failureBundlePath is { Length: > 0 })
-        {
-            message.AppendLine();
-            message.AppendLine(CultureInfo.InvariantCulture, $"Screenshot, markup and session story: {failureBundlePath}");
-        }
+        message.AppendLine();
+        message.AppendLine("A picture of the page, its markup, the session story and the console were recorded with the run. The run's summary lists them under Widgets.");
 
         return message.ToString().TrimEnd();
     }

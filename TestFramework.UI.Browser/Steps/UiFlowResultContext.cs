@@ -16,7 +16,11 @@ namespace TestFramework.UI.Browser.Steps;
 /// <param name="Url">The address the page was on when the step finished.</param>
 /// <param name="Title">The page's title when the step finished.</param>
 /// <param name="Entries">What the step did, in order.</param>
-/// <param name="FailureBundlePath">The folder holding the evidence of a failure, when the step failed.</param>
+/// <param name="FailureBundlePath">
+/// Always null, and was before the evidence moved. A step that fails throws rather than returning a
+/// result, so nothing ever filled this in; the evidence is recorded as run widgets. Kept because
+/// removing a positional parameter changes the constructor an already-compiled caller resolves.
+/// </param>
 public sealed record UiFlowResultContext(
     string App,
     string Url,

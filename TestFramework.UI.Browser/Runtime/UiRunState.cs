@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using TestFramework.Core.Variables;
@@ -34,21 +33,7 @@ internal sealed class UiRunState
     // touch, and the gate keeps doing the only job it ever had - one browser launch per application.
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, UiSession> sessions = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim sessionGate = new SemaphoreSlim(1, 1);
-    private readonly Lazy<string> runDirectory;
     private int cleanupClaimed;
-    private int screenshotCounter;
-
-    private UiRunState()
-    {
-        // Created on first write, not here: a run whose steps never took a screenshot should leave no
-        // empty folder behind in a build's artifacts.
-        this.runDirectory = new Lazy<string>(() => UiRunPaths.RunDirectory(
-            DateTimeOffset.UtcNow,
-            Guid.NewGuid().ToString("N")[..8]));
-    }
-
-    /// <summary>The folder this run writes screenshots and failure bundles into.</summary>
-    public string RunDirectory => this.runDirectory.Value;
 
     /// <summary>
     /// The state of one run, created on first use.
@@ -76,22 +61,6 @@ internal sealed class UiRunState
     /// </remarks>
     /// <returns>True for the first caller of a run, false for every later one.</returns>
     public bool TryClaimCleanup() => Interlocked.Exchange(ref this.cleanupClaimed, 1) == 0;
-
-    /// <summary>
-    /// The next file name for a screenshot, numbered so a folder reads in the order things happened.
-    /// </summary>
-    /// <param name="name">What the screenshot is of.</param>
-    /// <returns>The file name.</returns>
-    public string NextScreenshotFileName(string name)
-    {
-        int number = Interlocked.Increment(ref this.screenshotCounter);
-
-        return string.Format(
-            CultureInfo.InvariantCulture,
-            "{0:D2}-{1}.png",
-            number,
-            UiRunPaths.SafeName(name, 40));
-    }
 
     /// <summary>
     /// The session for an application, creating it on first use.

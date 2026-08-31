@@ -25,16 +25,27 @@ message.
 | `WithRetry` on a flow not starting with `Navigate` | `InvalidOperationException` at **plan time**, before any browser exists |
 | An asserted value did not match | `ValueAssertionException` from the framework's own assertions |
 
-## The Failure Bundle
+## The Evidence
 
-A failing step gets one self-contained folder per open application, under the run's output
-(`TestFrameworkOutput/ui/<run>/failure-<step label>-<app>/`, plus `-attempt<n>` from the second attempt
-on so a retry cannot photograph over the first failure), which CI publishes like any other run output:
+A failing step records four widgets per open application into the run's own output, under
+`TestFrameworkOutput/<run>/widgets/`, which CI publishes like any other run output — and which the
+debugging tool draws, the run's summary lists, and a shared run bundle carries:
 
-- `screenshot.png` — the page as it was at the failure
-- `page.html` — the markup, for reading what the locators saw
-- `session-picture.json` — everything the session did up to that point
-- `console.log` — what the application itself complained about
+- `<step>-<app>.png` — the page as it was at the failure
+- `<step>-<app>-page.html` — the markup, for reading what the locators saw
+- `<step>-<app>-session.json` — everything the session did up to that point
+- `<step>-<app>-console.txt` — what the application itself complained about, when it complained
+
+Each is attributed to the step and the attempt that produced it, so a retry does not photograph over
+the first failure — which is usually the interesting one. The run states the attempt itself; nothing
+here has to name it.
+
+Set `WidgetCapture: EveryAction` on an application to photograph after every action rather than only
+on a failure. A screenshot a test asks for by name with `.Screenshot("...")` is always kept, whatever
+that setting says.
+
+This used to be a folder of this package's own, named after a timestamp and a fresh identifier — which
+shared no key with the run that produced it, so the evidence existed and nothing could find it.
 
 Writing it is not the step's job. The engine tells whoever is watching a run that a step failed or ran
 out of time, and this package registers one such observer — `.LoadUIConfig()` does it, so a timeline that

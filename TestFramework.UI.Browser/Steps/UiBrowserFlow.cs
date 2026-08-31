@@ -532,16 +532,26 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 try
                 {
                     UiSessionEntry entry = await this
-                        .PerformAsync(action, session, query, resolutionOptions, config, runState, context.Variables, label, context.Logger, cancellationToken)
+                        .PerformAsync(action, session, query, resolutionOptions, config, context, context.Variables, label, context.Logger, cancellationToken)
                         .ConfigureAwait(false);
 
                     entries.Add(entry with { DurationMs = stopwatch.Elapsed.TotalMilliseconds });
+
+                    // What the page looked like after the action, when the suite asked to keep it.
+                    // Inside the loop rather than at the end of the step, because the point is the
+                    // sequence: a failure three actions later is read backwards from here.
+                    if (config.EffectiveWidgetCapture == UiWidgetCapture.EveryAction)
+                    {
+                        await UiEvidence
+                            .ScreenshotAsync(session, context, $"{index + 1:00}-{action.Describe()}", takeGate: false)
+                            .ConfigureAwait(false);
+                    }
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {
                     picture = picture.Add(entries, session.Page.Url, await SafeTitleAsync(session).ConfigureAwait(false));
 
-                    throw this.Fail(action, index, entries, session, runState, picture, sessionVariable, context, exception);
+                    throw this.Fail(action, index, entries, session, picture, sessionVariable, context, exception);
                 }
                 catch (OperationCanceledException exception) when (context.Deadline.HasExpired)
                 {
@@ -586,18 +596,17 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     /// The step's own account of what went wrong.
     /// </summary>
     /// <remarks>
-    /// It records the session and names where the evidence goes; it does not gather it. Photographing the
-    /// page, writing its markup and holding the browser open used to happen here, and in the wait and the
-    /// inspection too - three copies of a job that belongs to whoever is watching the run rather than to
-    /// each step that can fail. <see cref="UiFailureBundle.DirectoryFor"/> is the one convention both sides
-    /// ask, so the folder this message names is the folder the observer fills.
+    /// It records the session; it does not gather the evidence. Photographing the page, writing its
+    /// markup and holding the browser open used to happen here, and in the wait and the inspection too -
+    /// three copies of a job that belongs to whoever is watching the run rather than to each step that
+    /// can fail. Where the evidence ends up is no longer this step's business either: it goes to the
+    /// run's own widgets, which is a place every surface already knows how to read.
     /// </remarks>
     private Exception Fail(
         UiActionSpec action,
         int index,
         IReadOnlyList<UiSessionEntry> stepEntries,
         UiSession session,
-        UiRunState runState,
         UiSessionPicture picture,
         string sessionVariable,
         RunContext context,
@@ -621,7 +630,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             this.actions.Count,
             picture,
             consoleErrors,
-            UiFailureBundle.DirectoryFor(runState, this.LabelOptions.Label ?? this.Name, this.app, context.Attempt?.Number ?? 1),
+            failureBundlePath: null,
             inner);
     }
 
@@ -631,7 +640,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         PlaywrightElementQuery query,
         UiResolutionOptions resolutionOptions,
         WebAppConfig config,
-        UiRunState runState,
+        RunContext run,
         VariableStore variableStore,
         string label,
         ScopedLogger logger,
@@ -677,8 +686,9 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 break;
 
             case UiActionKind.Screenshot:
-                detail = await UiFailureBundle
-                    .ScreenshotAsync(session, runState, action.CaptureName ?? "screenshot", logger)
+                // The gate is already held by the step this runs inside, and it is not reentrant.
+                detail = await UiEvidence
+                    .ScreenshotAsync(session, run, action.CaptureName ?? "screenshot", takeGate: false)
                     .ConfigureAwait(false);
                 break;
 

@@ -159,7 +159,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
         Assert.Contains("'This Never Appears'", failure.Message, StringComparison.Ordinal);
         Assert.Contains("never happened", failure.Message, StringComparison.Ordinal);
         Assert.Contains("/app/products", failure.Message, StringComparison.Ordinal);
-        Assert.Contains("Screenshot, markup and session story", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("recorded with the run", failure.Message, StringComparison.Ordinal);
 
         output.WriteLine(failure.Message);
     }

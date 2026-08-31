@@ -131,6 +131,16 @@ public sealed record WebAppConfig : IInheritsConfig
     public bool? IgnoreHttpsErrors { get; init; }
 
     /// <summary>
+    /// How much of what the browser saw is kept as evidence. Defaults to only on a failure.
+    /// </summary>
+    /// <remarks>
+    /// A suite-level choice rather than a per-machine one, which is why it lives here and not among the
+    /// environment overrides: what a run records is part of what the run means, and two people running
+    /// the same suite should get the same evidence out of it.
+    /// </remarks>
+    public UiWidgetCapture? WidgetCapture { get; init; }
+
+    /// <summary>
     /// The values that apply when an entry did not state one.
     /// </summary>
     /// <remarks>
@@ -147,6 +157,7 @@ public sealed record WebAppConfig : IInheritsConfig
         public const string TestIdAttribute = "data-testid";
         public const UiAmbiguityMode Ambiguity = UiAmbiguityMode.Strict;
         public const bool IgnoreHttpsErrors = false;
+        public const UiWidgetCapture WidgetCapture = UiWidgetCapture.OnFailure;
         public static readonly TimeSpan SlowMo = TimeSpan.Zero;
         public static readonly TimeSpan ActionTimeout = TimeSpan.FromSeconds(10);
         public static readonly TimeSpan CompareTimeout = TimeSpan.FromSeconds(5);
@@ -172,4 +183,7 @@ public sealed record WebAppConfig : IInheritsConfig
 
     /// <summary>Whether to accept certificates a browser would otherwise refuse, defaulted.</summary>
     internal bool EffectiveIgnoreHttpsErrors => this.IgnoreHttpsErrors ?? Defaults.IgnoreHttpsErrors;
+
+    /// <summary>How much of what the browser saw is kept, defaulted to only on a failure.</summary>
+    internal UiWidgetCapture EffectiveWidgetCapture => this.WidgetCapture ?? Defaults.WidgetCapture;
 }

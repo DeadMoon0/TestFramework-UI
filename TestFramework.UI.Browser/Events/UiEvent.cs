@@ -201,7 +201,7 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
                 string.Create(
                     CultureInfo.InvariantCulture,
                     $"after {this.clock.Elapsed.TotalSeconds:F1}s and {this.polls} poll(s). {this.TimeoutAdvice(context.Variables)}") +
-                $"\nScreenshot, markup and session story: {UiFailureBundle.DirectoryFor(runState, this.LabelOptions.Label ?? this.Name, this.app, context.Attempt?.Number ?? 1)}",
+                "\nA picture of the page, its markup, the session story and the console were recorded with the run.",
                 exception);
         }
     }

@@ -124,6 +124,15 @@ public sealed class SampleAppFixture : IAsyncLifetime
                 AmbiguityMode = TestFramework.UI.Browser.Resolution.UiAmbiguityMode.FirstMatch,
             })
 
+            // Photographs every action rather than only a failure, for the test that shows the dial
+            // exists. Its own entry rather than a flag on shop, because what a run records is part of
+            // what the run means and every other test here relies on the default.
+            .Add("shop-watched", new WebAppConfig
+            {
+                BasedOn = "shop",
+                WidgetCapture = TestFramework.UI.Browser.Configuration.UiWidgetCapture.EveryAction,
+            })
+
             // Everything shop has EXCEPT an address: the bridge tests prove that the address can come
             // from the TestFramework.Web family's configuration instead.
             .Add("shop-bridged", shop with { BaseUrl = null }));

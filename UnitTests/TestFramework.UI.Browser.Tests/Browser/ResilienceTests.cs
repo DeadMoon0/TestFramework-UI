@@ -10,6 +10,8 @@ using TestFramework.UI.Session;
 using Xunit;
 using Xunit.Abstractions;
 
+using TestFramework.Core.Debugger;
+
 namespace TestFramework.UI.Browser.Tests.Browser;
 
 /// <summary>
@@ -172,17 +174,28 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("nonsense").LastResult.Exception);
 
-        Assert.NotNull(failure.FailureBundlePath);
-        Assert.True(Directory.Exists(failure.FailureBundlePath), "the bundle folder must exist");
+        // In the run's own output rather than a folder of this package's own. The evidence used to go
+        // somewhere named after a timestamp and a fresh identifier, which shared no key with the run
+        // that produced it — so nothing could find it afterwards.
+        string[] widgets = Directory.Exists(RunOutput.Root)
+            ? Directory.GetFiles(RunOutput.Root, "nonsense-shop*", SearchOption.AllDirectories)
+            : [];
+
+        Assert.NotEmpty(widgets);
+        Assert.All(widgets, path => Assert.Equal("widgets", Path.GetFileName(Path.GetDirectoryName(path))));
 
         // Attachable to a ticket as it is: what it looked like, what the markup was, what the run had
         // done, and what the page complained about.
-        Assert.True(File.Exists(Path.Combine(failure.FailureBundlePath!, "screenshot.png")));
-        Assert.True(File.Exists(Path.Combine(failure.FailureBundlePath!, "page.html")));
-        Assert.True(File.Exists(Path.Combine(failure.FailureBundlePath!, "session-picture.json")));
+        string[] names = [.. widgets.Select(Path.GetFileName)!];
 
-        // And the message says what the page does offer instead of what was asked for.
+        Assert.Contains("nonsense-shop.png", names);
+        Assert.Contains("nonsense-shop-page.html", names);
+        Assert.Contains("nonsense-shop-session.json", names);
+
+        // And the message says what the page does offer instead of what was asked for, and where the
+        // evidence went.
         Assert.Contains("The page does offer", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("recorded with the run", failure.Message, StringComparison.Ordinal);
 
         output.WriteLine(failure.Message);
     }
