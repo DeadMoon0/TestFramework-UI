@@ -141,5 +141,10 @@ public static class UiBrowserServiceCollectionExtension
     private static void AddRunWideServices(IServiceCollection services)
     {
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IStepObserver, UiFailureObserver>());
+
+        // What lets a reader watching a paused run ask to see the page it is sitting on. Registered
+        // the same way and for the same reason: the engine drives it, once per run, and a second
+        // registration would take two pictures of one page.
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWidgetCaptureSource, UiWidgetCaptureSource>());
     }
 }

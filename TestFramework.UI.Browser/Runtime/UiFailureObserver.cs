@@ -63,18 +63,25 @@ internal sealed class UiFailureObserver : IStepObserver
                 .ConfigureAwait(false);
         }
 
-        await HoldAsync(sessions, run).ConfigureAwait(false);
+        await HoldAsync(runState, sessions, run).ConfigureAwait(false);
     }
 
     /// <summary>
     /// Keeps the browser open on the failure, when the machine asked for it.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Deliberately unbounded: a person set an environment variable in order to look at the page, so the
     /// run waits until they are done. The engine says out loud that an observer is holding it, which is the
     /// notice that makes this legible rather than a hang.
+    /// </para>
+    /// <para>
+    /// Recorded on the run for the length of the hold, because a page stopped in the inspector cannot be
+    /// photographed — it waits for the same person. Anything that would take a picture from outside the
+    /// step has to be able to find that out, and the run is the only thing both of them hold.
+    /// </para>
     /// </remarks>
-    private static async Task HoldAsync(IReadOnlyList<UiSession> sessions, RunContext run)
+    private static async Task HoldAsync(UiRunState runState, IReadOnlyList<UiSession> sessions, RunContext run)
     {
         if (!UiEnvironmentOverrides.PauseOnFailure || sessions.Count == 0)
         {
@@ -84,6 +91,8 @@ internal sealed class UiFailureObserver : IStepObserver
         run.Logger.LogWarning(
             "The browser is being held open on the failure because {0} is set. Inspect the page, then let the run continue.",
             UiEnvironmentOverrides.PauseOnFailureVariable);
+
+        using IDisposable hold = runState.HoldForInspection();
 
         foreach (UiSession session in sessions)
         {

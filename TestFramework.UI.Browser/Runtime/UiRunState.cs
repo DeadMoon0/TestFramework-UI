@@ -34,6 +34,45 @@ internal sealed class UiRunState
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, UiSession> sessions = new(StringComparer.OrdinalIgnoreCase);
     private readonly SemaphoreSlim sessionGate = new SemaphoreSlim(1, 1);
     private int cleanupClaimed;
+    private int inspectionHolds;
+
+    /// <summary>
+    /// Whether a person is currently being given the browser to look at.
+    /// </summary>
+    /// <remarks>
+    /// A page stopped in Playwright's inspector does not answer a screenshot request, it waits — and
+    /// it is waiting for a person, so nothing bounds that wait. Anything that would photograph the
+    /// page from outside the step driving it has to know, and the run is where the two meet.
+    /// </remarks>
+    public bool IsHeldForInspection => Volatile.Read(ref this.inspectionHolds) > 0;
+
+    /// <summary>
+    /// Marks the browser as being held open for a person, until the returned scope is disposed.
+    /// </summary>
+    /// <remarks>
+    /// Counted rather than flagged: a failure in a parallel layer can hold two sessions, and the
+    /// first hold to end must not declare the browser free while the second is still open.
+    /// </remarks>
+    /// <returns>The scope covering the hold.</returns>
+    public IDisposable HoldForInspection()
+    {
+        Interlocked.Increment(ref this.inspectionHolds);
+
+        return new InspectionHold(this);
+    }
+
+    private sealed class InspectionHold(UiRunState state) : IDisposable
+    {
+        private int released;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref this.released, 1) == 0)
+            {
+                Interlocked.Decrement(ref state.inspectionHolds);
+            }
+        }
+    }
 
     /// <summary>
     /// The state of one run, created on first use.

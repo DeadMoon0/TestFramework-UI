@@ -44,6 +44,21 @@ Set `WidgetCapture: EveryAction` on an application to photograph after every act
 on a failure. A screenshot a test asks for by name with `.Screenshot("...")` is always kept, whatever
 that setting says.
 
+### Asking for a picture of now
+
+A run stopped at a breakpoint is sitting on a page nothing has photographed: the step that navigated
+there has not finished, so the newest picture predates it. The debugging tool offers a button while a
+run is held, and this package answers it by photographing every open application — one widget named
+`live-<app>`, so repeated asks read as versions of one page in the order they were made.
+
+Two cases where it declines rather than hangs, both said out loud in the run's log so the reason
+reaches whoever pressed the button:
+
+- **Another step is driving the page.** The capture waits five seconds for the page to be free and
+  then gives up. A missing picture is cheap; a hung debugger asking for one is not.
+- **The browser is being held open for a person** (`PauseOnFailure`). A page stopped in Playwright's
+  inspector does not answer a screenshot request — it waits for the same person the hold is for.
+
 This used to be a folder of this package's own, named after a timestamp and a fresh identifier — which
 shared no key with the run that produced it, so the evidence existed and nothing could find it.
 
