@@ -62,6 +62,13 @@ internal static class UiConfigResolver
         context.EffectiveSettings.Record(Source, $"{identifier.Identifier}:Browser", config.EffectiveBrowser);
         context.EffectiveSettings.Record(Source, $"{identifier.Identifier}:Headless", config.EffectiveHeadless ? "true" : "false");
 
+        // How much evidence was kept decides what a later reader can look at, and it defaults - so a run
+        // with no pictures on its steps should be able to say whether that was the policy or a failure.
+        context.EffectiveSettings.Record(
+            Source,
+            $"{identifier.Identifier}:WidgetCapture",
+            config.EffectiveWidgetCapture.ToString());
+
         if (config.Channel is { Length: > 0 } channel)
         {
             context.EffectiveSettings.Record(Source, $"{identifier.Identifier}:Channel", channel);

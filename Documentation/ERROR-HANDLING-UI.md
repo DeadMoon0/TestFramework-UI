@@ -41,8 +41,12 @@ the first failure — which is usually the interesting one. The run states the a
 here has to name it.
 
 Set `WidgetCapture: EveryAction` on an application to photograph after every action rather than only
-on a failure. A screenshot a test asks for by name with `.Screenshot("...")` is always kept, whatever
-that setting says.
+on a failure, which is the default. A screenshot a test asks for by name with `.Screenshot("...")` is
+always kept, whatever that setting says.
+
+The value that was actually in force is recorded on the run as `<app>:WidgetCapture`, beside the browser
+and the headless flag - so a run whose steps carry no pictures says whether that was the policy rather
+than leaving a later reader to guess.
 
 ### Asking for a picture of now
 
@@ -111,7 +115,7 @@ already wait those out where they cause them (`Choose` waits for its popup to cl
 
 An action inside a flow failed: the wrapped cause carries what went wrong, and the wrapper carries
 where — which action of how many, what already worked, the page address, the application's console
-errors during the step, and the failure bundle path:
+errors during the step, and where the evidence went:
 
 ```
 Action 4 of 6 on 'shop' failed: Fill 'Email'.

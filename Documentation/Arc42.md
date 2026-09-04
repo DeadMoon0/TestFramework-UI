@@ -94,7 +94,7 @@ A NuGet package consumed by test projects. Browser binaries come from the machin
 `Channel`) or a one-time Playwright install; nothing downloads implicitly. CI runs the unit lane
 always and the browser lane behind the gate, target frameworks sequentially
 (`TestTfmsInParallel=false`) because two browser fleets on one runner make real-seconds waits miss
-their windows. Failure bundles and screenshots land in the run output folder CI already publishes.
+their windows. What a failing step recorded lands in the run output folder CI already publishes, as widgets of the run.
 
 ## 8. Crosscutting Concepts
 
@@ -152,7 +152,7 @@ exception type must appear in ERROR-HANDLING-UI.md.
 - **Two-sweep resolution** — exact on all channels, then loose on all channels.
 - **Loose match** — a match found below the first exact rung; recorded, assertable.
 - **Settle loop** — retry-until-matched within the compare timeout, reporting the last look.
-- **Failure bundle** — screenshot, page markup, session story and console log for one failure.
+- **Widget** — a file the run recorded to be looked at. A failure records four per open application: a picture, the page markup, the session story and the console log.
 - **Device profile** — a named viewport/input identity (`Desktop 1080p`, `iPhone 14`), configuration
   only.
 - **Bridge** — resolving a browser identifier's address from the Web family's configuration.

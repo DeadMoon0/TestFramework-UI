@@ -40,7 +40,7 @@
     Assert run.UiLooseMatches(app).Should().HaveNoItems() in suites that want to be strict; leave it off while a page is being reworked, and the trace still shows every reach.
     Keep assertions in-house: run.UiUrl/UiTitle/UiTrace/UiSession/UiScreenshot/UiConsoleErrors, run.UiTable/UiColumn/UiDifferences, run.Variable&lt;T&gt;(...) - all ValueHandle-based, signalled to the debugging UI.
     Use Expect inside a flow for "the page caught up with me", Events between steps for "another actor got the page here", and never a sleep anywhere.
-    Give every step a Name; the session picture, the failure bundle folder and the assertions all key on it.
+    Give every step a Name; the session picture, the widget file names and the assertions all key on it.
     Prefer Choose over Select; it drives native lists and comboboxes alike and matches by what a person sees.
     Declare structures, tables and layouts as static readonly fields beside the timeline; they freeze on first use and are shared safely.
     State only what the test is about: subset matching, unordered rows and layout relations exist so somebody adding a column or moving a panel does not break a test about something else. Escalate locally (ContainingExactly, InOrder, InDocumentOrder) only where the point IS the order.

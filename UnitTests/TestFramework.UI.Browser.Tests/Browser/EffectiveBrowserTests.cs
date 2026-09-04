@@ -41,6 +41,13 @@ public class EffectiveBrowserTests(SampleAppFixture fixture, ITestOutputHelper o
         // Whether the window was shown is the other half of "what proved this", and it defaults.
         Assert.Contains(run.EffectiveSettings.Snapshot(), setting => setting.Name == "shop:Headless");
 
+        // And how much evidence was kept, so a run with no pictures says whether that was the policy.
+        EffectiveSetting widgets = Assert.Single(
+            run.EffectiveSettings.Snapshot(),
+            setting => setting.Name == "shop:WidgetCapture");
+
+        Assert.Equal("OnFailure", widgets.Value);
+
         output.WriteLine(string.Join(Environment.NewLine, run.EffectiveSettings.Snapshot()));
     }
 
