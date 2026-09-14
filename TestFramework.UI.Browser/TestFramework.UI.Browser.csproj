@@ -16,8 +16,7 @@
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>New in 0.2.0: browser evidence is recorded as the run's own widgets rather than into a folder of the pack's own. A screenshot, the markup behind it and the session's story are attributed to the step and the attempt that produced them, and the pack's failure folder - named after a timestamp and a fresh identifier, sharing no key with the run that produced it - is gone. A paused run can also be asked to show itself: every session the run has open is photographed on request, unless the browser is being held open for a person to look at, which is said out loud rather than waited on. The capture policy a run resolved is recorded with the rest of what it resolved. Requires TestFramework.Core 0.5.0 and TestFramework.Config 0.3.0.
-Earlier: First release. Steps take a RunContext, so a wait reads its own deadline instead of guessing a margin before it. Failure evidence - screenshot, markup, session story, and the held-open browser - moves out of the steps into a step observer the engine drives. The page now hands its answers over as text, parsed with Newtonsoft like the rest of the family. Requires TestFramework.Core 0.4.0 and TestFramework.Config 0.3.0. Bridge a differently-named application with BridgedTo, naming the kind the serving package defines.</PackageReleaseNotes>
+		<PackageReleaseNotes>Browser evidence is now recorded as the run's own widgets, attributed to the step and the attempt that produced them. The pack's own failure folder is gone, so anything that read that folder should read the run's output instead. A paused run can also be asked to photograph every session it has open. Requires TestFramework.Core 0.5.0 and TestFramework.Config 0.3.0.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
