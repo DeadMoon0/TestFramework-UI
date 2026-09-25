@@ -103,7 +103,7 @@ public class UiConfigResolverKindTests(ITestOutputHelper output)
     private async Task<TimelineRun> Run(WebAppIdentifier identifier, WebAppConfig entry, (string Kind, string Identifier, string BaseUrl)[] published)
     {
         ServiceCollection services = new ServiceCollection();
-        services.AddSingleton(new UiConfigStore([new(identifier.Identifier, entry)]));
+        services.AddSingleton<IResourceNodeSource>(new UiApplications([new(identifier.Identifier, entry)]));
 
         Timeline timeline = Timeline.Create()
             .Trigger(new ResolvesAppStep(identifier)).Name("resolves")

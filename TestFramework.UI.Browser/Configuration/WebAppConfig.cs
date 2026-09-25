@@ -56,14 +56,14 @@ public sealed record WebAppConfig : IInheritsConfig
     /// <remarks>
     /// The one <c>Effective…</c> value with no default behind it, because §5 of the family's architecture
     /// forbids one here: which browser a test drives decides what it proves. Everything that reads this comes
-    /// from <c>UiConfigStore.Get</c>, which refuses an entry that states no browser - so reaching here
+    /// from <c>UiConfigResolver.Resolve</c>, which refuses an entry that states no browser - so reaching here
     /// without one is a framework bug rather than a configuration mistake, and it says so.
     /// </remarks>
     internal string EffectiveBrowser => this.Browser is { Length: > 0 } browser
         ? browser
         : throw new InvalidOperationException(
             "A web application configuration reached the browser factory without a stated browser. "
-            + "UiConfigStore.Get refuses that, so this is a bug in TestFramework.UI.Browser rather than in a test.");
+            + "UiConfigResolver.Resolve refuses that, so this is a bug in TestFramework.UI.Browser rather than in a test.");
 
     /// <summary>
     /// A branded build to use instead of the downloaded one, for example <c>msedge</c> or <c>chrome</c>.

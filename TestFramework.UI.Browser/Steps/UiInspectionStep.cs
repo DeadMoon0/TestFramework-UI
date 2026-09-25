@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Playwright;
 using TestFramework.Core.Artifacts;
 using TestFramework.Core.Environment;
+using TestFramework.Core.Environment.Graph;
 using TestFramework.Core.Logging;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
@@ -79,7 +80,15 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
 
     /// <inheritdoc />
     public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
-        => [this.app.ExternalRequirement ?? new EnvironmentRequirement(BrowserEnvironmentResourceKinds.WebApp, this.app)];
+        => UiRequirements.Without(this.app);
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// The application, and the resource its address comes from - bridged, or the same-name site or API -
+    /// decided with the run's resources in view; see <see cref="UiRequirements"/>.
+    /// </remarks>
+    public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore, ResourceGraph resources)
+        => UiRequirements.For(this.app, resources);
 
     /// <inheritdoc />
     public StepGeneric? CreateCleanupStep(VariableStore variableStore)

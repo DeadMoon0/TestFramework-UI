@@ -7,6 +7,7 @@ using TestFramework.Core.Exceptions;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
+using TestFramework.Core.Environment.Graph;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.Core.Environment;
 using TestFramework.UI.Browser.Identifier;
@@ -162,7 +163,7 @@ public class BridgeResolutionTests(ITestOutputHelper output)
 
         ServiceCollection services = new ServiceCollection();
         services.AddSingleton(configuration);
-        services.AddSingleton(new UiConfigStore([new(app.Identifier, entry)]));
+        services.AddSingleton<IResourceNodeSource>(new UiApplications([new(app.Identifier, entry)]));
 
         // Both sections, because the point is that a reader does not care which one an identifier came from.
         services.LoadWebConfigs(configuration);

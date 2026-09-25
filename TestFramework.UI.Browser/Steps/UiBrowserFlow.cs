@@ -9,6 +9,7 @@ using Microsoft.Playwright;
 using TestFramework.Core;
 using TestFramework.Core.Artifacts;
 using TestFramework.Core.Environment;
+using TestFramework.Core.Environment.Graph;
 using TestFramework.Core.Logging;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
@@ -397,9 +398,15 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
 
     /// <inheritdoc />
     public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
-        // A bridged identifier declares the requirement of the package that provisions it, so one
-        // provisioned application serves both the browser steps and that package's own.
-        => [this.app.ExternalRequirement ?? new EnvironmentRequirement(BrowserEnvironmentResourceKinds.WebApp, this.app)];
+        => UiRequirements.Without(this.app);
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// The application, and the resource its address comes from - bridged, or the same-name site or API -
+    /// decided with the run's resources in view; see <see cref="UiRequirements"/>.
+    /// </remarks>
+    public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore, ResourceGraph resources)
+        => UiRequirements.For(this.app, resources);
 
     /// <inheritdoc />
     /// <remarks>

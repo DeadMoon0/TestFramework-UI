@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using TestFramework.Core.Environment.Graph;
 using TestFramework.Core.Steps;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Exceptions;
@@ -115,15 +116,19 @@ public static class UiBrowserServiceCollectionExtension
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(applications);
 
-        // Refused rather than layered. Two stores means the container hands out whichever was registered
-        // last, so the other set of applications disappears without a word - and a test then fails saying
-        // an application it can see in its own fixture is not configured.
-        if (services.Any(static descriptor => descriptor.ServiceType == typeof(UiConfigStore)))
+        // Refused rather than layered. Two declarations of the application set would each put their
+        // applications on the run's list, and the later would silently shadow the earlier per name - a test
+        // then drives settings it cannot see in its own fixture.
+        if (services.Any(static descriptor => descriptor.ServiceType == typeof(UiApplications)))
         {
             throw UiConfigurationException.ApplicationsAlreadyRegistered();
         }
 
-        services.AddSingleton(new UiConfigStore(applications));
+        // Declared as resources, so every browser step's application is on the run's list - checked
+        // before the run starts, and read by a step from the run rather than from a store.
+        UiApplications declared = new(applications);
+        services.AddSingleton(declared);
+        services.AddSingleton<IResourceNodeSource>(declared);
 
         AddRunWideServices(services);
     }

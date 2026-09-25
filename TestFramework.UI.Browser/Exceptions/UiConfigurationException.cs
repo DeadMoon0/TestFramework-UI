@@ -106,6 +106,28 @@ public sealed class UiConfigurationException : Exception
             "it; or name a differently-named resource with 'BaseUrlFromSite' / 'BaseUrlFromApi'.");
 
     /// <summary>
+    /// An application's own entry states an address while a bridge or a same-name resource also answers.
+    /// </summary>
+    /// <param name="identifier">The application.</param>
+    /// <param name="otherSources">What else would give it an address.</param>
+    /// <returns>The exception.</returns>
+    public static UiConfigurationException TwoAddresses(string identifier, IEnumerable<string> otherSources)
+        => new UiConfigurationException(
+            $"The web application '{identifier}' states its own 'BaseUrl', and {string.Join(" and ", otherSources)} would give it an address too. "
+            + "Which one a browser opens would be a guess, so the run is refused: keep one - remove the 'BaseUrl', or the bridge or resource that also answers.");
+
+    /// <summary>
+    /// An application takes its address from the resource of the same name, and several kinds carry it.
+    /// </summary>
+    /// <param name="identifier">The application.</param>
+    /// <param name="candidates">The resources that carry the name.</param>
+    /// <returns>The exception.</returns>
+    public static UiConfigurationException AmbiguousAddress(string identifier, IEnumerable<string> candidates)
+        => new UiConfigurationException(
+            $"The web application '{identifier}' takes its address from the resource of the same name, and {string.Join(" and ", candidates)} both carry that name. "
+            + "Set 'BaseUrl' for it, or bridge it to one of them with FromSite(...) or FromWebApi(...).");
+
+    /// <summary>
     /// An entry inherits from another that does not exist, or from a chain that loops.
     /// </summary>
     /// <param name="identifier">The entry.</param>

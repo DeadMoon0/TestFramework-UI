@@ -10,7 +10,7 @@
 <package_scope>
     Covers BrowserExt.Session(...) interaction flows, BrowserExt.Page(...) inspections (structure, table, layout, captures), BrowserExt.Events waits, the Target model and two-sweep resolution, typed value reads (Value.*), named JavaScript execution (Js.*), device profiles and configuration, the session picture, and the failure evidence.
     Also covers resolving the application's address from the TestFramework.Web family's Site and Api configuration.
-    Does not cover starting or hosting the application, its database or its stubs; browser steps declare requirements (ui.webapp, or the bridged kind) and an environment satisfies them.
+    Does not cover starting or hosting the application, its database or its stubs; browser steps require their ui.webapp entry plus the resource their address comes from (the bridged site or API, or the one same-name site or API), all checked before the run starts; an environment that declared that resource starts it.
 </package_scope>
 
 <key_concepts>

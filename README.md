@@ -18,8 +18,12 @@ the system under test, next to the API, the database and the stubs.
   machine, set `"Channel": "msedge"` and nothing needs to be downloaded.
 - **The application is the one your API serves**, or a site the TestFramework.Web family configures:
   name it under the same identifier and the browser resolves its address from the same configuration
-  the API and stub steps use — one identifier, both doors. When the names differ, say so once with
+  the API and stub steps use — one identifier, both doors. Leave `BaseUrl` out of the UI entry then: two
+  addresses for one name are refused before the run starts rather than one silently winning. When the
+  names differ, say so once with
   `BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.Site, "..."))`.
+- **Identifiers are case-sensitive**, like every resource name in a run, and a browser step whose
+  application nothing declares is refused before the first step, naming what is declared.
 - **You want the same test as desktop and as phone**: point it at a second configuration entry with
   a `Device` — the browser environment is configuration, never test code.
 - **You need the site booted for you**: that is the container lane's job. Browser steps declare what

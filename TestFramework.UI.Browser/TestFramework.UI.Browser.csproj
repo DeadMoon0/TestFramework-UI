@@ -11,12 +11,12 @@
 		<PackageTags>Test;UnitTest;IntegrationTest;Framework;Fluent;Timeline;UI;Browser;Playwright;WebUI;E2E</PackageTags>
 		<PackageIcon>Icon.png</PackageIcon>
 		<Description>Drive a local browser from inside a TestFramework timeline. Interactions read as imperative steps (Navigate, Click, Fill, Expect) and address elements the way a person does - by role, label, placeholder or visible text - so a renamed or relocated control does not fail a test that only wanted to press it. Every non-exact match is recorded and assertable, ambiguity fails with the candidates and the dial that resolves it, and expected page structure is declared as a typed, reusable field.</Description>
-		<Version>0.2.0</Version>
+		<Version>0.3.0</Version>
 		<PackageProjectUrl>https://github.com/DeadMoon0/TestFramework-UI</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>Browser evidence is now recorded as the run's own widgets, attributed to the step and the attempt that produced them. The pack's own failure folder is gone, so anything that read that folder should read the run's output instead. A paused run can also be asked to photograph every session it has open. Requires TestFramework.Core 0.5.0 and TestFramework.Config 0.3.0.</PackageReleaseNotes>
+		<PackageReleaseNotes>Requires TestFramework.Core 0.6.0. Web applications are now declared as the run's resources, so a browser step whose application nothing declares is refused before the first step, and the site of the same name is required - and started by the environment that declares it - when an entry states no address. Identifiers are now case-sensitive, and an application that states its own BaseUrl while a bridge or a same-name site or API also answers is refused.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -38,7 +38,7 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
 		<PackageReference Include="TestFramework.Config" Version="0.3.0" />
-		<PackageReference Include="TestFramework.Core" Version="0.5.0" />
+		<PackageReference Include="TestFramework.Core" Version="0.6.0" />
 	</ItemGroup>
 
 	<!--

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TestFramework.Core.Artifacts;
 using TestFramework.Core.Environment;
+using TestFramework.Core.Environment.Graph;
 using TestFramework.Core.Events;
 using TestFramework.Core.Logging;
 using TestFramework.Core.Steps;
@@ -103,7 +104,15 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
 
     /// <inheritdoc />
     public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
-        => [this.app.ExternalRequirement ?? new EnvironmentRequirement(BrowserEnvironmentResourceKinds.WebApp, this.app)];
+        => UiRequirements.Without(this.app);
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// The application, and the resource its address comes from - bridged, or the same-name site or API -
+    /// decided with the run's resources in view; see <see cref="UiRequirements"/>.
+    /// </remarks>
+    public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore, ResourceGraph resources)
+        => UiRequirements.For(this.app, resources);
 
     /// <inheritdoc />
     public StepGeneric? CreateCleanupStep(VariableStore variableStore)

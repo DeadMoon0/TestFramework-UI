@@ -1,5 +1,6 @@
 ﻿using TestFramework.UI.Browser.Runtime;
 using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Core.Environment.Graph;
 using TestFramework.Core.Steps;
@@ -89,14 +90,21 @@ internal static class UiConfigResolver
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(identifier);
 
-        UiConfigStore? store = context.Services.GetService<UiConfigStore>();
-
-        if (store is null)
+        // Read from the run, where the application was declared: a step's configuration is run data.
+        IReadOnlyDictionary<string, string> values = context.Values.ValuesFor(BrowserEnvironmentResourceKinds.WebAppKind, identifier.Identifier, ResourceVantage.Host);
+        if (values.Count == 0)
         {
-            throw UiConfigurationException.MissingIdentifier(identifier, []);
+            throw UiConfigurationException.MissingIdentifier(identifier, context.Values.IdentifiersOf(BrowserEnvironmentResourceKinds.WebAppKind));
         }
 
-        WebAppConfig config = store.Get(identifier);
+        WebAppConfig config = WebAppValues.Read(values);
+
+        // Checked on the way out rather than when declared, and only for what is asked for: an application
+        // nobody drives cannot break a run.
+        if (config.Browser is not { Length: > 0 })
+        {
+            throw UiConfigurationException.MissingBrowser(identifier);
+        }
 
         if (config.BaseUrl is { Length: > 0 })
         {
