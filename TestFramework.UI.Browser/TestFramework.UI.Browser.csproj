@@ -16,7 +16,7 @@
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>Requires TestFramework.Core 0.6.0. Web applications are now declared as the run's resources, so a browser step whose application nothing declares is refused before the first step, and the site of the same name is required - and started by the environment that declares it - when an entry states no address. Identifiers are now case-sensitive, and an application that states its own BaseUrl while a bridge or a same-name site or API also answers is refused.</PackageReleaseNotes>
+		<PackageReleaseNotes>Requires TestFramework.Core 0.6.0. REMOVED: UiActionFailedException.FailureBundlePath and UiFlowResultContext.FailureBundlePath, which were always null - the evidence is in the run's widgets. Web applications are now declared as the run's resources, so a browser step whose application nothing declares is refused before the first step, and the site of the same name is required - and started by the environment that declares it - when an entry states no address. Identifiers are now case-sensitive, and an application that states its own BaseUrl while a bridge or a same-name site or API also answers is refused.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>

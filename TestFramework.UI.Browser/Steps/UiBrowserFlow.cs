@@ -637,7 +637,6 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             this.actions.Count,
             picture,
             consoleErrors,
-            failureBundlePath: null,
             inner);
     }
 
