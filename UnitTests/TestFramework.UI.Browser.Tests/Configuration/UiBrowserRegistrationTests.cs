@@ -139,6 +139,39 @@ public class UiBrowserRegistrationTests
         Assert.Single(services.BuildServiceProvider().GetServices<IStepObserver>());
     }
 
+    [Theory]
+    [InlineData("msedge", "Channel = \"msedge\"")]
+    [InlineData("edge", "Channel = \"msedge\"")]
+    [InlineData("chrome", "Channel = \"chrome\"")]
+    [InlineData("safari", "Browser = \"webkit\"")]
+    public void ABrandedBuildNamedAsTheBrowserIsRefusedWithTheSettingThatMeansIt(string browser, string fix)
+    {
+        // A branded build is a Channel of an engine, not a browser of its own. Taking 'msedge' as the browser
+        // launched Playwright's bundled Chromium with no channel, and the finished run then recorded 'msedge'
+        // as what it drove - a record of a browser that never ran.
+        ServiceCollection services = new ServiceCollection();
+        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { Browser = browser, BaseUrl = "http://localhost/" }));
+
+        UiConfigurationException failure = Assert.Throws<UiConfigurationException>(
+            () => UiConfigResolver.Resolve(RunContext.Detached(services.BuildServiceProvider()), "shop"));
+
+        Assert.Contains($"'{browser}'", failure.Message, StringComparison.Ordinal);
+        Assert.Contains(fix, failure.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("chromium")]
+    [InlineData("firefox")]
+    [InlineData("webkit")]
+    [InlineData("Chromium")]
+    public void EachPlaywrightEngineIsAccepted(string browser)
+    {
+        ServiceCollection services = new ServiceCollection();
+        services.AddUiBrowser(apps => apps.Add("shop", new WebAppConfig { Browser = browser, BaseUrl = "http://localhost/" }));
+
+        Assert.Equal(browser, UiConfigResolver.Resolve(RunContext.Detached(services.BuildServiceProvider()), "shop").Browser);
+    }
+
     [Fact]
     public void AnApplicationThatStatesNoBrowserIsRefused()
     {

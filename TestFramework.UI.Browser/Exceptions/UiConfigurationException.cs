@@ -94,6 +94,33 @@ public sealed class UiConfigurationException : Exception
     }
 
     /// <summary>
+    /// The application names something as its browser that is not one of Playwright's three engines.
+    /// </summary>
+    /// <remarks>
+    /// A branded build is a <c>Channel</c> of an engine. Taken as the browser, <c>msedge</c> used to launch
+    /// Playwright's bundled Chromium with no channel, and the run then recorded <c>msedge</c> as what it drove.
+    /// </remarks>
+    /// <param name="identifier">The identifier.</param>
+    /// <param name="browser">What the application stated as its browser.</param>
+    /// <returns>The exception.</returns>
+    public static UiConfigurationException NotABrowserEngine(string identifier, string browser)
+    {
+        string fix = browser.ToLowerInvariant() switch
+        {
+            "msedge" or "edge" => "Browser = \"chromium\", Channel = \"msedge\"",
+            "chrome" => "Browser = \"chromium\", Channel = \"chrome\"",
+            "safari" => "Browser = \"webkit\"",
+            _ => "Browser = \"chromium\", \"firefox\" or \"webkit\"",
+        };
+
+        return new UiConfigurationException(
+            $"The web application '{identifier}' states '{browser}' as its browser, which is not one of Playwright's "
+            + "engines. Browser names the engine - 'chromium', 'firefox' or 'webkit' - and a branded build already "
+            + $"on the machine is the Channel of one. State {fix}, in the application's WebAppConfig or under "
+            + $"'Ui:{identifier}' in configuration.");
+    }
+
+    /// <summary>
     /// The application is configured, but nothing says where to reach it.
     /// </summary>
     /// <param name="identifier">The identifier.</param>

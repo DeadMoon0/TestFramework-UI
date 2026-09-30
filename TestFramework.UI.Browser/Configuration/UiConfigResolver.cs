@@ -32,6 +32,16 @@ namespace TestFramework.UI.Browser.Configuration;
 internal static class UiConfigResolver
 {
     /// <summary>
+    /// The browsers an application may state: Playwright's engines, and nothing that is only a build of one.
+    /// </summary>
+    internal static readonly IReadOnlySet<string> PlaywrightEngines = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "chromium",
+        "firefox",
+        "webkit",
+    };
+
+    /// <summary>
     /// Resolves the configuration, including an address that belongs to another package's resource.
     /// </summary>
     /// <summary>
@@ -101,9 +111,15 @@ internal static class UiConfigResolver
 
         // Checked on the way out rather than when declared, and only for what is asked for: an application
         // nobody drives cannot break a run.
-        if (config.Browser is not { Length: > 0 })
+        if (config.Browser is not { Length: > 0 } browser)
         {
             throw UiConfigurationException.MissingBrowser(identifier);
+        }
+
+        // Before anything is launched or recorded: what the finished run says it drove must be what it drove.
+        if (!PlaywrightEngines.Contains(browser))
+        {
+            throw UiConfigurationException.NotABrowserEngine(identifier, browser);
         }
 
         if (config.BaseUrl is { Length: > 0 })

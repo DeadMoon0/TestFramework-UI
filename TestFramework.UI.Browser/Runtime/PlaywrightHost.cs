@@ -103,11 +103,12 @@ internal static class PlaywrightHost
 
     private static async Task<IBrowser> LaunchAsync(IPlaywright driver, WebAppConfig config)
     {
+        // The resolver refuses anything else by name, so a branded build reaches here only as a Channel.
         IBrowserType browserType = config.EffectiveBrowser.ToLowerInvariant() switch
         {
-            "chromium" or "chrome" or "edge" or "msedge" => driver.Chromium,
+            "chromium" => driver.Chromium,
             "firefox" => driver.Firefox,
-            "webkit" or "safari" => driver.Webkit,
+            "webkit" => driver.Webkit,
             _ => throw new ArgumentException(
                 $"Unknown browser '{config.EffectiveBrowser}'. Use 'chromium', 'firefox' or 'webkit', and name a " +
                 "branded build such as 'msedge' with 'Channel' instead.",
