@@ -44,7 +44,7 @@ public sealed class UiBrowserApplications
         // Refused rather than overwritten, and refused here rather than at the first step that reads it:
         // two declarations of one name is a mistake in the fixture, and the second silently winning is how
         // a suite ends up driving an application nobody meant to configure.
-        if (this.declared.Any(entry => string.Equals(entry.Key, identifier, StringComparison.OrdinalIgnoreCase)))
+        if (this.declared.Any(entry => string.Equals(entry.Key, identifier, StringComparison.Ordinal)))
         {
             throw UiConfigurationException.DuplicateApplication(identifier);
         }

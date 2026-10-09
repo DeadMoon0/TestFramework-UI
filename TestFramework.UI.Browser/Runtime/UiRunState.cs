@@ -31,7 +31,9 @@ internal sealed class UiRunState
     // other: the failure observer enumerating open sessions while a parallel step's create wrote was
     // a concurrent enumeration/mutation. One dictionary, one rule: its own thread safety covers every
     // touch, and the gate keeps doing the only job it ever had - one browser launch per application.
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, UiSession> sessions = new(StringComparer.OrdinalIgnoreCase);
+    // Ordinal, as application identifiers are everywhere else: 'shop' and 'Shop' are two applications, and a
+    // case-insensitive key handed the second one the first one's browser context and page.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, UiSession> sessions = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim sessionGate = new SemaphoreSlim(1, 1);
     private int cleanupClaimed;
     private int inspectionHolds;
