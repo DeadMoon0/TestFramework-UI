@@ -5,14 +5,13 @@ name: Release TestFramework.UI.Browser
 # Trigger: push a package-prefixed tag, e.g.
 #     git tag UIBrowser-v<version> && git push origin UIBrowser-v<version>
 #
-# This repo produces three packages, so the tag prefix says which one this workflow releases.
-# The tagging convention is the same across every TestFramework repo.
+# The tag prefix names the package, as in every TestFramework repo.
 #
 # The tag is the source of truth: the job refuses to publish unless the packed project's
 # <Version> matches the version in the tag.
 #
-# Publish order matters across repos: this package depends on TestFramework.UI (packed from this repo) plus TestFramework.Core and TestFramework.Config, so those must
-# already be on nuget.org first.
+# Publish order matters across repos: this package depends on TestFramework.Core and
+# TestFramework.Config, so those must already be on nuget.org first.
 #
 # AUTHENTICATION - Trusted Publishing (OIDC). There is no long-lived API key.
 # The job requests a short-lived GitHub OIDC token and exchanges it with nuget.org for a

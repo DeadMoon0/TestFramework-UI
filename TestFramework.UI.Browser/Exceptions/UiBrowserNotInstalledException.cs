@@ -49,8 +49,8 @@ public sealed class UiBrowserNotInstalledException : TimelineFrameworkException
               3. Install them from a terminal, in the test project's output folder:
                      pwsh bin/Debug/net8.0/playwright.ps1 install chromium
 
-            On a machine with any browser installed, the tests find and use it on their own - the
-            TESTFRAMEWORK_UI_BROWSER environment variable only overrides WHICH one, never whether.
+            The application's Browser and Channel settings decide which browser a run drives; nothing
+            picks another one for it.
             """;
     }
 }

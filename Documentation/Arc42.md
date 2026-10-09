@@ -39,9 +39,10 @@ Three goals rank above everything else:
 
 Consumers write xunit tests using the Core timeline DSL. This repo adds the browser door. Upstream:
 TestFramework.Core (timeline model), TestFramework.Config (configuration builder), Microsoft
-Playwright (browser automation as a driver, deliberately *not* as a test runner), and — only in the
-bridge package — TestFramework.Web (Site and Api configuration stores). Downstream: a container lane
-can provision sites and publish their addresses into the same stores the bridge reads.
+Playwright (browser automation as a driver, deliberately *not* as a test runner). There is no
+dependency on TestFramework.Web: an application's address can come from any resource the run declares
+- a Web site or API among them - read through the run by kind name, so a container lane that provisions
+a site and publishes its address reaches the browser without this package knowing who published it.
 
 ## 4. Solution Strategy
 
@@ -104,7 +105,8 @@ their windows. What a failing step recorded lands in the run output folder CI al
   so the planner orders same-app steps and parallelizes different apps.
 - **Settle loops everywhere a page is compared**: one-shot comparison against a live page is the
   canonical flake.
-- **Own-deadline timeouts** for everything with a story to tell.
+- **The run's deadline** for everything with a story to tell: a step reads its budget from its
+  `RunContext`, and the engine's grace window lets its own account surface (see §2).
 - **Audits over prohibitions**: loose matches (`UiLooseMatches`), script use (`UiScripts`) — the
   framework permits and records, the suite decides.
 - **Invariant culture in every message**: a failure must read identically on every machine.

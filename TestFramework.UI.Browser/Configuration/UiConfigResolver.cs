@@ -42,16 +42,13 @@ internal static class UiConfigResolver
     };
 
     /// <summary>
-    /// Resolves the configuration, including an address that belongs to another package's resource.
-    /// </summary>
-    /// <summary>
     /// The configuration a step actually runs with, recorded on the run as it is resolved.
     /// </summary>
     /// <remarks>
     /// <para>
     /// The three callers all did the same two things - resolve, then apply the environment overrides - and
-    /// the second one can change the browser, so anything recording what a run drove had to happen after
-    /// both. Doing it here rather than at each call site is what keeps one answer: three places recording
+    /// the second one can change how the browser runs (headed, slowed down), so anything recording what a run
+    /// drove had to happen after both. Doing it here rather than at each call site is what keeps one answer: three places recording
     /// the same fact is three chances for them to disagree about what it is called.
     /// </para>
     /// <para>
@@ -91,6 +88,9 @@ internal static class UiConfigResolver
     /// <summary>Who recorded it, so another package's "Browser" is a different entry rather than a clash.</summary>
     private const string Source = "TestFramework.UI.Browser";
 
+    /// <summary>
+    /// Resolves the configuration, including an address that belongs to another package's resource.
+    /// </summary>
     /// <param name="context">The run.</param>
     /// <param name="identifier">The application.</param>
     /// <returns>The configuration, with a usable base address.</returns>

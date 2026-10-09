@@ -28,8 +28,8 @@ message.
 ## The Evidence
 
 A failing step records four widgets per open application into the run's own output, under
-`TestFrameworkOutput/<run>/widgets/`, which CI publishes like any other run output — and which the
-debugging tool draws, the run's summary lists, and a shared run bundle carries:
+`TestFrameworkOutput/<run>/widgets/`, which CI publishes like any other run output, the debugging tool
+draws and the run's summary lists:
 
 - `<step>-<app>.png` — the page as it was at the failure
 - `<step>-<app>-page.html` — the markup, for reading what the locators saw
@@ -68,8 +68,8 @@ shared no key with the run that produced it, so the evidence existed and nothing
 
 Writing it is not the step's job. The engine tells whoever is watching a run that a step failed or ran
 out of time, and this package registers one such observer — `.LoadUIConfig()` does it, so a timeline that
-configures the browser has the evidence too. The step names the folder in its own message; the observer
-fills it, and says in the run log where it went or why it could not.
+configures the browser has the evidence too. The observer records the widgets, and says in the run log
+where they went or why it could not.
 
 Locally, `TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1` also holds the browser open at the failure state for as
 long as you need it — the run says out loud that it is being held — and `TESTFRAMEWORK_UI_HEADED=1` /
@@ -115,7 +115,7 @@ already wait those out where they cause them (`Choose` waits for its popup to cl
 
 An action inside a flow failed: the wrapped cause carries what went wrong, and the wrapper carries
 where — which action of how many, what already worked, the page address, the application's console
-errors during the step, and where the evidence went:
+errors during the step. The evidence is the run's widgets (see The Evidence):
 
 ```
 Action 4 of 6 on 'shop' failed: Fill 'Email'.
@@ -153,10 +153,10 @@ geometry.
 
 ## UiConfigurationException
 
-An identifier has no configuration, or no road to an address. The message lists the identifiers that
-*are* registered, and — with the bridge — which stores were asked. Recovery: add the
-`Ui:<identifier>` entry, or load the Web configuration (`.LoadWebConfig()`) so a `Site:`/`Api:` entry can
-answer, or let the environment publish it.
+An identifier has no configuration, no browser, or no road to an address. The message lists the
+identifiers that *are* registered. Recovery: add the `Ui:<identifier>` entry with a `Browser`; give it a
+`BaseUrl`, name the resource that has one with `BaseUrlFrom`, or load the Web configuration
+(`.LoadWebConfig()`) so a site or API of the same name answers - or let the environment publish it.
 
 ## UiBrowserNotInstalledException
 
@@ -168,7 +168,7 @@ The configured browser engine is not on the machine. The message names the three
 ## Wait Event Timeouts
 
 A wait event raises `TimeoutException` with its own message — what was watched, where the page was,
-how many polls, the advice for that kind of wait, and the bundle path. Structure and table waits
+how many polls, and the advice for that kind of wait. Structure and table waits
 additionally report their **last look**, difference by difference, with the expectation the page did
 satisfy at that moment. The attribute waits report the value the attribute actually read on the last
 look (`AttributeEquals`) or the baseline it never moved from (`AttributeChanged` — whose baseline is
