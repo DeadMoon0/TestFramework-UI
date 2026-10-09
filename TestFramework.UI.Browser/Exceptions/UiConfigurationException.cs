@@ -148,6 +148,19 @@ public sealed class UiConfigurationException : TimelineFrameworkException
             + $"Correct it under 'Ui:{identifier}:{setting}', or wherever the application is declared.");
 
     /// <summary>
+    /// The application takes its address from another resource, and that resource has no address.
+    /// </summary>
+    /// <param name="identifier">The application.</param>
+    /// <param name="target">The resource it is bridged to.</param>
+    /// <param name="kind">The resource's kind, when the bridge states one.</param>
+    /// <returns>The exception.</returns>
+    public static UiConfigurationException BridgeHasNoAddress(string identifier, string target, string? kind)
+        => new UiConfigurationException(
+            $"The web application '{identifier}' takes its address from {(kind is { Length: > 0 } ? $"{kind} '{target}'" : $"'{target}'")}, "
+            + "which has no BaseUrl in this run. Give that resource its address - in its own configuration entry, or by "
+            + "the environment that starts it - or point the bridge at the resource that has one.");
+
+    /// <summary>
     /// The application is configured, but nothing says where to reach it.
     /// </summary>
     /// <param name="identifier">The identifier.</param>

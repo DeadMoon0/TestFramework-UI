@@ -146,6 +146,12 @@ internal static class UiConfigResolver
             return config with { BaseUrl = ownBaseUrl };
         }
 
+        // A bridge whose target exists but has no address yet is a different mistake from an application with no
+        // road at all, and its fix is on the other side: telling the user to set this application's own BaseUrl
+        // would lead to a run refused for having two addresses.
+        if (foreignIdentifier is { Length: > 0 })
+            throw UiConfigurationException.BridgeHasNoAddress(identifier, foreignIdentifier, identifier.ExternalRequirement?.ResourceKind);
+
         throw UiConfigurationException.MissingBaseUrl(identifier);
     }
 

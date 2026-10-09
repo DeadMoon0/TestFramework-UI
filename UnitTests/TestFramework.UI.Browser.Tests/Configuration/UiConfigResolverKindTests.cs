@@ -94,6 +94,21 @@ public class UiConfigResolverKindTests(ITestOutputHelper output)
         Assert.Throws<TimelineRunFailedException>(run.EnsureRanToCompletion);
     }
 
+    [Fact]
+    public async Task ABridgeWhoseTargetHasNoAddress_NamesTheTarget()
+    {
+        // The refusal used to be about the application's own BaseUrl - a fix that would then have been refused as a
+        // second address. What is missing is on the other side of the bridge, and the message says so.
+        TimelineRun run = await Run(
+            new WebAppIdentifier("shop"),
+            entry: new WebAppConfig { Browser = "chromium", BaseUrlFrom = "storefront" },
+            published: ("kind.a", "shop", "http://own/"));
+
+        TimelineRunFailedException failure = Assert.Throws<TimelineRunFailedException>(run.EnsureRanToCompletion);
+
+        Assert.Contains("takes its address from 'storefront', which has no BaseUrl", failure.ToString(), StringComparison.Ordinal);
+    }
+
     private Task<TimelineRun> Run(WebAppIdentifier identifier, params (string Kind, string Identifier, string BaseUrl)[] published)
         => Run(identifier, new WebAppConfig { Browser = "chromium" }, published);
 
