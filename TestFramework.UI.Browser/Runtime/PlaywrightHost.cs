@@ -74,7 +74,7 @@ internal static class PlaywrightHost
             config.EffectiveHeadless,
             config.EffectiveSlowMo.TotalMilliseconds);
 
-        if (Browsers.TryGetValue(key, out IBrowser? cached))
+        if (Browsers.TryGetValue(key, out IBrowser? cached) && cached.IsConnected)
         {
             return cached;
         }
@@ -85,19 +85,51 @@ internal static class PlaywrightHost
         {
             if (Browsers.TryGetValue(key, out cached))
             {
-                return cached;
+                if (cached.IsConnected)
+                {
+                    return cached;
+                }
+
+                // A browser process that died - crashed, killed, closed by a test - stays dead. Kept in the pool,
+                // it failed every later run in the process with "browser has been closed"; it is replaced instead.
+                Browsers.TryRemove(key, out _);
             }
 
             IPlaywright driver = await DriverAsync(cancellationToken).ConfigureAwait(false);
-            IBrowser browser = await LaunchAsync(driver, config).ConfigureAwait(false);
+            Task<IBrowser> launch = LaunchAsync(driver, config);
 
-            Browsers[key] = browser;
-
-            return browser;
+            try
+            {
+                IBrowser browser = await launch.WaitAsync(cancellationToken).ConfigureAwait(false);
+                Browsers[key] = browser;
+                return browser;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // The step gave up; the launch cannot be stopped half-way, so it is let finish and its browser
+                // pooled for the next run - or closed, if another launch got there first - rather than left running
+                // with nothing holding it.
+                _ = AdoptWhenLaunchedAsync(key, launch);
+                throw;
+            }
         }
         finally
         {
             BrowserGate.Release();
+        }
+    }
+
+    private static async Task AdoptWhenLaunchedAsync(string key, Task<IBrowser> launch)
+    {
+        try
+        {
+            IBrowser browser = await launch.ConfigureAwait(false);
+            if (!Browsers.TryAdd(key, browser))
+                await browser.CloseAsync().ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is PlaywrightException or UiBrowserNotInstalledException)
+        {
+            // A launch nobody waits for any more has no one to report to; the next run's launch will.
         }
     }
 
