@@ -38,7 +38,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("save")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -61,7 +61,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("save")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.UiLooseMatches("shop").Should().HaveNoItems();
@@ -74,7 +74,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop").Navigate("/ambiguous").Click("Delete")).Name("delete")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("delete").LastResult.Exception);
 
@@ -103,7 +103,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("delete")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
     }
@@ -120,7 +120,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("delete")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -146,7 +146,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("report")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         Exception? failure = run.Step("report").LastResult.Exception;
 
@@ -170,7 +170,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("nonsense")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("nonsense").LastResult.Exception);
 
@@ -211,7 +211,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("add")
             .Build();
 
-        TimelineRun first = await addToCart.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun first = await addToCart.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
         first.EnsureRanToCompletion();
 
         // The cart is kept in the browser's own storage, so a second run inheriting the first one's context
@@ -223,7 +223,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("visit")
             .Build();
 
-        TimelineRun second = await freshVisit.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun second = await freshVisit.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         second.EnsureRanToCompletion();
     }

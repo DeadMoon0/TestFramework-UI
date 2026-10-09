@@ -48,7 +48,7 @@ public class ShapeEventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(10)).Name("list-built")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -78,7 +78,7 @@ public class ShapeEventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(10)).Name("all-rows")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -100,7 +100,7 @@ public class ShapeEventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(3)).Name("hopeless")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         TimeoutException failure = Assert.IsType<TimeoutException>(run.Step("hopeless").LastResult.Exception);
 

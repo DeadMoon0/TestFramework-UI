@@ -40,7 +40,7 @@ public class DeviceTests(SampleAppFixture fixture, ITestOutputHelper output)
         // unchanged - the timeline below is built by one method, and the device is the only difference.
         foreach ((string app, int perceivableMenus) in new[] { ("shop", 0), ("shop-mobile", 1) })
         {
-            TimelineRun run = await CatalogueTimeline(app).SetupRun(fixture.Services(), output).RunAsync();
+            TimelineRun run = await CatalogueTimeline(app).SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
             run.EnsureRanToCompletion();
 
@@ -63,7 +63,7 @@ public class DeviceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("via-menu")
             .Build();
 
-        TimelineRun phoneRun = await phone.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun phoneRun = await phone.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
         phoneRun.EnsureRanToCompletion();
 
         // The desktop's way: the links are simply there.
@@ -74,7 +74,7 @@ public class DeviceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("directly")
             .Build();
 
-        TimelineRun desktopRun = await desktop.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun desktopRun = await desktop.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
         desktopRun.EnsureRanToCompletion();
     }
 
@@ -85,7 +85,7 @@ public class DeviceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop").Navigate("/responsive")).Name("open")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(device: "Atari 2600"), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(device: "Atari 2600"), output.WriteLine).RunAsync();
 
         // A raw ArgumentException, deliberately: the session never came to be, so there is no flow
         // context and no page to photograph - wrapping it would only add words around the real answer.

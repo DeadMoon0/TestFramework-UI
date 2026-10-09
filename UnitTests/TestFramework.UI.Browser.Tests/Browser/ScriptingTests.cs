@@ -34,7 +34,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("seeded")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -59,7 +59,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("measured")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -79,7 +79,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("explodes")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("explodes").LastResult.Exception);
 
@@ -101,7 +101,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("empty-handed")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("empty-handed").LastResult.Exception);
 
@@ -119,7 +119,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("mistyped")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("mistyped").LastResult.Exception);
 
@@ -139,7 +139,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("plain")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

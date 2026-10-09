@@ -447,7 +447,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         {
             if (action.Value?.Identifier is { } identifier)
             {
-                contract.Inputs.Add(new StepIOEntry(identifier.Identifier, StepIOKind.Variable, true, typeof(string)));
+                contract.Input(identifier, typeof(string));
             }
 
             foreach ((string _, VariableReference<string> argument) in action.Script?.Arguments ?? [])
@@ -456,35 +456,27 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 {
                     // A script's dependencies are step inputs like any other verb's, so the planner sees
                     // them and a typo fails before a browser starts.
-                    contract.Inputs.Add(new StepIOEntry(argumentIdentifier.Identifier, StepIOKind.Variable, true, typeof(string)));
+                    contract.Input(argumentIdentifier, typeof(string));
                 }
             }
 
             if (action.Kind == UiActionKind.Evaluate && action.CaptureName is { } evaluated)
             {
-                contract.Outputs.Add(new StepIOEntry(evaluated, StepIOKind.Variable, true, action.ResultBinder!.ResultType));
+                contract.Output(new VariableIdentifier(evaluated), action.ResultBinder!.ResultType);
             }
 
             if (action.Kind == UiActionKind.Read && action.CaptureName is { } captureName)
             {
                 // The variable's declared type is the source's own - so a count is an int to the step
                 // that consumes it, not a string that happens to hold digits.
-                contract.Outputs.Add(new StepIOEntry(
-                    captureName,
-                    StepIOKind.Variable,
-                    true,
-                    action.Source?.ValueType ?? typeof(string)));
+                contract.Output(new VariableIdentifier(captureName), action.Source?.ValueType ?? typeof(string));
             }
         }
 
         // The session picture is declared as an output rather than an input, and that is what keeps steps
         // on the same application in order: the planner sequences steps that write the same variable, and
         // the first step of a session legitimately has no picture to read yet.
-        contract.Outputs.Add(new StepIOEntry(
-            UiSessionVariable.For(this.app),
-            StepIOKind.Variable,
-            true,
-            typeof(UiSessionPicture)));
+        contract.Output(new VariableIdentifier(UiSessionVariable.For(this.app)), typeof(UiSessionPicture));
     }
 
     /// <inheritdoc />

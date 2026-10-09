@@ -27,7 +27,7 @@ public class EffectiveBrowserTests(SampleAppFixture fixture, ITestOutputHelper o
             .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Name("open")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -58,7 +58,7 @@ public class EffectiveBrowserTests(SampleAppFixture fixture, ITestOutputHelper o
             .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Name("open")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

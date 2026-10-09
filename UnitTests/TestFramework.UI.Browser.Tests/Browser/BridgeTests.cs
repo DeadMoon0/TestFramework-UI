@@ -47,7 +47,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("browse")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(services, output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(services, output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.UiUrl("shop-bridged").Should().Contain("/app/products");
@@ -74,7 +74,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("browse")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(services, output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(services, output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
     }
@@ -104,7 +104,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("browser-orders")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(services, output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(services, output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

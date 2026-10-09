@@ -11,7 +11,7 @@
 		<PackageTags>Test;UnitTest;IntegrationTest;Framework;Fluent;Timeline;UI;Browser;Playwright;WebUI;E2E</PackageTags>
 		<PackageIcon>Icon.png</PackageIcon>
 		<Description>Drive a local browser from inside a TestFramework timeline. Interactions read as imperative steps (Navigate, Click, Fill, Expect) and address elements the way a person does - by role, label, placeholder or visible text - so a renamed or relocated control does not fail a test that only wanted to press it. Every non-exact match is recorded and assertable, ambiguity fails with the candidates and the dial that resolves it, and expected page structure is declared as a typed, reusable field.</Description>
-		<Version>0.3.0</Version>
+		<Version>0.4.0</Version>
 		<PackageProjectUrl>https://github.com/DeadMoon0/TestFramework-UI</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
@@ -37,8 +37,8 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-		<PackageReference Include="TestFramework.Config" Version="0.3.0" />
-		<PackageReference Include="TestFramework.Core" Version="0.6.0" />
+		<PackageReference Include="TestFramework.Config" Version="0.4.0" />
+		<PackageReference Include="TestFramework.Core" Version="0.7.0" />
 	</ItemGroup>
 
 	<!--

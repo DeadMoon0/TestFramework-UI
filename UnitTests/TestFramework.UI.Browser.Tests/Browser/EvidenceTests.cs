@@ -32,7 +32,7 @@ public class EvidenceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("browse")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -53,7 +53,7 @@ public class EvidenceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("quiet")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -72,7 +72,7 @@ public class EvidenceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("watched")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

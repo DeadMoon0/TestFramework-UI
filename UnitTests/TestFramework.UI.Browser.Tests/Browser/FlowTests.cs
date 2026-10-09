@@ -41,7 +41,7 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("checkout")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -73,7 +73,7 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("export")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.Step("export").Should().HaveCompleted();
@@ -92,7 +92,7 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("banner")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
     }
@@ -105,7 +105,7 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop").Click("Add Rope to cart").Expect("2 items in cart")).Name("second")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

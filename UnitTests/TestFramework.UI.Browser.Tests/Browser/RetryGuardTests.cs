@@ -26,7 +26,7 @@ public class RetryGuardTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Build();
 
         InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => timeline.SetupRun(new ServiceCollection().BuildServiceProvider(), output).RunAsync());
+            () => timeline.SetupRun(new ServiceCollection().BuildServiceProvider(), output.WriteLine).RunAsync());
 
         Assert.Contains("WithRetry", failure.Message, StringComparison.Ordinal);
         Assert.Contains("starts with Click", failure.Message, StringComparison.Ordinal);
@@ -46,7 +46,7 @@ public class RetryGuardTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithRetry(2, CalcDelays.None).Name("safe")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
     }

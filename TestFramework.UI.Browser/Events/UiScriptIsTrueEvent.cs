@@ -56,7 +56,7 @@ public sealed class UiScriptIsTrueEvent : UiEvent<UiScriptIsTrueEvent>
         {
             if (argument.Identifier is { } identifier)
             {
-                contract.Inputs.Add(new StepIOEntry(identifier.Identifier, StepIOKind.Variable, true, typeof(string)));
+                contract.Input(identifier, typeof(string));
             }
         }
     }

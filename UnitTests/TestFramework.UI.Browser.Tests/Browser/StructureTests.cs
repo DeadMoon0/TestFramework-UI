@@ -46,7 +46,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Page("shop").CompareStructure(Target.Section("Orders All"), OrderList)).Name("shape")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.UiDifferences("shape").Should().HaveNoItems();
@@ -70,7 +70,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
                     .Containing(x => x.AtLeast(2, "app-order-row")))).Name("rows")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
     }
@@ -89,7 +89,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
                     .Row("A-1002", "Rope", "3", Cell.Contains("9")))).Name("orders")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.UiDifferences("orders").Should().HaveNoItems();
@@ -103,7 +103,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Page("shop").ReadTable(Target.Section("Orders All"), "orderRows")).Name("read")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -134,7 +134,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
                     }))).Name("wrong")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiStructureMismatchException failure = Assert.IsType<UiStructureMismatchException>(
             run.Step("wrong").LastResult.Exception);
@@ -165,7 +165,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
                     .AllowExtraRows())).Name("wrong")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiStructureMismatchException failure = Assert.IsType<UiStructureMismatchException>(
             run.Step("wrong").LastResult.Exception);
@@ -210,7 +210,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Page("shop").CompareStructure(Target.Section("Orders All"), AsSuggested)).Name("pasted")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.UiDifferences("pasted").Should().HaveNoItems();
@@ -224,7 +224,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Page("shop").CaptureStructure(Target.Section("Orders All"), "orderListShape")).Name("capture")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

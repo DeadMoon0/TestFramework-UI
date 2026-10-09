@@ -105,11 +105,7 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
 
         // Same session variable as the flow steps, which is what keeps an inspection ordered after the
         // flow that produced the page it is about.
-        contract.Outputs.Add(new StepIOEntry(
-            UiSessionVariable.For(this.app),
-            StepIOKind.Variable,
-            true,
-            typeof(UiSessionPicture)));
+        contract.Output(new VariableIdentifier(UiSessionVariable.For(this.app)), typeof(UiSessionPicture));
 
         this.DeclareOwnIO(contract);
     }

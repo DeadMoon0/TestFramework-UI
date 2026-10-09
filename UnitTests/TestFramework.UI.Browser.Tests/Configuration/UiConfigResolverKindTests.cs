@@ -110,7 +110,7 @@ public class UiConfigResolverKindTests(ITestOutputHelper output)
             .Build();
 
         ITimelineRunBuilder builder = timeline
-            .SetupRun(services.BuildServiceProvider(), output)
+            .SetupRun(services.BuildServiceProvider(), output.WriteLine)
             .SetEnv(new PublishingEnvironment(published));
 
         return await builder.RunAsync();

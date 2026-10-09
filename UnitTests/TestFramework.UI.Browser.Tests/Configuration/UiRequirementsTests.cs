@@ -106,6 +106,6 @@ public class UiRequirementsTests
         public override string SourceName => "another package";
 
         protected override IEnumerable<DeclaredResource> Declarations
-            => [new DeclaredResource(kind, identifier, new Dictionary<ValueKey, string>(), this.SourceName)];
+            => [new DeclaredResource { Kind = kind, Identifier = identifier, Values = new Dictionary<ValueKey, string>(), DeclaredBy = this.SourceName }];
     }
 }

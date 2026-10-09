@@ -35,7 +35,7 @@ public class InteractionTests(SampleAppFixture fixture, ITestOutputHelper output
                 .Name("hover-cycle")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -57,7 +57,7 @@ public class InteractionTests(SampleAppFixture fixture, ITestOutputHelper output
                 .Name("mouse-buttons")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -82,7 +82,7 @@ public class InteractionTests(SampleAppFixture fixture, ITestOutputHelper output
                 .Name("drag")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -110,7 +110,7 @@ public class InteractionTests(SampleAppFixture fixture, ITestOutputHelper output
                 .Name("keyboard")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

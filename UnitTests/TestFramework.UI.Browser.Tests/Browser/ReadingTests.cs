@@ -37,7 +37,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("form")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -67,7 +67,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("orders")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -89,7 +89,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("cart")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -109,7 +109,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("landed")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.Variable<string>("shipping").Should().Be("express");
@@ -127,7 +127,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("read")
             .Build();
 
-        TimelineRun run = await attributes.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await attributes.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("read").LastResult.Exception);
 
@@ -142,7 +142,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("read")
             .Build();
 
-        run = await parameters.SetupRun(fixture.Services(), output).RunAsync();
+        run = await parameters.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
         failure = Assert.IsType<UiActionFailedException>(run.Step("read").LastResult.Exception);
 
         Assert.Contains("no query parameter 'nope'", failure.Message, StringComparison.Ordinal);
@@ -162,7 +162,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("typo")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("typo").LastResult.Exception);
 
@@ -188,7 +188,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("wrong-verb")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("wrong-verb").LastResult.Exception);
 
@@ -208,7 +208,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("choose")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("choose").LastResult.Exception);
 
@@ -232,7 +232,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("read")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -250,7 +250,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("read")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("read").LastResult.Exception);
 

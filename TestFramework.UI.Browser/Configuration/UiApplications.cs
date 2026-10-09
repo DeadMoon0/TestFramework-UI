@@ -45,9 +45,11 @@ internal sealed class UiApplications : DeclaredNodeSource
     protected override IEnumerable<DeclaredResource> Declarations
         => this._applications
             .OrderBy(static application => application.Key, StringComparer.Ordinal)
-            .Select(application => new DeclaredResource(
-                BrowserEnvironmentResourceKinds.WebAppKind,
-                application.Key,
-                WebAppValues.From(application.Value),
-                $"UI application '{application.Key}'"));
+            .Select(application => new DeclaredResource
+            {
+                Kind = BrowserEnvironmentResourceKinds.WebAppKind,
+                Identifier = application.Key,
+                Values = WebAppValues.From(application.Value),
+                DeclaredBy = $"UI application '{application.Key}'",
+            });
 }

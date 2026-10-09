@@ -173,7 +173,7 @@ public class BridgeResolutionTests(ITestOutputHelper output)
             .Trigger(new ResolvesAppStep(app)).Name("resolves")
             .Build();
 
-        return await timeline.SetupRun(services.BuildServiceProvider(), output).RunAsync();
+        return await timeline.SetupRun(services.BuildServiceProvider(), output.WriteLine).RunAsync();
     }
 
     /// <summary>Resolves the application the way every browser step now does.</summary>

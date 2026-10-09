@@ -63,7 +63,7 @@ internal sealed class CaptureStructureStep : UiInspectionStep<UiCaptureResultCon
 
     /// <inheritdoc />
     protected override void DeclareOwnIO(StepIOContract contract)
-        => contract.Outputs.Add(new StepIOEntry(this.captureName, StepIOKind.Variable, true, typeof(string)));
+        => contract.Output(new VariableIdentifier(this.captureName), typeof(string));
 
     /// <inheritdoc />
     protected override async Task<(UiCaptureResultContext Result, string? Detail)> InspectAsync(

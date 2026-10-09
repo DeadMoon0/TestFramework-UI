@@ -71,7 +71,7 @@ public class CaptureOnRequestTests(SampleAppFixture fixture, ITestOutputHelper o
             .Trigger(new AsksForALookStep("shop", holdForInspection)).Name("look")
             .Build();
 
-        return await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        return await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
     }
 
     /// <summary>Every widget any run in this output has written, by file name.</summary>

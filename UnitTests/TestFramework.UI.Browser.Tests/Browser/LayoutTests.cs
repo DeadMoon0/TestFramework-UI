@@ -36,7 +36,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Page("shop").CheckLayout(CheckoutLayout)).Name("layout")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.UiDifferences("layout").Should().HaveNoItems();
@@ -54,7 +54,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .AndNoHorizontalScroll())).Name("layout")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
     }
@@ -70,7 +70,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Above(Target.Button("Place order"), Target.Field("Email")))).Name("upside-down")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiLayoutMismatchException failure = Assert.IsType<UiLayoutMismatchException>(
             run.Step("upside-down").LastResult.Exception);
@@ -93,7 +93,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(8)).Name("nobody-home")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiLayoutMismatchException failure = Assert.IsType<UiLayoutMismatchException>(
             run.Step("nobody-home").LastResult.Exception);
@@ -109,7 +109,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Page("shop").CaptureLayout(Target.Section("Orders All"), "orderGeometry")).Name("capture")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -134,7 +134,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("read")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -155,7 +155,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("typo")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         UiActionFailedException failure = Assert.IsType<UiActionFailedException>(run.Step("typo").LastResult.Exception);
 
@@ -189,7 +189,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Name("entry-visible")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

@@ -30,7 +30,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop").Click("Export all").Expect("Export started")).Name("export")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -55,7 +55,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(10)).Name("banner-gone")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -75,7 +75,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(5)).Name("nothing-there")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
     }
@@ -94,7 +94,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop").Expect("Thank you")).Name("confirmed")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.UiUrl("shop").Should().Contain("/confirmation");
@@ -113,7 +113,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(10)).Name("data-loaded")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -132,7 +132,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(5)).Name("mistyped")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         Exception failure = Assert.IsType<InvalidOperationException>(run.Step("mistyped").LastResult.Exception);
 
@@ -150,7 +150,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(3)).Name("hopeless")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         // The event's own message, not the runner's generic one - which is the entire point of the event
         // giving up slightly before its step timeout.
@@ -192,7 +192,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(10)).Name("banner-gone")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 
@@ -220,7 +220,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(3)).Name("never")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         TimeoutException failure = Assert.IsType<TimeoutException>(run.Step("never").LastResult.Exception);
 
@@ -252,7 +252,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithTimeOut(TimeSpan.FromSeconds(10)).Name("all-three")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
 

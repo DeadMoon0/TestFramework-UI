@@ -53,11 +53,7 @@ internal sealed class ReadTableStep : UiInspectionStep<UiTableResultContext>
     {
         if (this.into is { } identifier)
         {
-            contract.Outputs.Add(new StepIOEntry(
-                identifier.Identifier,
-                StepIOKind.Variable,
-                true,
-                typeof(IReadOnlyList<IReadOnlyDictionary<string, string>>)));
+            contract.Output(identifier, typeof(IReadOnlyList<IReadOnlyDictionary<string, string>>));
         }
     }
 

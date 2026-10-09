@@ -19,7 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="TestFramework.Web" Version="0.5.0" />
+		<PackageReference Include="TestFramework.Web" Version="0.6.0" />
 		<ProjectReference Include="..\..\TestFramework.UI.Browser\TestFramework.UI.Browser.csproj" />
 		<ProjectReference Include="..\TestFramework.UI.SampleWebApp\TestFramework.UI.SampleWebApp.csproj" />
 	</ItemGroup>

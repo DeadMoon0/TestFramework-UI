@@ -23,7 +23,7 @@ public class ReadmeSamplesTests(SampleAppFixture fixture, ITestOutputHelper outp
                 .Name("cart")
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(fixture.Services(), output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.UiUrl("shop").Should().Contain("/products");

@@ -129,18 +129,14 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
 
         if (this.pollDelay.Identifier is { } delayIdentifier)
         {
-            contract.Inputs.Add(new StepIOEntry(delayIdentifier.Identifier, StepIOKind.Variable, true, typeof(TimeSpan)));
+            contract.Input(delayIdentifier, typeof(TimeSpan));
         }
 
         this.DeclareOwnIO(contract);
 
         // The same variable the flows write, which is what keeps a wait ordered between the steps of its
         // application's session instead of floating free in the plan.
-        contract.Outputs.Add(new StepIOEntry(
-            UiSessionVariable.For(this.app),
-            StepIOKind.Variable,
-            true,
-            typeof(UiSessionPicture)));
+        contract.Output(new VariableIdentifier(UiSessionVariable.For(this.app)), typeof(UiSessionPicture));
     }
 
     /// <summary>
@@ -253,19 +249,17 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
 
         if (!outcome.Satisfied)
         {
-            return new SequentialPollingResult<UiWaitResultContext>(false, null, this.pollDelay.GetValue(context.Variables));
+            return SequentialPollingResult<UiWaitResultContext>.NotYet(this.pollDelay.GetValue(context.Variables));
         }
 
-        return new SequentialPollingResult<UiWaitResultContext>(
-            true,
+        return SequentialPollingResult<UiWaitResultContext>.Done(
             new UiWaitResultContext(
                 this.app,
                 this.session.Page.Url,
                 this.DescribeWaited(context.Variables),
                 outcome.ResolvedVia,
                 this.clock!.Elapsed.TotalMilliseconds,
-                this.polls),
-            TimeSpan.Zero);
+                this.polls));
     }
 
     private void Record(VariableStore variableStore, UiWaitResultContext result)
