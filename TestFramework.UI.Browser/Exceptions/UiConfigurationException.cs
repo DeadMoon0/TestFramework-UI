@@ -131,7 +131,7 @@ public sealed class UiConfigurationException : TimelineFrameworkException
             $"The web application '{identifier}' has no address. Set 'BaseUrl' for it; or configure a site " +
             $"or REST API under the same identifier '{identifier}' with LoadWebConfig(), so the address " +
             "resolves through the run whether a configuration entry or a container environment supplied " +
-            "it; or name a differently-named resource with 'BaseUrlFromSite' / 'BaseUrlFromApi'.");
+            "it; or name a differently-named resource with 'BaseUrlFrom'.");
 
     /// <summary>
     /// An application's own entry states an address while a bridge or a same-name resource also answers.

@@ -65,7 +65,7 @@
     - BrowserExt.Events.ElementVisible|ElementHidden(app, target), TextAppears|TextDisappears(app, text), AttributeEquals(app, target, attribute, rule), AttributeChanged(app, target, attribute) - baseline is the wait's first look, CountIs|CountAtLeast(app, target, n), UrlMatches(app, pattern).AsRegex(), ScriptIsTrue(app, js), StructureMatches(app, scope, structure), TableMatches(app, table, expected) - all take an optional pollDelay, default 500 ms
     - run.UiSession|UiUrl|UiTitle|UiTrace|UiLooseMatches|UiWeakestMatch|UiScripts|UiScreenshot|UiConsoleErrors(app), run.UiTable|UiColumn|UiDifferences|UiActualStructure|UiCapturedStructure(label), run.Variable&lt;T&gt;(name)
     - run.Step(label).UiResult() | UiCompare() | UiTableResult() | UiCapture() for the raw typed results
-    - WebAppConfig: BaseUrl, Browser, Channel, Headless, Device, BasedOn, ViewportWidth/Height, UserAgent, IsMobile, HasTouch, DeviceScaleFactor, Locale, ColorScheme, SlowMo, DefaultActionTimeout, DefaultCompareTimeout, TestIdAttribute, AmbiguityMode, IgnoreHttpsErrors, WidgetCapture (OnFailure|EveryAction), BaseUrlFromSite, BaseUrlFromApi
+    - WebAppConfig: BaseUrl, Browser, Channel, Headless, Device, BasedOn, ViewportWidth/Height, UserAgent, IsMobile, HasTouch, DeviceScaleFactor, Locale, ColorScheme, SlowMo, DefaultActionTimeout, DefaultCompareTimeout, TestIdAttribute, AmbiguityMode, IgnoreHttpsErrors, WidgetCapture (OnFailure|EveryAction), BaseUrlFrom
     - Exceptions: UiConfigurationException, UiTargetNotFoundException, UiAmbiguousTargetException, UiActionFailedException, UiStructureMismatchException, UiLayoutMismatchException, UiBrowserNotInstalledException
     - Extension point, public: WebAppIdentifier.BridgedTo (point an application at a resource another package provisions - a kind plus an identifier, which the run then answers for). Where a browser comes from is deliberately NOT one - it is internal, because a session's lifetime is this package's to own. There used to be an IUiBaseUrlSource seam here as well; it is gone, because asking the run is what it was a hand-built version of.
     - Bridging: identifier.BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi | .Site, id)). No registration to add: .LoadWebConfig() puts a site's or an API's address into the run and a browser step reads it there. There is no TestFramework.UI.Web package - it held two helpers for this and was removed.
@@ -83,7 +83,7 @@
           "DefaultActionTimeout": "00:00:10"
         },
         "shop-mobile": { "BasedOn": "shop", "Device": "iPhone 14" },
-        "shop-via-api": { "BaseUrlFromApi": "shop-api" }
+        "shop-via-api": { "BaseUrlFrom": "shop-api" }
       }
     }
 </configuration_shape>

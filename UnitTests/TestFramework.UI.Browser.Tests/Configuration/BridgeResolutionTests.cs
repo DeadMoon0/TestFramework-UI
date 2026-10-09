@@ -112,11 +112,11 @@ public class BridgeResolutionTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task BaseUrlFromSiteResolvesADifferentlyNamedSite()
+    public async Task BaseUrlFromResolvesADifferentlyNamedSite()
     {
         TimelineRun run = await Run(
             new WebAppIdentifier("shop"),
-            new WebAppConfig { Browser = "chromium", BaseUrlFromSite = "shop-ui" },
+            new WebAppConfig { Browser = "chromium", BaseUrlFrom = "shop-ui" },
             ("Site:shop-ui:BaseUrl", "http://localhost:39001/"));
 
         run.EnsureRanToCompletion();
@@ -125,14 +125,14 @@ public class BridgeResolutionTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task BaseUrlFromApiResolvesADifferentlyNamedApi()
+    public async Task BaseUrlFromResolvesADifferentlyNamedApi()
     {
         // Named for what it does rather than for a store it reads. Neither of these two members ever
         // restricted the search to a kind - only a bridged requirement does that - so the old name promised
         // something the code did not deliver; see the debt ledger.
         TimelineRun run = await Run(
             new WebAppIdentifier("shop"),
-            new WebAppConfig { Browser = "chromium", BaseUrlFromApi = "shop-api" },
+            new WebAppConfig { Browser = "chromium", BaseUrlFrom = "shop-api" },
             ("Api:shop-api:BaseUrl", "http://api/"));
 
         run.EnsureRanToCompletion();

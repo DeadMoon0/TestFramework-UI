@@ -28,18 +28,18 @@ public sealed record WebAppConfig : IInheritsConfig
     public string? BaseUrl { get; init; }
 
     /// <summary>
-    /// The identifier of a REST API whose configured address to use instead, for an application the
-    /// TestFramework.Web family serves itself. Resolves through the run; no bridge package involved.
+    /// The identifier of another resource - a site, a REST API, anything that publishes a <c>BaseUrl</c> - whose
+    /// address to use instead, when it differs from this application's own identifier. Resolves through the run.
+    /// With matching names nothing has to be set: the application's own identifier is looked up by itself.
     /// </summary>
-    public string? BaseUrlFromApi { get; init; }
-
-    /// <summary>
-    /// The identifier of a configured site whose address to use instead, when it differs from this
-    /// application's own identifier. Resolves through the run; no bridge package involved. With
-    /// matching names nothing has to be set: the application's own identifier is looked up in the
-    /// site configuration by itself.
-    /// </summary>
-    public string? BaseUrlFromSite { get; init; }
+    /// <remarks>
+    /// One name, because a configuration entry cannot say a resource's kind: this package does not know the
+    /// kinds other packages declare. It replaced <c>BaseUrlFromSite</c> and <c>BaseUrlFromApi</c>, which looked
+    /// like a site and an API lookup and were the same kind-less lookup twice - <c>BaseUrlFromSite = "x"</c> found a
+    /// REST API named <c>x</c> just as happily. A bridge that must name the kind is written in code:
+    /// <c>new WebAppIdentifier(id).BridgedTo(new EnvironmentRequirement(kind, name))</c>.
+    /// </remarks>
+    public string? BaseUrlFrom { get; init; }
 
     /// <summary>
     /// Another entry to inherit every unset value from. Lets a mobile variant be one line rather than a

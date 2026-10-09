@@ -100,8 +100,7 @@ public class UiConfigLoaderTests
         WebAppConfig stated = new()
         {
             BaseUrl = "http://localhost:5090/",
-            BaseUrlFromApi = "api",
-            BaseUrlFromSite = "site",
+            BaseUrlFrom = "site",
             Browser = "firefox",
             Channel = "msedge",
             Headless = false,

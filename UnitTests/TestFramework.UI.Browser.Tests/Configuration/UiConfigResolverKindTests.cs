@@ -88,7 +88,7 @@ public class UiConfigResolverKindTests(ITestOutputHelper output)
         // quietly try the application's own name instead. Unchanged.
         TimelineRun run = await Run(
             new WebAppIdentifier("shop"),
-            entry: new WebAppConfig { Browser = "chromium", BaseUrlFromSite = "missing" },
+            entry: new WebAppConfig { Browser = "chromium", BaseUrlFrom = "missing" },
             published: ("kind.a", "shop", "http://own/"));
 
         Assert.Throws<TimelineRunFailedException>(run.EnsureRanToCompletion);

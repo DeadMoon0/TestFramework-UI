@@ -31,8 +31,7 @@ internal static class WebAppValues
             values[new ValueKey(ValueNames.BaseUrl, ResourceVantage.Network)] = baseUrl;
         }
 
-        Add(values, nameof(WebAppConfig.BaseUrlFromApi), config.BaseUrlFromApi);
-        Add(values, nameof(WebAppConfig.BaseUrlFromSite), config.BaseUrlFromSite);
+        Add(values, nameof(WebAppConfig.BaseUrlFrom), config.BaseUrlFrom);
         Add(values, nameof(WebAppConfig.Browser), config.Browser);
         Add(values, nameof(WebAppConfig.Channel), config.Channel);
         Add(values, nameof(WebAppConfig.Headless), Format(config.Headless));
@@ -67,8 +66,7 @@ internal static class WebAppValues
         return new WebAppConfig
         {
             BaseUrl = Get(values, ValueNames.BaseUrl),
-            BaseUrlFromApi = Get(values, nameof(WebAppConfig.BaseUrlFromApi)),
-            BaseUrlFromSite = Get(values, nameof(WebAppConfig.BaseUrlFromSite)),
+            BaseUrlFrom = Get(values, nameof(WebAppConfig.BaseUrlFrom)),
             Browser = Get(values, nameof(WebAppConfig.Browser)),
             Channel = Get(values, nameof(WebAppConfig.Channel)),
             Headless = ParseBool(values, nameof(WebAppConfig.Headless)),

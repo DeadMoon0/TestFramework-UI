@@ -84,7 +84,7 @@ public class UiRequirementsTests
     [Fact]
     public void ABridgeInTheApplicationsOwnEntry_IsRequiredByName()
     {
-        ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium", BaseUrlFromSite = "storefront" }), Other(WebEnvironmentResourceKinds.SiteKind, "storefront"));
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium", BaseUrlFrom = "storefront" }), Other(WebEnvironmentResourceKinds.SiteKind, "storefront"));
 
         Assert.Equal(["ui.webapp/shop", "*/storefront"], Describe(UiRequirements.For(Shop, resources)));
     }

@@ -94,14 +94,14 @@ internal static class UiRequirements
     }
 
     /// <summary>
-    /// A bridge stated in the application's own entry - <c>BaseUrlFromSite</c> or <c>BaseUrlFromApi</c> - names
-    /// a resource without its kind, the way the resolver later reads it.
+    /// A bridge stated in the application's own entry - <c>BaseUrlFrom</c> - names a resource without its kind, the
+    /// way the resolver later reads it.
     /// </summary>
     private static EnvironmentRequirement? ConfiguredBridge(ResourceNode own)
     {
         foreach ((ValueKey key, string value) in own.DeclaredValues)
         {
-            if (key.ValueName is nameof(WebAppConfig.BaseUrlFromSite) or nameof(WebAppConfig.BaseUrlFromApi) && value is { Length: > 0 })
+            if (key.ValueName is nameof(WebAppConfig.BaseUrlFrom) && value is { Length: > 0 })
             {
                 return EnvironmentRequirement.AnyKind(value);
             }

@@ -27,8 +27,7 @@ public static class BrowserEnvironmentResourceKinds
     public static readonly ResourceKind WebAppKind = ResourceKind
         .Named(WebApp)
         .OffersPerVantage(ValueNames.BaseUrl, ValueTraits.Optional)
-        .Offers(nameof(WebAppConfig.BaseUrlFromApi), ValueTraits.Optional)
-        .Offers(nameof(WebAppConfig.BaseUrlFromSite), ValueTraits.Optional)
+        .Offers(nameof(WebAppConfig.BaseUrlFrom), ValueTraits.Optional)
         .Offers(nameof(WebAppConfig.Browser), ValueTraits.Optional)
         .Offers(nameof(WebAppConfig.Channel), ValueTraits.Optional)
         .Offers(nameof(WebAppConfig.Headless), ValueTraits.Optional)

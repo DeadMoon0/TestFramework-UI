@@ -129,7 +129,7 @@ internal static class UiConfigResolver
 
         // The bridged name comes off the requirement, which is the only thing that carries it now: a
         // separate member holding the same string was one the four bridge sites had to keep in step by hand.
-        string? foreignIdentifier = identifier.ExternalRequirement?.ResourceIdentifier ?? config.BaseUrlFromSite ?? config.BaseUrlFromApi;
+        string? foreignIdentifier = identifier.ExternalRequirement?.ResourceIdentifier ?? config.BaseUrlFrom;
 
         if (foreignIdentifier is { Length: > 0 }
             && Address(context, foreignIdentifier, identifier.ExternalRequirement?.ResourceKind) is { Length: > 0 } foreignBaseUrl)
