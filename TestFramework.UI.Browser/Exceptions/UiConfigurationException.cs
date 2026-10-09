@@ -122,6 +122,19 @@ public sealed class UiConfigurationException : TimelineFrameworkException
     }
 
     /// <summary>
+    /// A setting holds a value that does not read as the setting's type.
+    /// </summary>
+    /// <param name="identifier">The application.</param>
+    /// <param name="setting">The setting.</param>
+    /// <param name="text">What it held.</param>
+    /// <param name="expected">What it takes.</param>
+    /// <returns>The exception.</returns>
+    public static UiConfigurationException InvalidValue(string identifier, string setting, string text, string expected)
+        => new UiConfigurationException(
+            $"The web application '{identifier}' holds '{text}' for '{setting}', which takes {expected}. "
+            + $"Correct it under 'Ui:{identifier}:{setting}', or wherever the application is declared.");
+
+    /// <summary>
     /// The application is configured, but nothing says where to reach it.
     /// </summary>
     /// <param name="identifier">The identifier.</param>

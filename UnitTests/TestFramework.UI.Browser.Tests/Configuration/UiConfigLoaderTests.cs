@@ -46,7 +46,7 @@ public class UiConfigLoaderTests
             }
         }
 
-        return WebAppValues.Read(values);
+        return WebAppValues.Read(values, "shop");
     }
 
     [Fact]

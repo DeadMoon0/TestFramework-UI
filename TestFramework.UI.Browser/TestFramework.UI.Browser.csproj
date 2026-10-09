@@ -16,7 +16,7 @@
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>BREAKING - needs TestFramework.Core 0.7.0 and TestFramework.Config 0.4.0. Optional parameters became overloads, results and snapshots are built by the package (UiSessionEntry and UiExpectedNode take init properties), value records and WebAppIdentifier are sealed, and every UI exception is a TimelineFrameworkException. BaseUrlFromSite and BaseUrlFromApi are one setting, BaseUrlFrom: rename the key. A cookie or local-storage value read into a variable is a secret variable.</PackageReleaseNotes>
+		<PackageReleaseNotes>BREAKING - needs TestFramework.Core 0.7.0 and TestFramework.Config 0.4.0. Optional parameters became overloads, results and snapshots are built by the package (UiSessionEntry and UiExpectedNode take init properties), value records and WebAppIdentifier are sealed, and every UI exception is a TimelineFrameworkException. BaseUrlFromSite and BaseUrlFromApi are one setting, BaseUrlFrom: rename the key. A cookie or local-storage value read into a variable is a secret variable, and a malformed setting is refused naming the application and the setting.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>

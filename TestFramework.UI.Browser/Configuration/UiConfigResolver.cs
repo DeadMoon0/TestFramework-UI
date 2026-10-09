@@ -107,7 +107,7 @@ internal static class UiConfigResolver
             throw UiConfigurationException.MissingIdentifier(identifier, context.Values.IdentifiersOf(BrowserEnvironmentResourceKinds.WebAppKind));
         }
 
-        WebAppConfig config = WebAppValues.Read(values);
+        WebAppConfig config = WebAppValues.Read(values, identifier.Identifier);
 
         // Checked on the way out rather than when declared, and only for what is asked for: an application
         // nobody drives cannot break a run.
