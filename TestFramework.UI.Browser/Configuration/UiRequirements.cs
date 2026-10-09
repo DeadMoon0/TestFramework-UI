@@ -40,7 +40,8 @@ internal static class UiRequirements
     /// <summary>
     /// The requirements a browser step states while the run is planned.
     /// </summary>
-    /// <exception cref="UiConfigurationException">Two addresses for one application, or none at all.</exception>
+    /// <exception cref="UiConfigurationException">No browser, a browser that is not an engine, two addresses for one
+    /// application, or none at all.</exception>
     public static IReadOnlyCollection<EnvironmentRequirement> For(WebAppIdentifier app, ResourceGraph resources)
     {
         List<EnvironmentRequirement> required = [BrowserEnvironmentResourceKinds.WebAppKind.Requirement(app.Identifier)];
@@ -49,6 +50,20 @@ internal static class UiRequirements
         if (!resources.TryGetNode(BrowserEnvironmentResourceKinds.WebApp, app.Identifier, out ResourceNode? own) || own is null)
         {
             return app.ExternalRequirement is { } unresolvedBridge ? [.. required, unresolvedBridge] : required;
+        }
+
+        // Which browser a test drives decides what it proves, and there is no default (§5): a run that states none is
+        // refused now, while nothing has started, rather than in its first browser step after the environment and the
+        // earlier stages have run. The resolver keeps the same checks as the last defence.
+        string? browser = own.DeclaredValues.FirstOrDefault(static pair => pair.Key.ValueName == nameof(WebAppConfig.Browser)).Value;
+        if (browser is not { Length: > 0 })
+        {
+            throw UiConfigurationException.MissingBrowser(app.Identifier);
+        }
+
+        if (!UiConfigResolver.PlaywrightEngines.Contains(browser))
+        {
+            throw UiConfigurationException.NotABrowserEngine(app.Identifier, browser);
         }
 
         bool statesAddress = own.DeclaredValues.Keys.Any(static key => key.ValueName == ValueNames.BaseUrl);

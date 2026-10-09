@@ -179,9 +179,13 @@ would never be seen.
 
 ## The Plan-Time Refusals
 
-Two mistakes are refused before any browser exists, because discovering them in a run would be
+These mistakes are refused before any browser exists, because discovering them in a run would be
 discovering them in production data:
 
+- An application that states no browser, or names a branded build (`msedge`, `chrome`) as the browser instead
+  of as the `Channel` of an engine (`UiConfigurationException` naming the application and the fix) - which
+  browser a test drives decides what it proves, and there is no default to fall back to.
+- An application with two addresses, or with none (`UiConfigurationException`).
 - `WithRetry` on a flow whose first action is not `Navigate` (`InvalidOperationException` naming the
   rule and the fix) — a retried attempt replays actions against whatever the failed one left behind.
 - A mistyped variable in any step input (`IOContractViolationException` from the Core contract

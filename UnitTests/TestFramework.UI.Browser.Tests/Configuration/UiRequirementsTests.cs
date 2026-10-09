@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TestFramework.Core.Environment;
@@ -18,6 +19,29 @@ namespace TestFramework.UI.Browser.Tests.Configuration;
 public class UiRequirementsTests
 {
     private static readonly WebAppIdentifier Shop = new("shop");
+
+    [Fact]
+    public void AnApplicationThatStatesNoBrowser_IsRefusedWhileTheRunIsPlanned()
+    {
+        // Refused in the first browser step, a missing browser cost the environment's start-up and every stage
+        // before it; nothing has run yet when the plan is made.
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/" }));
+
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
+
+        Assert.Contains("'shop'", refusal.Message, StringComparison.Ordinal);
+        Assert.Contains("browser", refusal.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void ABrandedBuildNamedAsTheBrowser_IsRefusedWhileTheRunIsPlanned()
+    {
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "msedge" }));
+
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
+
+        Assert.Contains("Channel = \"msedge\"", refusal.Message, StringComparison.Ordinal);
+    }
 
     [Fact]
     public void AnApplicationStatingItsOwnAddress_RequiresOnlyItself()
