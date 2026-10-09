@@ -48,7 +48,7 @@
     Keep scripts rare, named, and honest: seed and read state, never click through JavaScript. Watch run.UiScripts(app) the way you watch loose matches.
     Put WithRetry only on flows that start with Navigate; the plan-time guard enforces it, so design for it.
     Set "Channel": "msedge" on Windows machines and CI where Edge is present - zero download; use TESTFRAMEWORK_UI_AUTOINSTALL=1 with chromium on Linux runners.
-    Diagnose locally with the environment overrides: TESTFRAMEWORK_UI_HEADED=1 to watch, TESTFRAMEWORK_UI_SLOWMO=250 to follow, TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1 to inspect the live page at the failure.
+    Diagnose locally with the environment overrides: TESTFRAMEWORK_UI_HEADED=1 to watch, TESTFRAMEWORK_UI_SLOWMO=250 to follow, TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1 (with TESTFRAMEWORK_UI_HEADED=1; headless has no window to hold) to inspect the live page at the failure.
     Data-driven browser tests currently use a loop inside a [Fact]; the Core test-identity resolver crashes under xunit theory invokers until the Core fix ships.
 </best_practices>
 

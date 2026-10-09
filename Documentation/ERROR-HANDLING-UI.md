@@ -71,8 +71,9 @@ out of time, and this package registers one such observer — `.LoadUIConfig()` 
 configures the browser has the evidence too. The observer records the widgets, and says in the run log
 where they went or why it could not.
 
-Locally, `TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1` also holds the browser open at the failure state for as
-long as you need it — the run says out loud that it is being held — and `TESTFRAMEWORK_UI_HEADED=1` /
+Locally, `TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1` together with `TESTFRAMEWORK_UI_HEADED=1` also holds the
+browser open at the failure state for as long as you need it (a headless browser has no window to hold, and
+the run says so instead) — the run says out loud that it is being held — and `TESTFRAMEWORK_UI_HEADED=1` /
 `TESTFRAMEWORK_UI_SLOWMO=250` replay a run watchably. These are environment overrides, never
 configuration — they belong to a person's machine, not to a suite.
 

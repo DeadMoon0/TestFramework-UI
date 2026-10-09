@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Linq;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TestFramework.Core.Steps;
@@ -83,9 +84,17 @@ internal sealed class UiFailureObserver : IStepObserver
     /// </remarks>
     private static async Task HoldAsync(UiRunState runState, IReadOnlyList<UiSession> sessions, RunContext run)
     {
-        if (!UiEnvironmentOverrides.PauseOnFailure || sessions.Count == 0)
+        switch (PlanHold(UiEnvironmentOverrides.PauseOnFailure, [.. sessions.Select(static session => session.Config.EffectiveHeadless)]))
         {
-            return;
+            case UiHoldPlan.Nothing:
+                return;
+
+            case UiHoldPlan.HeadlessOnly:
+                run.Logger.LogWarning(
+                    "{0} is set, but every browser here runs headless, where there is no window to hold open. Set {1}=1 as well to look at the page.",
+                    UiEnvironmentOverrides.PauseOnFailureVariable,
+                    UiEnvironmentOverrides.HeadedVariable);
+                return;
         }
 
         run.Logger.LogWarning(
@@ -94,10 +103,28 @@ internal sealed class UiFailureObserver : IStepObserver
 
         using IDisposable hold = runState.HoldForInspection();
 
-        foreach (UiSession session in sessions)
+        foreach (UiSession session in sessions.Where(static session => !session.Config.EffectiveHeadless))
         {
             await session.Page.PauseAsync().ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Whether a failure holds the browser open, given what was asked and how each browser runs.
+    /// </summary>
+    /// <remarks>
+    /// Playwright's pause returns at once in a headless browser, so a hold there held nothing while the log said
+    /// the browser was being held open. Headed browsers are held; headless-only says why it cannot.
+    /// </remarks>
+    /// <param name="requested">Whether the pause-on-failure variable is set.</param>
+    /// <param name="headless">Whether each open session's browser runs headless.</param>
+    /// <returns>What to do.</returns>
+    internal static UiHoldPlan PlanHold(bool requested, IReadOnlyList<bool> headless)
+    {
+        if (!requested || headless.Count == 0)
+            return UiHoldPlan.Nothing;
+
+        return headless.All(static isHeadless => isHeadless) ? UiHoldPlan.HeadlessOnly : UiHoldPlan.Hold;
     }
 
     /// <summary>
@@ -112,4 +139,19 @@ internal sealed class UiFailureObserver : IStepObserver
         => variables.TryGetVariable(UiSessionVariable.For(app), out UiSessionPicture? picture) && picture is not null
             ? picture
             : UiSessionPicture.Empty(app);
+}
+
+/// <summary>
+/// What a failure does with the browser when pause-on-failure is asked for.
+/// </summary>
+internal enum UiHoldPlan
+{
+    /// <summary>Not asked for, or nothing is open.</summary>
+    Nothing,
+
+    /// <summary>Every open browser is headless: there is no window to hold, and the run says so.</summary>
+    HeadlessOnly,
+
+    /// <summary>The headed browsers are held open until the person lets the run continue.</summary>
+    Hold,
 }
