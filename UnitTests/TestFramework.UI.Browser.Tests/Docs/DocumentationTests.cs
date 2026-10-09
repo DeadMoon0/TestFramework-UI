@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -65,6 +65,22 @@ public class DocumentationTests
         Assert.True(
             undocumented.Length == 0,
             $"Public exception types missing from ERROR-HANDLING-UI.md: {string.Join(", ", undocumented)}");
+    }
+
+    [Fact]
+    public void TheReleaseGateRunsEveryTestSuite()
+    {
+        // The gate ran the browser suite only, so the foundation suite - the comparison rules - never stopped a
+        // publish. A suite added later is held to the same rule by this test rather than by memory.
+        string root = RepositoryRoot();
+        string workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "release-ui-browser.yml"));
+
+        string[] ungated = Directory.GetFiles(Path.Combine(root, "UnitTests"), "*.Tests.csproj", SearchOption.AllDirectories)
+            .Select(path => Path.GetRelativePath(root, path).Replace(Path.DirectorySeparatorChar, '/'))
+            .Where(relative => !workflow.Contains(relative, StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.True(ungated.Length == 0, $"Test suites the release gate does not run: {string.Join(", ", ungated)}");
     }
 
     [Fact]

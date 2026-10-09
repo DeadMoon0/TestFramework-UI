@@ -39,6 +39,9 @@ env:
   PACKAGE_PREFIX: UIBrowser
   PROJECT: TestFramework.UI.Browser/TestFramework.UI.Browser.csproj
   TEST_PROJECT: UnitTests/TestFramework.UI.Browser.Tests/TestFramework.UI.Browser.Tests.csproj
+  # The comparison algebra - structure, tables, text, boxes, the session picture - is tested only here, and a
+  # release that skipped it shipped whatever those rules had become.
+  FOUNDATION_TEST_PROJECT: UnitTests/TestFramework.UI.Tests/TestFramework.UI.Tests.csproj
 
 jobs:
   publish:
@@ -79,7 +82,10 @@ jobs:
           fi
 
       - name: Test
-        run: dotnet test "$TEST_PROJECT" --configuration Release --logger "trx"
+        run: |
+          set -euo pipefail
+          dotnet test "$FOUNDATION_TEST_PROJECT" --configuration Release --logger "trx"
+          dotnet test "$TEST_PROJECT" --configuration Release --logger "trx"
 
       - name: Pack
         run: dotnet pack "$PROJECT" -c Release -p:ContinuousIntegrationBuild=true -o out
