@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Core.Environment.Graph;
 using TestFramework.UI.Browser.Configuration;
+using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Resolution;
 using Xunit;
 
@@ -91,6 +92,31 @@ public class UiConfigLoaderTests
 
         Assert.Empty(applications.Nodes);
     }
+
+    [Fact]
+    public void AMistypedSetting_IsRefusedNamingTheSettingsThereAre()
+    {
+        // Bound by name, a mistyped key binds nothing: "Headles": false ran the browser headless without a word.
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(
+            () => Load(("Ui:shop:Browser", "chromium"), ("Ui:shop:Headles", "false")));
+
+        Assert.Contains("'Ui:shop' holds 'Headles'", refusal.Message, StringComparison.Ordinal);
+        Assert.Contains("Headless", refusal.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ARetiredSettingName_IsRefusedLikeAnyUnknownKey()
+    {
+        // BaseUrlFromSite became BaseUrlFrom; a file still using the old name is told, not ignored.
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(
+            () => Load(("Ui:shop:Browser", "chromium"), ("Ui:shop:BaseUrlFromSite", "storefront")));
+
+        Assert.Contains("BaseUrlFrom", refusal.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SettingKeysAreReadRegardlessOfCase_AsConfigurationKeysAre()
+        => Assert.Equal("firefox", Get(Load(("Ui:shop:browser", "firefox")), "shop").Browser);
 
     [Fact]
     public void EverySetting_SurvivesTheTripThroughTheRunsValues()

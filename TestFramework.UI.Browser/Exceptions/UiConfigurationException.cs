@@ -122,6 +122,19 @@ public sealed class UiConfigurationException : TimelineFrameworkException
     }
 
     /// <summary>
+    /// An application's configuration entry holds keys that are not settings.
+    /// </summary>
+    /// <param name="identifier">The application.</param>
+    /// <param name="unknown">The keys that are not settings.</param>
+    /// <param name="settings">The settings there are.</param>
+    /// <returns>The exception.</returns>
+    public static UiConfigurationException UnknownSettings(string identifier, IEnumerable<string> unknown, IEnumerable<string> settings)
+        => new UiConfigurationException(
+            $"'Ui:{identifier}' holds {string.Join(", ", unknown.Select(static key => $"'{key}'"))}, which "
+            + "is not a setting, so it would bind nothing and the default would apply without a word. "
+            + $"The settings are: {string.Join(", ", settings)}.");
+
+    /// <summary>
     /// A setting holds a value that does not read as the setting's type.
     /// </summary>
     /// <param name="identifier">The application.</param>

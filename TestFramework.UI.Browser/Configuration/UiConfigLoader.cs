@@ -1,4 +1,6 @@
-﻿using System;
+﻿using TestFramework.UI.Browser.Exceptions;
+using System.Linq;
+using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,11 +28,36 @@ internal sealed class UiConfigLoader
         // package rather than a missing section.
         List<KeyValuePair<string, WebAppConfig>> entries = [];
         foreach (IConfigurationSection child in configuration.GetSection(UiSelector).GetChildren())
+        {
+            EnsureEveryKeyIsASetting(child);
             entries.Add(new KeyValuePair<string, WebAppConfig>(child.Key, child.Get<WebAppConfig>() ?? new WebAppConfig()));
+        }
 
         // The applications and the pieces that drive them go in together, through the same one place the
         // in-code road uses - so the two roads cannot register different sets, and neither can register
         // half a set.
         UiBrowserServiceCollectionExtension.AddApplications(serviceCollection, entries);
+    }
+
+    /// <summary>
+    /// Refuses a key that is not one of the application's settings.
+    /// </summary>
+    /// <remarks>
+    /// The binder skips a key it cannot place, so <c>"Headles": false</c> bound nothing and the browser silently ran
+    /// headless - with 22 settings, a typo is the likeliest configuration mistake there is. Configuration keys are
+    /// case-insensitive, so the comparison is too.
+    /// </remarks>
+    private static void EnsureEveryKeyIsASetting(IConfigurationSection entry)
+    {
+        string[] settings = [.. typeof(WebAppConfig).GetProperties()
+            .Where(static property => property.SetMethod is { IsPublic: true })
+            .Select(static property => property.Name)];
+
+        string[] unknown = [.. entry.GetChildren()
+            .Select(static key => key.Key)
+            .Where(key => !settings.Contains(key, StringComparer.OrdinalIgnoreCase))];
+
+        if (unknown.Length > 0)
+            throw UiConfigurationException.UnknownSettings(entry.Key, unknown, settings);
     }
 }
