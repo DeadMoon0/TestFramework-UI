@@ -16,7 +16,9 @@ namespace TestFramework.UI.Browser.Reading;
 /// <param name="TypedValue">The value, in the source's own type.</param>
 /// <param name="Detail">The value as a trace line.</param>
 /// <param name="Resolved">Which lookup found the element, when the source reads from one.</param>
-internal sealed record UiReadResult(object TypedValue, string Detail, UiResolvedTarget? Resolved);
+/// <param name="IsCredential">Whether the value is a credential - a cookie, a local-storage entry - which the trace
+/// shows as a placeholder and the variable it is read into holds as a secret.</param>
+internal sealed record UiReadResult(object TypedValue, string Detail, UiResolvedTarget? Resolved, bool IsCredential);
 
 /// <summary>
 /// Answers a <see cref="UiValueSource"/> against a live page.
@@ -81,7 +83,7 @@ internal static class UiValueReader
         => locator ?? throw new InvalidOperationException($"Reading {source.Describe()} needs an element.");
 
     private static UiReadResult Result(object value, UiResolvedTarget? resolved)
-        => new UiReadResult(value, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty, resolved);
+        => new UiReadResult(value, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty, resolved, IsCredential: false);
 
     private static async Task<UiReadResult> FieldValueAsync(UiValueSource source, ILocator locator, UiResolvedTarget? resolved)
     {
@@ -229,7 +231,7 @@ internal static class UiValueReader
             // The variable is the one channel the value travels; the trace shows a placeholder.
             // Local storage is where tokens live, and the trace detail reaches the run log, the
             // session picture, failure messages and the evidence bundle.
-            return new UiReadResult(value, SensitiveDetail, Resolved: null);
+            return new UiReadResult(value, SensitiveDetail, Resolved: null, IsCredential: true);
         }
 
         IReadOnlyList<string> keys = await page
@@ -261,7 +263,7 @@ internal static class UiValueReader
                 // This source's own doc names an HttpOnly cookie - a session token, typically - as
                 // the primary use, so echoing the value into the trace printed the token into logs
                 // and evidence by construction.
-                return new UiReadResult(cookie.Value, SensitiveDetail, Resolved: null);
+                return new UiReadResult(cookie.Value, SensitiveDetail, Resolved: null, IsCredential: true);
             }
         }
 

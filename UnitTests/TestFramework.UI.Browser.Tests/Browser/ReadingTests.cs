@@ -240,6 +240,30 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
     }
 
     [BrowserFact]
+    public async Task ACookieReadIntoAVariable_IsComparedButNeverQuoted()
+    {
+        // A cookie is typically a session token. The trace already showed a placeholder; the variable it was read
+        // into still reached the debugger, the value files and a failed assertion's message in clear.
+        Timeline timeline = Timeline.Create()
+            .Trigger(BrowserExt.Session("shop")
+                .Navigate("/scrolling")
+                .Expect("The newest entry is at the top.")
+                .Read(Value.Cookie("changelog-visited"), "visited"))
+                .Name("read")
+            .Build();
+
+        TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
+
+        run.EnsureRanToCompletion();
+        Assert.True(run.VariableStore.IsSecret("visited"));
+        run.Variable<string>("visited").Should().Be("yes");
+
+        TestFramework.Core.Exceptions.ValueAssertionException failure = Assert.Throws<TestFramework.Core.Exceptions.ValueAssertionException>(
+            () => run.Variable<string>("visited").Should().Be("no"));
+        Assert.DoesNotContain("yes", failure.Message, StringComparison.Ordinal);
+    }
+
+    [BrowserFact]
     public async Task AMissingCookieNamesTheOnesTheBrowserHolds()
     {
         Timeline timeline = Timeline.Create()

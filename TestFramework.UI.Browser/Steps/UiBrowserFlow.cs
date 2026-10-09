@@ -907,6 +907,11 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             case int number:
                 variableStore.SetVariable(action.CaptureName!, number);
                 break;
+            // A credential travels in the variable and nowhere else: the run and the test read it, and the
+            // debugger, the value files and an assertion's message say "(secret)".
+            case string credential when result.IsCredential:
+                variableStore.SetSecretVariable(action.CaptureName!, credential);
+                break;
             default:
                 variableStore.SetVariable(action.CaptureName!, (string)result.TypedValue);
                 break;

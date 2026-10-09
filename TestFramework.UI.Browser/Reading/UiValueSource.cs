@@ -227,6 +227,10 @@ public static class Value
     /// One entry of the page's local storage. A key the page does not hold fails, naming the ones it
     /// does.
     /// </summary>
+    /// <remarks>
+    /// Local storage is where tokens live, so the value is read into a secret variable: the test compares it, and
+    /// everything that describes it - the trace, the debugger, an assertion's message - says <c>(secret)</c>.
+    /// </remarks>
     /// <param name="key">The storage key.</param>
     /// <returns>The source.</returns>
     public static UiValueSource LocalStorage(string key)
@@ -243,7 +247,7 @@ public static class Value
     /// <remarks>
     /// Read from the browser rather than from <c>document.cookie</c>, so an <c>HttpOnly</c> cookie - a
     /// session token, typically - is as readable as any other. What the page's own scripts cannot see,
-    /// a test still can.
+    /// a test still can. The value is read into a secret variable, so what describes it says <c>(secret)</c>.
     /// </remarks>
     /// <param name="name">The cookie name.</param>
     /// <returns>The source.</returns>
