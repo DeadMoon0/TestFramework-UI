@@ -67,6 +67,46 @@ public class DocumentationTests
             $"Public exception types missing from ERROR-HANDLING-UI.md: {string.Join(", ", undocumented)}");
     }
 
+    [Fact]
+    public void NoConfigurationRefusalNamesAMethodThatDoesNotExist()
+    {
+        // A refusal is copied, not read: the one a user hit when a site and an API shared a name told them to call
+        // FromSite(...) and FromWebApi(...), which had been deleted with the bridge package. Every factory is called
+        // here, and every Name( in its message must be a public member somewhere in the family it can reach.
+        HashSet<string> known = [.. new[]
+            {
+                typeof(UiConfigurationException).Assembly,
+                typeof(TestFramework.Core.Steps.RunContext).Assembly,
+                typeof(TestFramework.Config.ConfigInstance).Assembly,
+                typeof(TestFramework.Web.WebExt).Assembly,
+            }
+            .SelectMany(static assembly => assembly.GetExportedTypes())
+            .SelectMany(static type => type.GetMembers(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Instance)
+                .Select(static member => member.Name)
+                .Append(type.Name))];
+
+        List<string> invented = [];
+        foreach (System.Reflection.MethodInfo factory in typeof(UiConfigurationException).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .Where(static method => method.ReturnType == typeof(UiConfigurationException)))
+        {
+            object?[] arguments = [.. factory.GetParameters().Select(static parameter => Sample(parameter.ParameterType))];
+            string message = ((Exception)factory.Invoke(null, arguments)!).Message;
+
+            invented.AddRange(Regex.Matches(message, @"\b([A-Z][A-Za-z]+)\(")
+                .Select(static match => match.Groups[1].Value)
+                .Where(name => !known.Contains(name))
+                .Select(name => $"{factory.Name}: {name}(...)"));
+        }
+
+        Assert.True(invented.Count == 0, $"Refusals name members that do not exist: {string.Join("; ", invented)}");
+    }
+
+    private static object? Sample(Type type)
+        => type == typeof(string) ? "shop"
+        : typeof(IEnumerable<string>).IsAssignableFrom(type) ? new[] { "a site 'shop'", "a REST API 'shop'" }
+        : type.IsValueType ? Activator.CreateInstance(type)
+        : null;
+
     private static string[] ListedFiles(string skill, string elementName)
     {
         Match block = Regex.Match(skill, $"<{elementName}>(?<body>.*?)</{elementName}>", RegexOptions.Singleline);

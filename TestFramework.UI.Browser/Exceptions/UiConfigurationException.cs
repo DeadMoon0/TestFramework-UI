@@ -153,7 +153,8 @@ public sealed class UiConfigurationException : TimelineFrameworkException
     public static UiConfigurationException AmbiguousAddress(string identifier, IEnumerable<string> candidates)
         => new UiConfigurationException(
             $"The web application '{identifier}' takes its address from the resource of the same name, and {string.Join(" and ", candidates)} both carry that name. "
-            + "Set 'BaseUrl' for it, or bridge it to one of them with FromSite(...) or FromWebApi(...).");
+            + "Set 'BaseUrl' for it, or name the one it means: 'BaseUrlFrom' in its configuration entry, or in code "
+            + $"new WebAppIdentifier(\"{identifier}\").BridgedTo(new EnvironmentRequirement(kind, name)), which also states the kind.");
 
     /// <summary>
     /// An entry inherits from another that does not exist, or from a chain that loops.
