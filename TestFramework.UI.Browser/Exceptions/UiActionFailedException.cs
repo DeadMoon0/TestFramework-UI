@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text;
 using TestFramework.UI.Session;
 
+using TestFramework.Core.Exceptions;
 namespace TestFramework.UI.Browser.Exceptions;
 
 /// <summary>
@@ -14,7 +15,7 @@ namespace TestFramework.UI.Browser.Exceptions;
 /// worked, and whether the page itself was complaining; the evidence is recorded as run widgets. The inner
 /// exception keeps the original diagnosis - a missing element, an ambiguous name, a browser timeout.
 /// </remarks>
-public sealed class UiActionFailedException : Exception
+public sealed class UiActionFailedException : TimelineFrameworkException
 {
     internal UiActionFailedException(
         string app,
@@ -24,7 +25,7 @@ public sealed class UiActionFailedException : Exception
         UiSessionPicture picture,
         IReadOnlyList<string> consoleErrors,
         Exception inner)
-        : base(BuildMessage(app, actionDescription, actionNumber, actionCount, picture, consoleErrors, inner), inner)
+        : base(BuildMessage(app, actionDescription, actionNumber, actionCount, picture, consoleErrors, inner), [], [], inner)
     {
         this.App = app;
         this.ActionDescription = actionDescription;

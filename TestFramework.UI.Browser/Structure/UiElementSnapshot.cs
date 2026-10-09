@@ -19,17 +19,51 @@ namespace TestFramework.UI.Structure;
 /// mode that made a whole generation of snapshot tests get deleted.
 /// </para>
 /// </remarks>
-/// <param name="Tag">The element's kind, lower-cased - <c>div</c>, <c>button</c>, or a component's own
-/// name such as <c>app-order-row</c>.</param>
-/// <param name="Attributes">The attributes it carried, by name.</param>
-/// <param name="Text">Its text, including its descendants', normalized.</param>
-/// <param name="Children">The elements inside it.</param>
-public sealed record UiElementSnapshot(
-    string Tag,
-    IReadOnlyDictionary<string, string> Attributes,
-    string? Text,
-    IReadOnlyList<UiElementSnapshot> Children)
+public sealed record UiElementSnapshot
 {
+    internal UiElementSnapshot(string tag, IReadOnlyDictionary<string, string> attributes, string? text, IReadOnlyList<UiElementSnapshot> children)
+    {
+        this.Tag = tag;
+        this.Attributes = attributes;
+        this.Text = text;
+        this.Children = children;
+    }
+
+    /// <summary>
+    /// The element's kind, lower-cased - <c>div</c>, <c>button</c>, or a component's own name such as <c>app-order-row</c>.
+    /// </summary>
+    public string Tag { get; }
+
+    /// <summary>
+    /// The attributes it carried, by name.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> Attributes { get; }
+
+    /// <summary>
+    /// Its text, including its descendants', normalized.
+    /// </summary>
+    public string? Text { get; }
+
+    /// <summary>
+    /// The elements inside it.
+    /// </summary>
+    public IReadOnlyList<UiElementSnapshot> Children { get; internal init; }
+
+    /// <summary>
+    /// An element with nothing in it and no text or attributes, for a test that only cares about one node.
+    /// </summary>
+    /// <param name="tag">The element's kind.</param>
+    /// <returns>The snapshot.</returns>
+    public static UiElementSnapshot Of(string tag) => Of(tag, null, null);
+
+    /// <summary>
+    /// An element with nothing in it and no attributes, for a test that only cares about one node.
+    /// </summary>
+    /// <param name="tag">The element's kind.</param>
+    /// <param name="text">Its text.</param>
+    /// <returns>The snapshot.</returns>
+    public static UiElementSnapshot Of(string tag, string? text) => Of(tag, text, null);
+
     /// <summary>
     /// An element with nothing in it, for a test that only cares about one node.
     /// </summary>
@@ -39,8 +73,8 @@ public sealed record UiElementSnapshot(
     /// <returns>The snapshot.</returns>
     public static UiElementSnapshot Of(
         string tag,
-        string? text = null,
-        IReadOnlyDictionary<string, string>? attributes = null)
+        string? text,
+        IReadOnlyDictionary<string, string>? attributes)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(tag);
 

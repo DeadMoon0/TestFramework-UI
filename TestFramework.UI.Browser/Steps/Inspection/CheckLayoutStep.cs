@@ -94,7 +94,7 @@ internal sealed class CheckLayoutStep : UiInspectionStep<UiCompareResultContext>
             differences.Count == 0,
             differences,
             actual,
-            SuggestedCode: null);
+            suggestedCode: null);
 
         return (result, differences.Count == 0 ? $"matched ({this.rules.Count} relations)" : $"{differences.Count} difference(s)");
     }

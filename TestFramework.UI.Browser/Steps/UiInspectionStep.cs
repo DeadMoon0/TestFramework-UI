@@ -263,19 +263,21 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
         string? detail,
         Stopwatch stopwatch)
     {
-        UiSessionEntry entry = new UiSessionEntry(
-            label,
-            this.ActionName,
-            this.target?.Describe() ?? "the page",
-            resolved?.DescribeMatch(),
-            resolved?.Rank,
-            resolved is not null && !resolved.Spec.Exact,
-            resolved?.CandidateCount ?? 0,
-            resolved?.Snippet,
-            detail,
-            session.Page.Url,
-            session.DrainConsoleErrors(),
-            stopwatch.Elapsed.TotalMilliseconds);
+        UiSessionEntry entry = new UiSessionEntry
+        {
+            StepLabel = label,
+            Action = this.ActionName,
+            Target = this.target?.Describe() ?? "the page",
+            ResolvedVia = resolved?.DescribeMatch(),
+            MatchRank = resolved?.Rank,
+            MatchWasFuzzy = resolved is not null && !resolved.Spec.Exact,
+            CandidateCount = resolved?.CandidateCount ?? 0,
+            MatchedSnippet = resolved?.Snippet,
+            Detail = detail,
+            Url = session.Page.Url,
+            ConsoleErrors = session.DrainConsoleErrors(),
+            DurationMs = stopwatch.Elapsed.TotalMilliseconds,
+        };
 
         UiSessionPicture picture = ReadPicture(variableStore, sessionVariable, this.app);
 

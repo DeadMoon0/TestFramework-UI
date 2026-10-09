@@ -12,16 +12,36 @@ namespace TestFramework.UI.Browser.Steps;
 /// lives in the session variable; this is only what this step contributed, which is what
 /// <c>run.Step(label)</c> is asked about.
 /// </remarks>
-/// <param name="App">The application this step drove.</param>
-/// <param name="Url">The address the page was on when the step finished.</param>
-/// <param name="Title">The page's title when the step finished.</param>
-/// <param name="Entries">What the step did, in order.</param>
-public sealed record UiFlowResultContext(
-    string App,
-    string Url,
-    string Title,
-    IReadOnlyList<UiSessionEntry> Entries) : StepResultContext
+public sealed record UiFlowResultContext : StepResultContext
 {
+    internal UiFlowResultContext(string app, string url, string title, IReadOnlyList<UiSessionEntry> entries)
+    {
+        this.App = app;
+        this.Url = url;
+        this.Title = title;
+        this.Entries = entries;
+    }
+
+    /// <summary>
+    /// The application this step drove.
+    /// </summary>
+    public string App { get; }
+
+    /// <summary>
+    /// The address the page was on when the step finished.
+    /// </summary>
+    public string Url { get; }
+
+    /// <summary>
+    /// The page's title when the step finished.
+    /// </summary>
+    public string Title { get; }
+
+    /// <summary>
+    /// What the step did, in order.
+    /// </summary>
+    public IReadOnlyList<UiSessionEntry> Entries { get; }
+
     /// <summary>
     /// Returns a readable summary of the step.
     /// </summary>

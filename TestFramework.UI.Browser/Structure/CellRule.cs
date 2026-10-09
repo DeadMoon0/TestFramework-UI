@@ -99,10 +99,19 @@ public static class Cell
     /// <summary>
     /// Accepts a value containing <paramref name="fragment"/> after normalizing both.
     /// </summary>
+    /// <remarks>Uses <c>false</c> for <c>ignoreCase</c>; the other overload states it.</remarks>
+    /// <param name="fragment">The fragment to look for.</param>
+    /// <returns>The rule.</returns>
+    public static CellRule Contains(string fragment)
+        => Contains(fragment, false);
+
+    /// <summary>
+    /// Accepts a value containing <paramref name="fragment"/> after normalizing both.
+    /// </summary>
     /// <param name="fragment">The fragment to look for.</param>
     /// <param name="ignoreCase">True to compare without regard to case.</param>
     /// <returns>The rule.</returns>
-    public static CellRule Contains(string fragment, bool ignoreCase = false)
+    public static CellRule Contains(string fragment, bool ignoreCase)
     {
         ArgumentNullException.ThrowIfNull(fragment);
 

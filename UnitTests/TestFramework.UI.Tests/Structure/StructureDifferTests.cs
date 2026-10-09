@@ -17,13 +17,15 @@ public class StructureDifferTests
         IEnumerable<UiExpectedNode>? children = null,
         bool exactChildren = false,
         bool inOrder = false)
-        => new UiExpectedNode(
-            tag,
-            cardinality ?? UiCardinality.One,
-            rules?.ToList() ?? [],
-            children?.ToList() ?? [],
-            exactChildren,
-            inOrder);
+        => new UiExpectedNode
+        {
+            Tag = tag,
+            Cardinality = cardinality ?? UiCardinality.One,
+            Rules = rules?.ToList() ?? [],
+            Children = children?.ToList() ?? [],
+            ChildrenExact = exactChildren,
+            ChildrenInOrder = inOrder,
+        };
 
     private static UiNodeRule TextIs(string expected)
         => new UiNodeRule($"text is '{expected}'", element => UiText.EqualsNormalized(element.Text, expected));

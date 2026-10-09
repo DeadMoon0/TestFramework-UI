@@ -62,14 +62,21 @@ public static class BrowserTimelineResultExtensions
     /// <summary>
     /// Everything the session did, or everything one step did.
     /// </summary>
+    /// <remarks>Uses <c>null</c> for <c>stepLabel</c>; the other overload states it.</remarks>
+    /// <param name="run">The finished run.</param>
+    /// <param name="app">The application.</param>
+    /// <returns>The entries, oldest first.</returns>
+    public static ValueHandle<IReadOnlyList<UiSessionEntry>> UiTrace(this TimelineRun run, WebAppIdentifier app)
+        => run.UiTrace(app, null);
+
+    /// <summary>
+    /// Everything the session did, or everything one step did.
+    /// </summary>
     /// <param name="run">The finished run.</param>
     /// <param name="app">The application.</param>
     /// <param name="stepLabel">A step to narrow to, or null for the whole session.</param>
     /// <returns>The entries, oldest first.</returns>
-    public static ValueHandle<IReadOnlyList<UiSessionEntry>> UiTrace(
-        this TimelineRun run,
-        WebAppIdentifier app,
-        string? stepLabel = null)
+    public static ValueHandle<IReadOnlyList<UiSessionEntry>> UiTrace(this TimelineRun run, WebAppIdentifier app, string? stepLabel)
     {
         ArgumentNullException.ThrowIfNull(run);
 

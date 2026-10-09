@@ -67,11 +67,22 @@ public static class UiText
     /// Determines whether the normalized <paramref name="actual"/> contains the normalized
     /// <paramref name="fragment"/>.
     /// </summary>
+    /// <remarks>Uses <c>false</c> for <c>ignoreCase</c>; the other overload states it.</remarks>
+    /// <param name="actual">The text a page produced.</param>
+    /// <param name="fragment">The fragment a test expects to find.</param>
+    /// <returns>True when the fragment occurs in the text.</returns>
+    public static bool ContainsNormalized(string? actual, string? fragment)
+        => ContainsNormalized(actual, fragment, false);
+
+    /// <summary>
+    /// Determines whether the normalized <paramref name="actual"/> contains the normalized
+    /// <paramref name="fragment"/>.
+    /// </summary>
     /// <param name="actual">The text a page produced.</param>
     /// <param name="fragment">The fragment a test expects to find.</param>
     /// <param name="ignoreCase">True to compare without regard to case.</param>
     /// <returns>True when the fragment occurs in the text.</returns>
-    public static bool ContainsNormalized(string? actual, string? fragment, bool ignoreCase = false)
+    public static bool ContainsNormalized(string? actual, string? fragment, bool ignoreCase)
     {
         string normalizedActual = Normalize(actual) ?? string.Empty;
         string normalizedFragment = Normalize(fragment) ?? string.Empty;

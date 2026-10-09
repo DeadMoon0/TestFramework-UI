@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
+using TestFramework.Core.Exceptions;
 namespace TestFramework.UI.Browser.Exceptions;
 
 /// <summary>
@@ -13,7 +14,7 @@ namespace TestFramework.UI.Browser.Exceptions;
 /// then what the page actually was, then the expectation that would have passed - in the same form the
 /// test is written in.
 /// </remarks>
-public sealed class UiStructureMismatchException : Exception
+public sealed class UiStructureMismatchException : TimelineFrameworkException
 {
     internal UiStructureMismatchException(
         string app,
@@ -23,7 +24,7 @@ public sealed class UiStructureMismatchException : Exception
         string actual,
         string? suggestedCode,
         TimeSpan waited)
-        : base(BuildMessage(app, url, scope, differences, actual, suggestedCode, waited))
+        : base(BuildMessage(app, url, scope, differences, actual, suggestedCode, waited), [], [], null)
     {
         this.App = app;
         this.Url = url;

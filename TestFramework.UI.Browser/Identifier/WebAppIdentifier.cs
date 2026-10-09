@@ -1,6 +1,8 @@
 ﻿using System;
 using TestFramework.Core.Environment;
 
+using TestFramework.Core.Conventions;
+
 namespace TestFramework.UI.Browser.Identifier;
 
 /// <summary>
@@ -11,7 +13,8 @@ namespace TestFramework.UI.Browser.Identifier;
 /// container an environment provisioned, or a deployed environment, without a line of it changing.
 /// </remarks>
 /// <param name="Identifier">The name the configuration uses for this application.</param>
-public record WebAppIdentifier(string Identifier)
+[ClosedShape("An identifier is its name; anything more about an application belongs in its configuration.")]
+public sealed record WebAppIdentifier(string Identifier)
 {
     /// <summary>
     /// Converts an identifier to its name, so it can be used wherever a string is expected.

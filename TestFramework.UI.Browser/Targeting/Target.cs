@@ -95,10 +95,20 @@ public static class Target
     /// An element with this ARIA role, optionally narrowed by accessible name. Use it for roles the
     /// other factories do not cover - <c>tab</c>, <c>dialog</c>, <c>alert</c>, <c>option</c>.
     /// </summary>
+    /// <remarks>Uses <c>null</c> for <c>name</c>; the other overload states it.</remarks>
+    /// <param name="role">The ARIA role.</param>
+    /// <returns>The target.</returns>
+    public static UiTarget Role(string role)
+        => Role(role, null);
+
+    /// <summary>
+    /// An element with this ARIA role, optionally narrowed by accessible name. Use it for roles the
+    /// other factories do not cover - <c>tab</c>, <c>dialog</c>, <c>alert</c>, <c>option</c>.
+    /// </summary>
     /// <param name="role">The ARIA role.</param>
     /// <param name="name">The accessible name, or null for any element of that role.</param>
     /// <returns>The target.</returns>
-    public static UiTarget Role(string role, string? name = null)
+    public static UiTarget Role(string role, string? name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(role);
 

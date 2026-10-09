@@ -18,19 +18,21 @@ public class UiSessionPictureTests
         bool fuzzy = false,
         int candidates = 1,
         IReadOnlyList<string>? consoleErrors = null)
-        => new UiSessionEntry(
-            step,
-            action,
-            target,
-            via,
-            rank,
-            fuzzy,
-            candidates,
-            MatchedSnippet: null,
-            Detail: null,
-            Url: "http://localhost/checkout",
-            ConsoleErrors: consoleErrors ?? Array.Empty<string>(),
-            DurationMs: 12);
+        => new UiSessionEntry
+        {
+            StepLabel = step,
+            Action = action,
+            Target = target,
+            ResolvedVia = via,
+            MatchRank = rank,
+            MatchWasFuzzy = fuzzy,
+            CandidateCount = candidates,
+            MatchedSnippet = null,
+            Detail = null,
+            Url = "http://localhost/checkout",
+            ConsoleErrors = consoleErrors ?? Array.Empty<string>(),
+            DurationMs = 12,
+        };
 
     [Fact]
     public void APictureGrowsWithoutChangingWhatCameBefore()

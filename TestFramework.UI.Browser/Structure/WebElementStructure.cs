@@ -265,13 +265,15 @@ public sealed class WebElementStructure
     {
         this.frozen = true;
 
-        return new UiExpectedNode(
-            this.tag,
-            this.cardinality,
-            this.rules,
-            this.children.Select(static child => child.Compile()).ToList(),
-            this.childrenExact,
-            this.childrenInOrder);
+        return new UiExpectedNode
+        {
+            Tag = this.tag,
+            Cardinality = this.cardinality,
+            Rules = this.rules,
+            Children = this.children.Select(static child => child.Compile()).ToList(),
+            ChildrenExact = this.childrenExact,
+            ChildrenInOrder = this.childrenInOrder,
+        };
     }
 
     internal WebElementStructure AddChild(string? tag, UiCardinality cardinality)

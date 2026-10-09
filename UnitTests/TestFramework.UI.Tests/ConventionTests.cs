@@ -59,4 +59,27 @@ public class ConventionTests(ITestOutputHelper output)
 
         output.WriteLine(report.ToString());
     }
+
+    [Fact]
+    public void ThisPackagesPublicSurfaceCanGrow()
+    {
+        // Each package is compiled on its own. A knob added as one more optional parameter, or one more member
+        // on a positional record, compiles everywhere and then throws MissingMethodException in every package
+        // built against the old signature.
+        ConventionReport report = StepConventions.AssertPublicSurfaceCanGrow(typeof(UiSessionPicture).Assembly);
+
+        output.WriteLine(report.ToString());
+    }
+
+    [Fact]
+    public void EveryExceptionThisPackageThrowsIsAFrameworkException()
+    {
+        // One base, so a failure always carries its recovery steps and reads the same way in a run's failure detail.
+        string[] strays = [.. typeof(UiSessionPicture).Assembly.GetTypes()
+            .Where(type => type.IsPublic && typeof(System.Exception).IsAssignableFrom(type))
+            .Where(type => !typeof(TestFramework.Core.Exceptions.TimelineFrameworkException).IsAssignableFrom(type))
+            .Select(type => type.FullName!)];
+
+        Assert.Empty(strays);
+    }
 }

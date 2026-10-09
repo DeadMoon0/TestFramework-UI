@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using TestFramework.Core.Exceptions;
 namespace TestFramework.UI.Browser.Exceptions;
 
 /// <summary>
@@ -11,9 +12,9 @@ namespace TestFramework.UI.Browser.Exceptions;
 /// The message lists the identifiers that <em>are</em> configured, because the mistake is almost always
 /// a typo or a missing section, and both are answered by seeing what exists.
 /// </remarks>
-public sealed class UiConfigurationException : Exception
+public sealed class UiConfigurationException : TimelineFrameworkException
 {
-    private UiConfigurationException(string message) : base(message)
+    private UiConfigurationException(string message) : base(message, [], [], null)
     {
     }
 

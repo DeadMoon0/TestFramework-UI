@@ -6,12 +6,42 @@ namespace TestFramework.UI.Browser.Configuration;
 /// <summary>
 /// One emulated device: a viewport, and whether the page should believe it is on a phone.
 /// </summary>
-/// <param name="Width">The viewport width in pixels.</param>
-/// <param name="Height">The viewport height in pixels.</param>
-/// <param name="IsMobile">Whether the page is told it is on a mobile device.</param>
-/// <param name="HasTouch">Whether touch events are available.</param>
-/// <param name="DeviceScaleFactor">The device pixel ratio.</param>
-public sealed record UiDeviceProfile(int Width, int Height, bool IsMobile, bool HasTouch, float DeviceScaleFactor);
+public sealed record UiDeviceProfile
+{
+    internal UiDeviceProfile(int width, int height, bool isMobile, bool hasTouch, float deviceScaleFactor)
+    {
+        this.Width = width;
+        this.Height = height;
+        this.IsMobile = isMobile;
+        this.HasTouch = hasTouch;
+        this.DeviceScaleFactor = deviceScaleFactor;
+    }
+
+    /// <summary>
+    /// The viewport width in pixels.
+    /// </summary>
+    public int Width { get; }
+
+    /// <summary>
+    /// The viewport height in pixels.
+    /// </summary>
+    public int Height { get; }
+
+    /// <summary>
+    /// Whether the page is told it is on a mobile device.
+    /// </summary>
+    public bool IsMobile { get; }
+
+    /// <summary>
+    /// Whether touch events are available.
+    /// </summary>
+    public bool HasTouch { get; }
+
+    /// <summary>
+    /// The device pixel ratio.
+    /// </summary>
+    public float DeviceScaleFactor { get; }
+}
 
 /// <summary>
 /// The desktop sizes this package names itself, for the cases Playwright's phone and tablet

@@ -304,9 +304,14 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     }
 
     /// <summary>Photographs the page into the run's output folder.</summary>
+    /// <returns>The same flow, for chaining.</returns>
+    public UiBrowserFlow Screenshot()
+        => this.Screenshot("screenshot");
+
+    /// <summary>Photographs the page into the run's output folder.</summary>
     /// <param name="name">What the picture is of, used in the file name.</param>
     /// <returns>The same flow, for chaining.</returns>
-    public UiBrowserFlow Screenshot(string name = "screenshot")
+    public UiBrowserFlow Screenshot(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
@@ -760,19 +765,21 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 resolved.CandidateCount > 1 ? $" ({resolved.CandidateCount} candidates)" : string.Empty);
         }
 
-        return new UiSessionEntry(
-            label,
-            action.Kind.ToString(),
-            action.Target?.Describe(),
-            resolved?.DescribeMatch(),
-            resolved?.Rank,
-            resolved is not null && !resolved.Spec.Exact,
-            resolved?.CandidateCount ?? 0,
-            resolved?.Snippet,
-            detail,
-            session.Page.Url,
-            session.DrainConsoleErrors(),
-            0);
+        return new UiSessionEntry
+        {
+            StepLabel = label,
+            Action = action.Kind.ToString(),
+            Target = action.Target?.Describe(),
+            ResolvedVia = resolved?.DescribeMatch(),
+            MatchRank = resolved?.Rank,
+            MatchWasFuzzy = resolved is not null && !resolved.Spec.Exact,
+            CandidateCount = resolved?.CandidateCount ?? 0,
+            MatchedSnippet = resolved?.Snippet,
+            Detail = detail,
+            Url = session.Page.Url,
+            ConsoleErrors = session.DrainConsoleErrors(),
+            DurationMs = 0,
+        };
     }
 
     private static async Task<string?> ActOnAsync(

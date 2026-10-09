@@ -8,11 +8,30 @@ namespace TestFramework.UI.Browser.Runtime;
 /// <summary>
 /// A browser this machine can actually drive.
 /// </summary>
-/// <param name="Browser">What to put in <c>WebAppConfig.Browser</c>, for example <c>chromium</c>.</param>
-/// <param name="Channel">What to put in <c>WebAppConfig.Channel</c>, or null for Playwright's own build.</param>
-/// <param name="Description">Where it was found, for a fixture that wants to say so.</param>
-public sealed record UiAvailableBrowser(string Browser, string? Channel, string Description)
+public sealed record UiAvailableBrowser
 {
+    internal UiAvailableBrowser(string browser, string? channel, string description)
+    {
+        this.Browser = browser;
+        this.Channel = channel;
+        this.Description = description;
+    }
+
+    /// <summary>
+    /// What to put in <c>WebAppConfig.Browser</c>, for example <c>chromium</c>.
+    /// </summary>
+    public string Browser { get; }
+
+    /// <summary>
+    /// What to put in <c>WebAppConfig.Channel</c>, or null for Playwright's own build.
+    /// </summary>
+    public string? Channel { get; }
+
+    /// <summary>
+    /// Where it was found, for a fixture that wants to say so.
+    /// </summary>
+    public string Description { get; }
+
     /// <summary>Reads as <c>chromium (Playwright's own build)</c>.</summary>
     /// <returns>The description.</returns>
     public override string ToString() => this.Description;

@@ -6,6 +6,7 @@ using System.Text;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Targeting;
 
+using TestFramework.Core.Exceptions;
 namespace TestFramework.UI.Browser.Exceptions;
 
 /// <summary>
@@ -16,7 +17,7 @@ namespace TestFramework.UI.Browser.Exceptions;
 /// should be able to fix the test from the failure alone without opening the page - that is the whole
 /// point of failing here rather than pressing something plausible.
 /// </remarks>
-public sealed class UiAmbiguousTargetException : Exception
+public sealed class UiAmbiguousTargetException : TimelineFrameworkException
 {
     internal UiAmbiguousTargetException(
         string app,
@@ -25,7 +26,7 @@ public sealed class UiAmbiguousTargetException : Exception
         UiQuerySpec spec,
         int matchCount,
         IReadOnlyList<UiCandidate> candidates)
-        : base(BuildMessage(app, url, target, spec, matchCount, candidates))
+        : base(BuildMessage(app, url, target, spec, matchCount, candidates), [], [], null)
     {
         this.App = app;
         this.Url = url;

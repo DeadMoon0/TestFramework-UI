@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using TestFramework.Core.Conventions;
+
 namespace TestFramework.UI.Structure;
 
 /// <summary>
@@ -14,6 +16,7 @@ namespace TestFramework.UI.Structure;
 /// </remarks>
 /// <param name="Columns">The header texts, in the order the page had them.</param>
 /// <param name="Rows">The rows, each as one value per column.</param>
+[ClosedShape("A table is its columns and rows.")]
 public sealed record UiTableSnapshot(
     IReadOnlyList<string> Columns,
     IReadOnlyList<IReadOnlyList<string>> Rows)

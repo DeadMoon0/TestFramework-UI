@@ -71,12 +71,32 @@ public static class BrowserExt
         /// <summary>
         /// Completes when an element is on the page and visible.
         /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>pollDelay</c>; the other overload states it.</remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">The element. A plain string names visible text.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementVisibleEvent ElementVisible(WebAppIdentifier app, UiTarget target)
+            => this.ElementVisible(app, target, null);
+
+        /// <summary>
+        /// Completes when an element is on the page and visible.
+        /// </summary>
         /// <param name="app">The application to watch.</param>
         /// <param name="target">The element. A plain string names visible text.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiElementVisibleEvent ElementVisible(WebAppIdentifier app, UiTarget target, VariableReference<TimeSpan>? pollDelay = null)
+        public UiElementVisibleEvent ElementVisible(WebAppIdentifier app, UiTarget target, VariableReference<TimeSpan>? pollDelay)
             => new UiElementVisibleEvent(app, target, pollDelay);
+
+        /// <summary>
+        /// Completes when an element is gone from the page, or was never there.
+        /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>pollDelay</c>; the other overload states it.</remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">The element. A plain string names visible text.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementHiddenEvent ElementHidden(WebAppIdentifier app, UiTarget target)
+            => this.ElementHidden(app, target, null);
 
         /// <summary>
         /// Completes when an element is gone from the page, or was never there.
@@ -85,8 +105,18 @@ public static class BrowserExt
         /// <param name="target">The element. A plain string names visible text.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiElementHiddenEvent ElementHidden(WebAppIdentifier app, UiTarget target, VariableReference<TimeSpan>? pollDelay = null)
+        public UiElementHiddenEvent ElementHidden(WebAppIdentifier app, UiTarget target, VariableReference<TimeSpan>? pollDelay)
             => new UiElementHiddenEvent(app, target, pollDelay);
+
+        /// <summary>
+        /// Completes when a text is visible on the page.
+        /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>pollDelay</c>; the other overload states it.</remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="text">The words to wait for.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementVisibleEvent TextAppears(WebAppIdentifier app, string text)
+            => this.TextAppears(app, text, null);
 
         /// <summary>
         /// Completes when a text is visible on the page.
@@ -95,7 +125,7 @@ public static class BrowserExt
         /// <param name="text">The words to wait for.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiElementVisibleEvent TextAppears(WebAppIdentifier app, string text, VariableReference<TimeSpan>? pollDelay = null)
+        public UiElementVisibleEvent TextAppears(WebAppIdentifier app, string text, VariableReference<TimeSpan>? pollDelay)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(text);
 
@@ -105,11 +135,21 @@ public static class BrowserExt
         /// <summary>
         /// Completes when a text is gone from the page, or was never there.
         /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>pollDelay</c>; the other overload states it.</remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="text">The words that must go away.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementHiddenEvent TextDisappears(WebAppIdentifier app, string text)
+            => this.TextDisappears(app, text, null);
+
+        /// <summary>
+        /// Completes when a text is gone from the page, or was never there.
+        /// </summary>
         /// <param name="app">The application to watch.</param>
         /// <param name="text">The words that must go away.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiElementHiddenEvent TextDisappears(WebAppIdentifier app, string text, VariableReference<TimeSpan>? pollDelay = null)
+        public UiElementHiddenEvent TextDisappears(WebAppIdentifier app, string text, VariableReference<TimeSpan>? pollDelay)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(text);
 
@@ -128,14 +168,25 @@ public static class BrowserExt
         /// <param name="target">The element carrying the attribute.</param>
         /// <param name="attribute">The attribute name, for example <c>data-state</c>.</param>
         /// <param name="expected">What the value must satisfy.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiAttributeEqualsEvent AttributeEquals(WebAppIdentifier app, UiTarget target, string attribute, CellRule expected)
+            => this.AttributeEquals(app, target, attribute, expected, null);
+
+        /// <summary>
+        /// Completes when an attribute of an element reads a value a rule accepts.
+        /// </summary>
+        /// <remarks>
+        /// The channel components report on without a visible word changing - <c>data-state</c>,
+        /// <c>aria-busy</c>, <c>aria-expanded</c>. A plain string for <paramref name="expected"/> means
+        /// exact; <c>Cell.Contains</c>, <c>Cell.Matches</c> and the other rules say anything looser.
+        /// </remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">The element carrying the attribute.</param>
+        /// <param name="attribute">The attribute name, for example <c>data-state</c>.</param>
+        /// <param name="expected">What the value must satisfy.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiAttributeEqualsEvent AttributeEquals(
-            WebAppIdentifier app,
-            UiTarget target,
-            string attribute,
-            CellRule expected,
-            VariableReference<TimeSpan>? pollDelay = null)
+        public UiAttributeEqualsEvent AttributeEquals(WebAppIdentifier app, UiTarget target, string attribute, CellRule expected, VariableReference<TimeSpan>? pollDelay)
             => new UiAttributeEqualsEvent(app, target, attribute, expected, pollDelay);
 
         /// <summary>
@@ -144,18 +195,29 @@ public static class BrowserExt
         /// <remarks>
         /// For transitions with no destination value a test could name - a stamp, a counter, a rotating
         /// id. The baseline is taken on the wait's first look, so the wait must start before the change.
-        /// When the destination is known, <see cref="AttributeEquals"/> says it better.
+        /// When the destination is known, <c>AttributeEquals</c> says it better.
+        /// </remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">The element carrying the attribute.</param>
+        /// <param name="attribute">The attribute name.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiAttributeChangedEvent AttributeChanged(WebAppIdentifier app, UiTarget target, string attribute)
+            => this.AttributeChanged(app, target, attribute, null);
+
+        /// <summary>
+        /// Completes when an attribute of an element no longer reads what the wait first saw.
+        /// </summary>
+        /// <remarks>
+        /// For transitions with no destination value a test could name - a stamp, a counter, a rotating
+        /// id. The baseline is taken on the wait's first look, so the wait must start before the change.
+        /// When the destination is known, <c>AttributeEquals</c> says it better.
         /// </remarks>
         /// <param name="app">The application to watch.</param>
         /// <param name="target">The element carrying the attribute.</param>
         /// <param name="attribute">The attribute name.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiAttributeChangedEvent AttributeChanged(
-            WebAppIdentifier app,
-            UiTarget target,
-            string attribute,
-            VariableReference<TimeSpan>? pollDelay = null)
+        public UiAttributeChangedEvent AttributeChanged(WebAppIdentifier app, UiTarget target, string attribute, VariableReference<TimeSpan>? pollDelay)
             => new UiAttributeChangedEvent(app, target, attribute, pollDelay);
 
         /// <summary>
@@ -164,15 +226,41 @@ public static class BrowserExt
         /// <remarks>
         /// For lists that fill in. A page can pass through the expected count on its way past it and
         /// satisfy this wait; a list whose final size matters more than the moment it is reached is
-        /// better waited on with <see cref="StructureMatches"/> or <see cref="TableMatches"/>.
+        /// better waited on with <c>StructureMatches</c> or <c>TableMatches</c>.
+        /// </remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">What to count.</param>
+        /// <param name="count">The count to reach. Zero waits for absence.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementCountEvent CountIs(WebAppIdentifier app, UiTarget target, int count)
+            => this.CountIs(app, target, count, null);
+
+        /// <summary>
+        /// Completes when exactly <paramref name="count"/> elements answer to a target.
+        /// </summary>
+        /// <remarks>
+        /// For lists that fill in. A page can pass through the expected count on its way past it and
+        /// satisfy this wait; a list whose final size matters more than the moment it is reached is
+        /// better waited on with <c>StructureMatches</c> or <c>TableMatches</c>.
         /// </remarks>
         /// <param name="app">The application to watch.</param>
         /// <param name="target">What to count.</param>
         /// <param name="count">The count to reach. Zero waits for absence.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiElementCountEvent CountIs(WebAppIdentifier app, UiTarget target, int count, VariableReference<TimeSpan>? pollDelay = null)
+        public UiElementCountEvent CountIs(WebAppIdentifier app, UiTarget target, int count, VariableReference<TimeSpan>? pollDelay)
             => new UiElementCountEvent(app, target, count, atLeast: false, pollDelay);
+
+        /// <summary>
+        /// Completes when at least <paramref name="count"/> elements answer to a target.
+        /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>pollDelay</c>; the other overload states it.</remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="target">What to count.</param>
+        /// <param name="count">The count to reach.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiElementCountEvent CountAtLeast(WebAppIdentifier app, UiTarget target, int count)
+            => this.CountAtLeast(app, target, count, null);
 
         /// <summary>
         /// Completes when at least <paramref name="count"/> elements answer to a target.
@@ -182,8 +270,19 @@ public static class BrowserExt
         /// <param name="count">The count to reach.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiElementCountEvent CountAtLeast(WebAppIdentifier app, UiTarget target, int count, VariableReference<TimeSpan>? pollDelay = null)
+        public UiElementCountEvent CountAtLeast(WebAppIdentifier app, UiTarget target, int count, VariableReference<TimeSpan>? pollDelay)
             => new UiElementCountEvent(app, target, count, atLeast: true, pollDelay);
+
+        /// <summary>
+        /// Completes when the page's address contains a text - or matches an expression, with
+        /// <see cref="UiUrlMatchesEvent.AsRegex"/>.
+        /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>pollDelay</c>; the other overload states it.</remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="pattern">The substring, or the expression.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiUrlMatchesEvent UrlMatches(WebAppIdentifier app, VariableReference<string> pattern)
+            => this.UrlMatches(app, pattern, null);
 
         /// <summary>
         /// Completes when the page's address contains a text - or matches an expression, with
@@ -193,8 +292,23 @@ public static class BrowserExt
         /// <param name="pattern">The substring, or the expression.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiUrlMatchesEvent UrlMatches(WebAppIdentifier app, VariableReference<string> pattern, VariableReference<TimeSpan>? pollDelay = null)
+        public UiUrlMatchesEvent UrlMatches(WebAppIdentifier app, VariableReference<string> pattern, VariableReference<TimeSpan>? pollDelay)
             => new UiUrlMatchesEvent(app, pattern, pollDelay);
+
+        /// <summary>
+        /// Completes when a part of the page is built the way a structure says.
+        /// </summary>
+        /// <remarks>
+        /// The same comparison the <c>CompareStructure</c> step makes, as a wait - for the shape another
+        /// actor produces over time. A timeout reports the last look's differences, so a wait that never
+        /// matched ends as readably as a comparison that failed.
+        /// </remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="scope">The element to compare, and everything inside it.</param>
+        /// <param name="expected">The structure it should have.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiStructureMatchesEvent StructureMatches(WebAppIdentifier app, UiTarget scope, WebElementStructure expected)
+            => this.StructureMatches(app, scope, expected, null);
 
         /// <summary>
         /// Completes when a part of the page is built the way a structure says.
@@ -209,12 +323,19 @@ public static class BrowserExt
         /// <param name="expected">The structure it should have.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiStructureMatchesEvent StructureMatches(
-            WebAppIdentifier app,
-            UiTarget scope,
-            WebElementStructure expected,
-            VariableReference<TimeSpan>? pollDelay = null)
+        public UiStructureMatchesEvent StructureMatches(WebAppIdentifier app, UiTarget scope, WebElementStructure expected, VariableReference<TimeSpan>? pollDelay)
             => new UiStructureMatchesEvent(app, scope, expected, pollDelay);
+
+        /// <summary>
+        /// Completes when a table on the page holds what an expected table says.
+        /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>pollDelay</c>; the other overload states it.</remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="table">The table element.</param>
+        /// <param name="expected">The rows it should hold.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiTableMatchesEvent TableMatches(WebAppIdentifier app, UiTarget table, ExpectedTable expected)
+            => this.TableMatches(app, table, expected, null);
 
         /// <summary>
         /// Completes when a table on the page holds what an expected table says.
@@ -224,12 +345,19 @@ public static class BrowserExt
         /// <param name="expected">The rows it should hold.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiTableMatchesEvent TableMatches(
-            WebAppIdentifier app,
-            UiTarget table,
-            ExpectedTable expected,
-            VariableReference<TimeSpan>? pollDelay = null)
+        public UiTableMatchesEvent TableMatches(WebAppIdentifier app, UiTarget table, ExpectedTable expected, VariableReference<TimeSpan>? pollDelay)
             => new UiTableMatchesEvent(app, table, expected, pollDelay);
+
+        /// <summary>
+        /// Completes when a script in the page returns <c>true</c>.
+        /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>pollDelay</c>; the other overload states it.</remarks>
+        /// <param name="app">The application to watch.</param>
+        /// <param name="script">The question, phrased to always have a boolean answer - for example
+        /// <c>() =&gt; window.myApp?.ready === true</c>.</param>
+        /// <returns>The event, for <c>WaitForEvent</c>.</returns>
+        public UiScriptIsTrueEvent ScriptIsTrue(WebAppIdentifier app, JsScript script)
+            => this.ScriptIsTrue(app, script, null);
 
         /// <summary>
         /// Completes when a script in the page returns <c>true</c>.
@@ -239,7 +367,7 @@ public static class BrowserExt
         /// <c>() =&gt; window.myApp?.ready === true</c>.</param>
         /// <param name="pollDelay">The delay between polls. Defaults to 500 ms.</param>
         /// <returns>The event, for <c>WaitForEvent</c>.</returns>
-        public UiScriptIsTrueEvent ScriptIsTrue(WebAppIdentifier app, JsScript script, VariableReference<TimeSpan>? pollDelay = null)
+        public UiScriptIsTrueEvent ScriptIsTrue(WebAppIdentifier app, JsScript script, VariableReference<TimeSpan>? pollDelay)
             => new UiScriptIsTrueEvent(app, script, pollDelay);
     }
 
@@ -282,10 +410,19 @@ public static class BrowserExt
         /// <summary>
         /// Reads a table off the page as data.
         /// </summary>
+        /// <remarks>Uses <c>null</c> for <c>into</c>; the other overload states it.</remarks>
+        /// <param name="table">The table element.</param>
+        /// <returns>The step.</returns>
+        public Step<UiTableResultContext> ReadTable(UiTarget table)
+            => this.ReadTable(table, null);
+
+        /// <summary>
+        /// Reads a table off the page as data.
+        /// </summary>
         /// <param name="table">The table element.</param>
         /// <param name="into">A variable to put the rows in, or null to only return them as the step's result.</param>
         /// <returns>The step.</returns>
-        public Step<UiTableResultContext> ReadTable(UiTarget table, VariableIdentifier? into = null)
+        public Step<UiTableResultContext> ReadTable(UiTarget table, VariableIdentifier? into)
             => new ReadTableStep(this.app, table, into);
 
         /// <summary>
@@ -330,6 +467,8 @@ public static class BrowserExt
     /// </summary>
     public sealed class UiToolingProxy
     {
+        internal UiToolingProxy() { }
+
         /// <summary>
         /// Downloads the browsers Playwright drives, if they are not already present.
         /// </summary>

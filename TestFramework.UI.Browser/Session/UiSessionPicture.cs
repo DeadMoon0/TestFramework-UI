@@ -21,16 +21,36 @@ namespace TestFramework.UI.Session;
 /// stay free to run side by side.
 /// </para>
 /// </remarks>
-/// <param name="App">The application identifier this session belongs to.</param>
-/// <param name="Url">The address the page is on now.</param>
-/// <param name="Title">The page's title now.</param>
-/// <param name="Entries">What happened, oldest first.</param>
-public sealed record UiSessionPicture(
-    string App,
-    string Url,
-    string Title,
-    IReadOnlyList<UiSessionEntry> Entries)
+public sealed record UiSessionPicture
 {
+    internal UiSessionPicture(string app, string url, string title, IReadOnlyList<UiSessionEntry> entries)
+    {
+        this.App = app;
+        this.Url = url;
+        this.Title = title;
+        this.Entries = entries;
+    }
+
+    /// <summary>
+    /// The application identifier this session belongs to.
+    /// </summary>
+    public string App { get; }
+
+    /// <summary>
+    /// The address the page is on now.
+    /// </summary>
+    public string Url { get; internal init; }
+
+    /// <summary>
+    /// The page's title now.
+    /// </summary>
+    public string Title { get; internal init; }
+
+    /// <summary>
+    /// What happened, oldest first.
+    /// </summary>
+    public IReadOnlyList<UiSessionEntry> Entries { get; internal init; }
+
     /// <summary>
     /// The picture of a session that has not done anything yet.
     /// </summary>

@@ -264,19 +264,21 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
 
     private void Record(VariableStore variableStore, UiWaitResultContext result)
     {
-        UiSessionEntry entry = new UiSessionEntry(
-            this.LabelOptions.Label ?? this.Name,
-            this.ActionName,
-            result.Waited,
-            result.ResolvedVia,
-            null,
-            false,
-            0,
-            null,
-            string.Create(CultureInfo.InvariantCulture, $"after {result.WaitedForMs / 1000:F1}s ({result.Polls} poll(s))"),
-            result.Url,
-            this.session!.DrainConsoleErrors(),
-            result.WaitedForMs);
+        UiSessionEntry entry = new UiSessionEntry
+        {
+            StepLabel = this.LabelOptions.Label ?? this.Name,
+            Action = this.ActionName,
+            Target = result.Waited,
+            ResolvedVia = result.ResolvedVia,
+            MatchRank = null,
+            MatchWasFuzzy = false,
+            CandidateCount = 0,
+            MatchedSnippet = null,
+            Detail = string.Create(CultureInfo.InvariantCulture, $"after {result.WaitedForMs / 1000:F1}s ({result.Polls} poll(s))"),
+            Url = result.Url,
+            ConsoleErrors = this.session!.DrainConsoleErrors(),
+            DurationMs = result.WaitedForMs,
+        };
 
         UiSessionPicture picture = this.Picture(variableStore);
 

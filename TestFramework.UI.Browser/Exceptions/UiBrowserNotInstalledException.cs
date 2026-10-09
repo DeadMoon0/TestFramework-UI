@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Playwright;
 
+using TestFramework.Core.Exceptions;
 namespace TestFramework.UI.Browser.Exceptions;
 
 /// <summary>
@@ -10,10 +11,10 @@ namespace TestFramework.UI.Browser.Exceptions;
 /// A first run on a fresh clone hits this, so the message is written for somebody who has not read any
 /// documentation yet: it names the three ways forward and puts the one needing no download first.
 /// </remarks>
-public sealed class UiBrowserNotInstalledException : Exception
+public sealed class UiBrowserNotInstalledException : TimelineFrameworkException
 {
     internal UiBrowserNotInstalledException(string browser, string? channel, Exception inner)
-        : base(BuildMessage(browser, channel), inner)
+        : base(BuildMessage(browser, channel), [], [], inner)
     {
         this.Browser = browser;
         this.Channel = channel;

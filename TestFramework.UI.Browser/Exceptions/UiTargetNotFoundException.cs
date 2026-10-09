@@ -6,6 +6,7 @@ using System.Text;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Targeting;
 
+using TestFramework.Core.Exceptions;
 namespace TestFramework.UI.Browser.Exceptions;
 
 /// <summary>
@@ -16,7 +17,7 @@ namespace TestFramework.UI.Browser.Exceptions;
 /// enough to be the obvious intent - the exact line that would have worked. A control renamed from
 /// <c>Save</c> to <c>Save changes</c> should cost a reader one glance, not a debugging session.
 /// </remarks>
-public sealed class UiTargetNotFoundException : Exception
+public sealed class UiTargetNotFoundException : TimelineFrameworkException
 {
     internal UiTargetNotFoundException(
         string app,
@@ -24,7 +25,7 @@ public sealed class UiTargetNotFoundException : Exception
         UiTarget target,
         IReadOnlyList<UiQuerySpec> triedSpecs,
         IReadOnlyList<string> availableNames)
-        : base(BuildMessage(app, url, target, triedSpecs, availableNames))
+        : base(BuildMessage(app, url, target, triedSpecs, availableNames), [], [], null)
     {
         this.App = app;
         this.Url = url;

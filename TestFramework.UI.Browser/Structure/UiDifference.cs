@@ -1,3 +1,5 @@
+using TestFramework.Core.Conventions;
+
 namespace TestFramework.UI.Structure;
 
 /// <summary>
@@ -30,6 +32,7 @@ public enum UiDifferenceKind
 /// <param name="Path">Where it is, as a path through the structure, for example
 /// <c>app-order-list &gt; app-order-row</c>.</param>
 /// <param name="Detail">What exactly differed, in the words of the expectation that failed.</param>
+[ClosedShape("A difference is its kind, where it is and what it is.")]
 public sealed record UiDifference(UiDifferenceKind Kind, string Path, string Detail)
 {
     /// <summary>

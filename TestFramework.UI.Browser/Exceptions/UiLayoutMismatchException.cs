@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
+using TestFramework.Core.Exceptions;
 namespace TestFramework.UI.Browser.Exceptions;
 
 /// <summary>
@@ -13,7 +14,7 @@ namespace TestFramework.UI.Browser.Exceptions;
 /// opening it - and the note that the comparison kept looking while the page settled, so a slow render
 /// is never mistaken for a broken layout.
 /// </remarks>
-public sealed class UiLayoutMismatchException : Exception
+public sealed class UiLayoutMismatchException : TimelineFrameworkException
 {
     internal UiLayoutMismatchException(
         string app,
@@ -21,7 +22,7 @@ public sealed class UiLayoutMismatchException : Exception
         IReadOnlyList<string> differences,
         string actual,
         TimeSpan waited)
-        : base(BuildMessage(app, url, differences, actual, waited))
+        : base(BuildMessage(app, url, differences, actual, waited), [], [], null)
     {
         this.App = app;
         this.Url = url;

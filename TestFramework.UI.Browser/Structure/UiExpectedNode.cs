@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 
+using TestFramework.Core.Conventions;
+
 namespace TestFramework.UI.Structure;
 
 /// <summary>
@@ -9,6 +11,7 @@ namespace TestFramework.UI.Structure;
 /// </summary>
 /// <param name="Min">The fewest acceptable.</param>
 /// <param name="Max">The most acceptable, or null for any number.</param>
+[ClosedShape("A cardinality is its bounds.")]
 public sealed record UiCardinality(int Min, int? Max)
 {
     /// <summary>Exactly one.</summary>
@@ -76,6 +79,7 @@ public sealed record UiCardinality(int Min, int? Max)
 /// </remarks>
 /// <param name="Description">How the rule reads, for example <c>name is 'orders'</c>.</param>
 /// <param name="Predicate">What it checks.</param>
+[ClosedShape("A rule is what it says and what it checks.")]
 public sealed record UiNodeRule(string Description, Func<UiElementSnapshot, bool> Predicate);
 
 /// <summary>
@@ -95,20 +99,38 @@ public sealed record UiNodeRule(string Description, Func<UiElementSnapshot, bool
 /// the test's own decision rather than an accident of how the expectation was written.
 /// </para>
 /// </remarks>
-/// <param name="Tag">The element kind expected, lower-cased. Null matches any kind.</param>
-/// <param name="Cardinality">How many of it are expected among its parent's children.</param>
-/// <param name="Rules">What must be true of each match.</param>
-/// <param name="Children">What must be inside each match.</param>
-/// <param name="ChildrenExact">True when no other children are allowed.</param>
-/// <param name="ChildrenInOrder">True when the children must appear in the order given.</param>
-public sealed record UiExpectedNode(
-    string? Tag,
-    UiCardinality Cardinality,
-    IReadOnlyList<UiNodeRule> Rules,
-    IReadOnlyList<UiExpectedNode> Children,
-    bool ChildrenExact = false,
-    bool ChildrenInOrder = false)
+public sealed record UiExpectedNode
 {
+    /// <summary>
+    /// The element kind expected, lower-cased. Null matches any kind.
+    /// </summary>
+    public required string? Tag { get; init; }
+
+    /// <summary>
+    /// How many of it are expected among its parent's children.
+    /// </summary>
+    public required UiCardinality Cardinality { get; init; }
+
+    /// <summary>
+    /// What must be true of each match.
+    /// </summary>
+    public required IReadOnlyList<UiNodeRule> Rules { get; init; }
+
+    /// <summary>
+    /// What must be inside each match.
+    /// </summary>
+    public required IReadOnlyList<UiExpectedNode> Children { get; init; }
+
+    /// <summary>
+    /// True when no other children are allowed.
+    /// </summary>
+    public bool ChildrenExact { get; init; }
+
+    /// <summary>
+    /// True when the children must appear in the order given.
+    /// </summary>
+    public bool ChildrenInOrder { get; init; }
+
     /// <summary>
     /// How this node reads as a path segment in a difference message.
     /// </summary>

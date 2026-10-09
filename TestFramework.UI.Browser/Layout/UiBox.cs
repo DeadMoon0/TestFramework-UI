@@ -1,6 +1,8 @@
 using System;
 using System.Globalization;
 
+using TestFramework.Core.Conventions;
+
 namespace TestFramework.UI.Layout;
 
 /// <summary>
@@ -10,6 +12,7 @@ namespace TestFramework.UI.Layout;
 /// <param name="Y">The top edge.</param>
 /// <param name="Width">How wide it is.</param>
 /// <param name="Height">How tall it is.</param>
+[ClosedShape("A box is its position and size.")]
 public sealed record UiBox(double X, double Y, double Width, double Height)
 {
     /// <summary>The right edge.</summary>
