@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using TestFramework.UI;
 using TestFramework.UI.Structure;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Structure;
 
@@ -298,7 +299,7 @@ public sealed class WebElementStructure
     {
         if (this.frozen)
         {
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 "This structure has already been used by a step and cannot be changed. A structure is meant " +
                 "to be declared once and shared; build a new one with WebElementStructure.OneElement(...) " +
                 "if a test needs a different shape.");

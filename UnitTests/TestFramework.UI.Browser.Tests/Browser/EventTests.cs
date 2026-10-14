@@ -7,6 +7,7 @@ using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Targeting;
 using TestFramework.UI.Browser.Tests.Shared;
 using Xunit.Abstractions;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Tests.Browser;
 
@@ -134,7 +135,7 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
 
-        Exception failure = Assert.IsType<InvalidOperationException>(run.Step("mistyped").LastResult.Exception);
+        Exception failure = Assert.IsType<FrameworkStateException>(run.Step("mistyped").LastResult.Exception);
 
         // Immediately and with the fix - not as a timeout that blames the page.
         Assert.Contains("needs a boolean", failure.Message, StringComparison.Ordinal);

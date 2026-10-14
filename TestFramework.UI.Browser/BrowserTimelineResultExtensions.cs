@@ -6,6 +6,7 @@ using TestFramework.Core.Timelines.Assertions;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Steps;
 using TestFramework.UI.Session;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser;
 
@@ -187,7 +188,7 @@ public static class BrowserTimelineResultExtensions
         ArgumentNullException.ThrowIfNull(handle);
 
         return handle.LastResult.Result as UiFlowResultContext
-            ?? throw new InvalidOperationException(
+            ?? throw new FrameworkConfigurationException(
                 $"The step did not produce a browser result. It produced {Describe(handle.LastResult.Result)}.");
     }
 
@@ -290,7 +291,7 @@ public static class BrowserTimelineResultExtensions
         ArgumentNullException.ThrowIfNull(handle);
 
         return handle.LastResult.Result as UiCompareResultContext
-            ?? throw new InvalidOperationException(
+            ?? throw new FrameworkConfigurationException(
                 $"The step is not a comparison. It produced {Describe(handle.LastResult.Result)}.");
     }
 
@@ -304,7 +305,7 @@ public static class BrowserTimelineResultExtensions
         ArgumentNullException.ThrowIfNull(handle);
 
         return handle.LastResult.Result as UiTableResultContext
-            ?? throw new InvalidOperationException(
+            ?? throw new FrameworkConfigurationException(
                 $"The step is not a table read. It produced {Describe(handle.LastResult.Result)}.");
     }
 
@@ -318,14 +319,14 @@ public static class BrowserTimelineResultExtensions
         ArgumentNullException.ThrowIfNull(handle);
 
         return handle.LastResult.Result as UiCaptureResultContext
-            ?? throw new InvalidOperationException(
+            ?? throw new FrameworkConfigurationException(
                 $"The step is not a structure capture. It produced {Describe(handle.LastResult.Result)}.");
     }
 
     private static TResult Result<TResult>(TimelineRun run, string label, string what)
         where TResult : class
         => run.Step(label).LastResult.Result as TResult
-            ?? throw new InvalidOperationException(
+            ?? throw new FrameworkConfigurationException(
                 $"The step '{label}' is not {what}. It produced {Describe(run.Step(label).LastResult.Result)}.");
 
     private static UiSessionPicture SessionOf(TimelineRun run, WebAppIdentifier app)

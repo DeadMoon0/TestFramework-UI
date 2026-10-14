@@ -10,6 +10,7 @@ using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Structure;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Events;
 
@@ -90,7 +91,7 @@ public sealed class UiScriptIsTrueEvent : UiEvent<UiScriptIsTrueEvent>
 
         // Not a pending state but a broken question - said now, with the fix, rather than as a timeout
         // that blames the page.
-        throw new InvalidOperationException(
+        throw new FrameworkStateException(
             $"The script '{this.script.Name}' returned "
             + (result is null ? "nothing" : UiText.Truncate(PageJson.Describe(result), 80))
             + ", and a wait needs a boolean. Phrase the question so it always has one, for example "

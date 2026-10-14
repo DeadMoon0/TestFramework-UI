@@ -9,6 +9,7 @@ using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Runtime;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Events;
 
@@ -96,7 +97,7 @@ public sealed class UiUrlMatchesEvent : UiEvent<UiUrlMatchesEvent>
         CancellationToken cancellationToken)
     {
         string wanted = this.pattern.GetValue(variableStore)
-            ?? throw new InvalidOperationException("The address pattern resolved to nothing.");
+            ?? throw new FrameworkStateException("The address pattern resolved to nothing.");
 
         // The match timeout is the same rule the table cells apply: a pathological pattern polled in a
         // loop must fail as a stated regex problem, never hold the poll hostage.

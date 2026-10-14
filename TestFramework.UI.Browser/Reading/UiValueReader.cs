@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Playwright;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Structure;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Reading;
 
@@ -95,7 +96,7 @@ internal static class UiValueReader
         {
             // Playwright's input_value is defined for the native form controls and nothing else. The
             // element was found, so the problem is the question, and the message should redirect it.
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 $"The {source.Target!.Describe()} was found, but it is not a native form control, so it has " +
                 $"no value to read. Read Value.Text(...) for what it shows, or Value.Attribute(...) for what " +
                 $"it carries.",
@@ -118,7 +119,7 @@ internal static class UiValueReader
             .EvaluateAsync<string[]>("el => Array.from(el.attributes, a => a.name)")
             .ConfigureAwait(false) ?? [];
 
-        throw new InvalidOperationException(
+        throw new FrameworkStateException(
             $"The {source.Target!.Describe()} carries no attribute '{source.Argument}'. " +
             Offer("It carries", present.Take(MaxNamed).ToList()));
     }
@@ -142,7 +143,7 @@ internal static class UiValueReader
                 .EvaluateAsync<string[]>("el => Array.from(el.options, o => o.label)")
                 .ConfigureAwait(false) ?? [];
 
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 $"The {source.Target!.Describe()} has nothing selected. " +
                 Offer("Its options are", options.Take(MaxNamed).ToList()));
         }
@@ -155,7 +156,7 @@ internal static class UiValueReader
                 resolved);
         }
 
-        throw new InvalidOperationException(
+        throw new FrameworkStateException(
             $"The {source.Target!.Describe()} is a <{tag}> that is neither a native list nor declares the " +
             "combobox contract, so it has no selected option to read.");
     }
@@ -194,7 +195,7 @@ internal static class UiValueReader
         {
             // Computed style answers "" for a property that does not exist, which is a typo nine times
             // out of ten - and a typo deserves a message, not an empty variable.
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 $"The computed style of {source.Target!.Describe()} has no value for '{source.Argument}'. " +
                 "Property names are CSS names, for example 'background-color'.");
         }
@@ -215,7 +216,7 @@ internal static class UiValueReader
             }
         }
 
-        throw new InvalidOperationException(
+        throw new FrameworkStateException(
             $"The address {url} carries no query parameter '{source.Argument}'. " +
             Offer("It carries", parameters.Select(static parameter => parameter.Name).Take(MaxNamed).ToList()));
     }
@@ -238,7 +239,7 @@ internal static class UiValueReader
             .EvaluateAsync<string[]>("() => Object.keys(window.localStorage)")
             .ConfigureAwait(false) ?? [];
 
-        throw new InvalidOperationException(
+        throw new FrameworkStateException(
             $"The page holds no local storage entry '{source.Argument}'. " +
             Offer("It holds", keys.Take(MaxNamed).ToList()));
     }
@@ -267,7 +268,7 @@ internal static class UiValueReader
             }
         }
 
-        throw new InvalidOperationException(
+        throw new FrameworkStateException(
             $"The browser holds no cookie '{source.Argument}' for {page.Url}. " +
             Offer("It holds", cookies.Select(static cookie => cookie.Name).Take(MaxNamed).ToList()));
     }

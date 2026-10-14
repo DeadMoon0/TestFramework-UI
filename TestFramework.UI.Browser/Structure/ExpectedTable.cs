@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Structure;
 
@@ -260,7 +261,7 @@ public sealed class ExpectedTable
     {
         if (this.frozen)
         {
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 "This expected table has already been used by a run, so it can no longer be changed: a table " +
                 "shared by several timelines cannot be edited by one of them after another has started " +
                 "comparing against it. Build a new ExpectedTable for the changed expectation.");

@@ -23,6 +23,7 @@ using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Targeting;
 using TestFramework.UI.Session;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Steps;
 
@@ -430,7 +431,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
         if (this.RetryOptions.MaxRetryCount.GetValue(variableStore) > 0
             && (this.actions.Count == 0 || this.actions[0].Kind != UiActionKind.Navigate))
         {
-            throw new InvalidOperationException(
+            throw new FrameworkConfigurationException(
                 $"'{this.LabelOptions.Label ?? this.Name}' combines WithRetry with a browser flow that starts " +
                 $"with {(this.actions.Count == 0 ? "no action" : this.actions[0].Kind.ToString())}. A retried " +
                 "attempt replays its actions against whatever the failed one left behind, so only a flow whose " +
@@ -821,7 +822,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
                 {
                     // The one wrong answer would be to click around and hope: a component library's
                     // select is a different contract, and there is a verb for it.
-                    throw new InvalidOperationException(
+                    throw new FrameworkStateException(
                         $"The {action.Target!.Describe()} is a <{tag}>, not a native <select>, so Select " +
                         "cannot drive it. Use Choose(...), which drives native lists and ARIA comboboxes alike.");
                 }

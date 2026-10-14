@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TestFramework.UI.Structure;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Tests.Structure;
 
@@ -174,9 +175,9 @@ public class ExpectedTableTests
 
         expected.Compare(new UiTableSnapshot(["Order"], [["A-1001"]]));
 
-        Assert.Throws<InvalidOperationException>(() => expected.Row("A-1002"));
-        Assert.Throws<InvalidOperationException>(() => expected.AllowExtraRows());
-        Assert.Throws<InvalidOperationException>(() => expected.InOrder());
-        Assert.Throws<InvalidOperationException>(() => expected.KeyedBy("Order"));
+        Assert.Throws<FrameworkStateException>(() => expected.Row("A-1002"));
+        Assert.Throws<FrameworkStateException>(() => expected.AllowExtraRows());
+        Assert.Throws<FrameworkStateException>(() => expected.InOrder());
+        Assert.Throws<FrameworkStateException>(() => expected.KeyedBy("Order"));
     }
 }

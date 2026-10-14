@@ -5,6 +5,7 @@ using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Tests.Shared;
 using Xunit.Abstractions;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Tests.Browser;
 
@@ -25,7 +26,7 @@ public class RetryGuardTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .WithRetry(2, CalcDelays.None).Name("dangerous")
             .Build();
 
-        InvalidOperationException failure = await Assert.ThrowsAsync<InvalidOperationException>(
+        FrameworkConfigurationException failure = await Assert.ThrowsAsync<FrameworkConfigurationException>(
             () => timeline.SetupRun(new ServiceCollection().BuildServiceProvider(), output.WriteLine).RunAsync());
 
         Assert.Contains("WithRetry", failure.Message, StringComparison.Ordinal);

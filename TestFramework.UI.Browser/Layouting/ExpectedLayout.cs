@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using TestFramework.UI.Browser.Targeting;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Layouting;
 
@@ -170,7 +171,7 @@ public sealed class ExpectedLayout
     {
         if (this.frozen)
         {
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 "This layout has already been used by a step and cannot be changed. A layout is meant to be " +
                 "declared once and shared; start a new one for a different shape.");
         }

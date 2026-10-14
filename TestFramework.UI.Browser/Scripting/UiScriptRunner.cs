@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TestFramework.Core.Variables;
 using TestFramework.UI.Structure;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Scripting;
 
@@ -55,7 +56,7 @@ internal sealed class UiScriptResultBinder<T> : IUiScriptResultBinder
 
         if (result is null or { Type: JTokenType.Null or JTokenType.Undefined })
         {
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 $"The script '{scriptName}' returned nothing, and the variable '{variable}' needs a " +
                 $"{typeof(T).Name}. A function body without a return returns undefined - " +
                 "'() => { window.x = 1; }' evaluates to nothing, '() => window.x = 1' to the value.");
@@ -76,7 +77,7 @@ internal sealed class UiScriptResultBinder<T> : IUiScriptResultBinder
         // what came back, and here is the type the variable was declared as.
         catch (Exception exception) when (exception is JsonException or FormatException or InvalidCastException or OverflowException or ArgumentException)
         {
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 $"The script '{scriptName}' returned {UiText.Truncate(PageJson.Describe(result), 120)}, " +
                 $"which does not read as the {typeof(T).Name} the variable '{variable}' was declared as.",
                 exception);
@@ -134,7 +135,7 @@ internal static class UiScriptRunner
         {
             // The page's own error text is the diagnosis; the wrapper adds what the page cannot know -
             // which script this was, and the one constraint scripts most often trip over.
-            throw new InvalidOperationException(
+            throw new FrameworkStateException(
                 $"The script '{script.Name}' failed in the page: {exception.Message.Split('\n')[0].Trim()} " +
                 "(A script's result must be plain data - strings, numbers, booleans, arrays, objects. " +
                 "A DOM node cannot leave the page; return what you need of it, such as el.textContent.)",

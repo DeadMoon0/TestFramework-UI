@@ -22,7 +22,7 @@ message.
 | A wait event timed out | `TimeoutException` with the event's own message: what was watched, where the page was, how many polls |
 | Missing or unresolvable configuration | `UiConfigurationException` |
 | The configured browser is not installed | `UiBrowserNotInstalledException` |
-| `WithRetry` on a flow not starting with `Navigate` | `InvalidOperationException` at **plan time**, before any browser exists |
+| `WithRetry` on a flow not starting with `Navigate` | `FrameworkConfigurationException` at **plan time**, before any browser exists |
 | An asserted value did not match | `ValueAssertionException` from the framework's own assertions |
 
 ## The Evidence
@@ -187,7 +187,7 @@ discovering them in production data:
   of as the `Channel` of an engine (`UiConfigurationException` naming the application and the fix) - which
   browser a test drives decides what it proves, and there is no default to fall back to.
 - An application with two addresses, or with none (`UiConfigurationException`).
-- `WithRetry` on a flow whose first action is not `Navigate` (`InvalidOperationException` naming the
+- `WithRetry` on a flow whose first action is not `Navigate` (`FrameworkConfigurationException` naming the
   rule and the fix) — a retried attempt replays actions against whatever the failed one left behind.
 - A mistyped variable in any step input (`IOContractViolationException` from the Core contract
   validation) — the plan knows every declared input and output.

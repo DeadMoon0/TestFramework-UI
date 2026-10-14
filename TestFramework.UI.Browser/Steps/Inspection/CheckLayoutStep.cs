@@ -12,6 +12,7 @@ using TestFramework.UI.Browser.Layouting;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Targeting;
 using TestFramework.UI.Layout;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Steps.Inspection;
 
@@ -226,7 +227,7 @@ internal sealed class CheckLayoutStep : UiInspectionStep<UiCompareResultContext>
 
         int[] measured = await lens.Session.Page
             .EvaluateAsync<int[]>("() => [window.innerWidth, window.innerHeight]")
-            .ConfigureAwait(false) ?? throw new InvalidOperationException("The page reported no viewport.");
+            .ConfigureAwait(false) ?? throw new FrameworkStateException("The page reported no viewport.");
 
         return new UiBox(0, 0, measured[0], measured[1]);
     }

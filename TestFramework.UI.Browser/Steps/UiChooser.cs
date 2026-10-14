@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Playwright;
 using TestFramework.UI.Browser.Reading;
 using TestFramework.UI.Structure;
+using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Steps;
 
@@ -64,7 +65,7 @@ internal static class UiChooser
                 .ConfigureAwait(false);
         }
 
-        throw new InvalidOperationException(
+        throw new FrameworkStateException(
             $"The {describeTarget} is a <{tag}> that is neither a native <select> nor declares the combobox " +
             "contract (role=\"combobox\" or aria-haspopup=\"listbox\"), so there is no list here to choose from.");
     }
@@ -190,7 +191,7 @@ internal static class UiChooser
 
             if (count > 1)
             {
-                throw new InvalidOperationException(
+                throw new FrameworkStateException(
                     $"The {describeTarget} opened, but the page shows {count} listboxes and its aria-controls " +
                     "does not say which one belongs to it, so choosing would be a guess.");
             }
@@ -228,7 +229,7 @@ internal static class UiChooser
 
             if (matches.Count > 1)
             {
-                throw new InvalidOperationException(
+                throw new FrameworkStateException(
                     $"{matches.Count} options of the {describeTarget} answer to '{option}': " +
                     $"{string.Join(", ", matches.Select(index => $"'{labels[index]}'"))}. Name one of them exactly.");
             }
@@ -238,7 +239,7 @@ internal static class UiChooser
             ? "It offers no options at all."
             : $"It offers: {string.Join(", ", labels.Select(static label => $"'{label}'"))}.";
 
-        throw new InvalidOperationException($"The {describeTarget} has no option '{option}'. {offered}");
+        throw new FrameworkStateException($"The {describeTarget} has no option '{option}'. {offered}");
     }
 
     private static bool Matches(string candidate, string wanted, bool exact)
