@@ -166,8 +166,7 @@ public class BridgeResolutionTests(ITestOutputHelper output)
         services.AddSingleton<IResourceNodeSource>(new UiApplications([new(app.Identifier, entry)]));
 
         // Both sections, because the point is that a reader does not care which one an identifier came from.
-        services.LoadWebConfigs(configuration);
-        services.LoadWebSiteConfigs(configuration);
+        services.AddWeb(configuration);
 
         Timeline timeline = Timeline.Create()
             .Trigger(new ResolvesAppStep(app)).Label("resolves")

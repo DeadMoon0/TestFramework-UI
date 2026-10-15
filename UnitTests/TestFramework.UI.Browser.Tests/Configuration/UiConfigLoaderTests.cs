@@ -12,7 +12,7 @@ using Xunit;
 namespace TestFramework.UI.Browser.Tests.Configuration;
 
 /// <summary>
-/// Covers loading the <c>Ui</c> section into the run's declared resources, which is what .LoadUIConfig()
+/// Covers loading the <c>Ui</c> section into the run's declared resources, which is what .LoadUiConfig()
 /// wires up.
 /// </summary>
 public class UiConfigLoaderTests

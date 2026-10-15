@@ -17,7 +17,7 @@ public static class UiConfigExtension
     /// The store is registered even when the section is absent, so the error a step gets names the
     /// missing entry rather than a missing package.
     /// </remarks>
-    public static IConfigInstanceBuilder LoadUIConfig(this IConfigInstanceBuilder builder)
+    public static IConfigInstanceBuilder LoadUiConfig(this IConfigInstanceBuilder builder)
     {
         builder.AddService((services, configuration) => new UiConfigLoader().LoadAllConfigs(configuration, services));
         return builder;

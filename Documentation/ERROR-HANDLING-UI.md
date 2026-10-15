@@ -67,7 +67,7 @@ This used to be a folder of this package's own, named after a timestamp and a fr
 shared no key with the run that produced it, so the evidence existed and nothing could find it.
 
 Writing it is not the step's job. The engine tells whoever is watching a run that a step failed or ran
-out of time, and this package registers one such observer — `.LoadUIConfig()` does it, so a timeline that
+out of time, and this package registers one such observer — `.LoadUiConfig()` does it, so a timeline that
 configures the browser has the evidence too. The observer records the widgets, and says in the run log
 where they went or why it could not.
 

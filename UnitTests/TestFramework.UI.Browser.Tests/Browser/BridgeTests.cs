@@ -37,7 +37,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
             // A hand-built store would be a declaration nothing reads: the run is what answers now.
             IConfiguration configuration = Configured(("Site:shop-bridged:BaseUrl", fixture.AppUrl));
             registrations.AddSingleton(configuration);
-            registrations.LoadWebSiteConfigs(configuration);
+            registrations.AddWeb(configuration);
         });
 
         Timeline timeline = Timeline.Create()
@@ -62,7 +62,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
         {
             IConfiguration configuration = Configured(("Api:shop-api:BaseUrl", fixture.BaseUrl));
             registrations.AddSingleton(configuration);
-            registrations.LoadWebConfigs(configuration);
+            registrations.AddWeb(configuration);
         });
 
         WebAppIdentifier app = new WebAppIdentifier("shop-bridged").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, "shop-api"));
@@ -88,7 +88,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
         {
             IConfiguration configuration = Configured(("Api:shop-api:BaseUrl", fixture.BaseUrl));
             registrations.AddSingleton(configuration);
-            registrations.LoadWebConfigs(configuration);
+            registrations.AddWeb(configuration);
         });
 
         WebAppIdentifier app = new WebAppIdentifier("shop-bridged").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, "shop-api"));

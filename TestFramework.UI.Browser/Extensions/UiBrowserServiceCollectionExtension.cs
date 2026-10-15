@@ -86,7 +86,7 @@ public static class UiBrowserServiceCollectionExtension
     /// <returns>The service collection, for chaining.</returns>
     /// <exception cref="UiConfigurationException">
     /// Applications have already been registered on this collection - by an earlier call, or by
-    /// <c>LoadUIConfig()</c> reading the <c>Ui</c> configuration section.
+    /// <c>LoadUiConfig()</c> reading the <c>Ui</c> configuration section.
     /// </exception>
     public static IServiceCollection AddUiBrowser(this IServiceCollection services, Action<UiBrowserApplications> declare)
     {
@@ -107,7 +107,7 @@ public static class UiBrowserServiceCollectionExtension
     /// <remarks>
     /// The one place either happens, so the configuration road and the in-code road cannot register
     /// different sets. Internal because the store is: a caller reaches this through the overload above or
-    /// through <c>LoadUIConfig()</c>.
+    /// through <c>LoadUiConfig()</c>.
     /// </remarks>
     /// <param name="services">The service collection.</param>
     /// <param name="applications">The declared applications.</param>

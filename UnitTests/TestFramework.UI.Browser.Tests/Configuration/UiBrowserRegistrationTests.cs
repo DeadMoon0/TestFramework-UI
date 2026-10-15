@@ -46,7 +46,7 @@ public class UiBrowserRegistrationTests
     [Fact]
     public void TheConfigurationRoadRegistersTheSameThings()
     {
-        // .LoadUIConfig() reaches the same one place, so the two roads cannot register different sets.
+        // .LoadUiConfig() reaches the same one place, so the two roads cannot register different sets.
         ServiceCollection services = new ServiceCollection();
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(
@@ -76,7 +76,7 @@ public class UiBrowserRegistrationTests
             () => services.AddUiBrowser(apps => apps.Add("other", new WebAppConfig { Browser = "chromium", BaseUrl = "http://two/" })));
 
         Assert.Contains("already registered", failure.Message, StringComparison.Ordinal);
-        Assert.Contains("LoadUIConfig", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("LoadUiConfig", failure.Message, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -32,7 +32,7 @@ Three goals rank above everything else:
   surfaces, so nothing here under-cuts its budget to be heard. The own-deadline pattern this document
   used to prescribe is gone, and `UiEventDeadline` with it.
 - Turning this package on is one call. `AddUiBrowser(...)` registers the applications and everything
-  that drives them together, `.LoadUIConfig()` reaches the same place, and the store behind them is
+  that drives them together, `.LoadUiConfig()` reaches the same place, and the store behind them is
   internal so half of it cannot be registered alone.
 
 ## 3. Context
