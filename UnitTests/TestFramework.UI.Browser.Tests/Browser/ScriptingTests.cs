@@ -23,7 +23,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
         // The honest use of the hatch: putting the application into a state before the test starts -
         // here a pre-filled cart, fed from a timeline variable and visible to the page after a reload.
         Timeline timeline = Timeline.Create()
-            .SetVariable("seededCart", Var.Const("""[{"product":"Rope","quantity":2,"price":9}]"""))
+            .SetVariable("seededCart", """[{"product":"Rope","quantity":2,"price":9}]""")
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/products")
                 .Execute(Js.Inline("args => localStorage.setItem('sample-app.cart', args.cart)")
