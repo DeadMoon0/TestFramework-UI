@@ -29,7 +29,7 @@ public class EvidenceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/products")
                 .Screenshot("the-catalogue"))
-                .Name("browse")
+                .Label("browse")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -50,7 +50,7 @@ public class EvidenceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/products")
                 .Click("Anvil"))
-                .Name("quiet")
+                .Label("quiet")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -69,7 +69,7 @@ public class EvidenceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop-watched")
                 .Navigate("/products")
                 .Click("Anvil"))
-                .Name("watched")
+                .Label("watched")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

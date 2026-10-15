@@ -170,7 +170,7 @@ public class BridgeResolutionTests(ITestOutputHelper output)
         services.LoadWebSiteConfigs(configuration);
 
         Timeline timeline = Timeline.Create()
-            .Trigger(new ResolvesAppStep(app)).Name("resolves")
+            .Trigger(new ResolvesAppStep(app)).Label("resolves")
             .Build();
 
         return await timeline.SetupRun(services.BuildServiceProvider(), output.WriteLine).RunAsync();

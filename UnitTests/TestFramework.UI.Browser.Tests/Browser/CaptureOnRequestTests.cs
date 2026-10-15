@@ -68,7 +68,7 @@ public class CaptureOnRequestTests(SampleAppFixture fixture, ITestOutputHelper o
     private async Task<TimelineRun> RunAsync(bool holdForInspection)
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(new AsksForALookStep("shop", holdForInspection)).Name("look")
+            .Trigger(new AsksForALookStep("shop", holdForInspection)).Label("look")
             .Build();
 
         return await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

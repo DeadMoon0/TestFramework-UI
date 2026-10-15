@@ -8,9 +8,9 @@ private static readonly Timeline _timeline = Timeline.Create()
         .Navigate("/products")
         .Click("Anvil")
         .Click("Add to cart"))
-        .Name("add-to-cart")
+        .Label("add-to-cart")
     .WaitForEvent(BrowserExt.Events.TextAppears("shop", "1 item in cart"))
-        .WithTimeOut(TimeSpan.FromSeconds(15))
+        .WithTimeout(TimeSpan.FromSeconds(15))
     .Build();
 ```
 

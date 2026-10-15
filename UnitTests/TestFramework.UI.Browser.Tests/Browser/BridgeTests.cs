@@ -44,7 +44,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop-bridged")
                 .Navigate("/products")
                 .Expect("Anvil"))
-                .Name("browse")
+                .Label("browse")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(services, output.WriteLine).RunAsync();
@@ -71,7 +71,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session(app)
                 .Navigate("/app/products")
                 .Expect("Anvil"))
-                .Name("browse")
+                .Label("browse")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(services, output.WriteLine).RunAsync();
@@ -95,13 +95,13 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
 
         Timeline timeline = Timeline.Create()
             // The back door: what the API says the orders are.
-            .Trigger(WebExt.Api.Http("shop-api").Get("api/orders").Call()).Name("api-orders")
+            .Trigger(WebExt.Api.Http("shop-api").Get("api/orders").Call()).Label("api-orders")
 
             // The front door: what a person sees of the same orders.
             .Trigger(BrowserExt.Session(app)
                 .Navigate("/app/orders")
                 .Expect("Anvil"))
-                .Name("browser-orders")
+                .Label("browser-orders")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(services, output.WriteLine).RunAsync();

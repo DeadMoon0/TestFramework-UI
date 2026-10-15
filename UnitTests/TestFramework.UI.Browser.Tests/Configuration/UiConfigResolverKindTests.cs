@@ -121,7 +121,7 @@ public class UiConfigResolverKindTests(ITestOutputHelper output)
         services.AddSingleton<IResourceNodeSource>(new UiApplications([new(identifier.Identifier, entry)]));
 
         Timeline timeline = Timeline.Create()
-            .Trigger(new ResolvesAppStep(identifier)).Name("resolves")
+            .Trigger(new ResolvesAppStep(identifier)).Label("resolves")
             .Build();
 
         ITimelineRunBuilder builder = timeline

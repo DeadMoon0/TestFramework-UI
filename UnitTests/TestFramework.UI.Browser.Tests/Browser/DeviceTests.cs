@@ -29,7 +29,7 @@ public class DeviceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Navigate("/responsive")
             .Expect("Catalogue")
             .Read(Value.Count(Target.Button("Menu")), "menus"))
-            .Name("look")
+            .Label("look")
         .Build();
 
     [BrowserFact]
@@ -60,7 +60,7 @@ public class DeviceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Click("Menu")
                 .Expect("Menu open")
                 .Click(Target.Link("Tools")))
-                .Name("via-menu")
+                .Label("via-menu")
             .Build();
 
         TimelineRun phoneRun = await phone.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -71,7 +71,7 @@ public class DeviceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/responsive")
                 .Click(Target.Link("Tools")))
-                .Name("directly")
+                .Label("directly")
             .Build();
 
         TimelineRun desktopRun = await desktop.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -82,7 +82,7 @@ public class DeviceTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AnUnknownDeviceNamesTheOnesThatExist()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/responsive")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/responsive")).Label("open")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(device: "Atari 2600"), output.WriteLine).RunAsync();

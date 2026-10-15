@@ -25,10 +25,10 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AWaitStandsBetweenStepsAndTheTimelineReadsThatWay()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/delayed")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/delayed")).Label("open")
             .WaitForEvent(BrowserExt.Events.ElementVisible("shop", Target.Button("Export all")))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("actions-ready")
-            .Trigger(BrowserExt.Session("shop").Click("Export all").Expect("Export started")).Name("export")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("actions-ready")
+            .Trigger(BrowserExt.Session("shop").Click("Export all").Expect("Export started")).Label("export")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -51,9 +51,9 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task ADisappearanceIsWaitedForNotAssumed()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/delayed").Expect("Loading orders...")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/delayed").Expect("Loading orders...")).Label("open")
             .WaitForEvent(BrowserExt.Events.ElementHidden("shop", Target.TestId("banner")))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("banner-gone")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("banner-gone")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -71,9 +71,9 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
         // The wait asserts a state, not a transition - so it must not fail when the thing disappeared
         // faster than the first poll, or never existed at all.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/products").Expect("Anvil")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/products").Expect("Anvil")).Label("open")
             .WaitForEvent(BrowserExt.Events.ElementHidden("shop", Target.Text("No Such Banner")))
-                .WithTimeOut(TimeSpan.FromSeconds(5)).Name("nothing-there")
+                .WithTimeout(TimeSpan.FromSeconds(5)).Label("nothing-there")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -89,10 +89,10 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/checkout")
                 .Fill("Email", "showroom@example.test")
                 .Check("Accept terms")
-                .Click("Place order")).Name("submit")
+                .Click("Place order")).Label("submit")
             .WaitForEvent(BrowserExt.Events.UrlMatches("shop", @"confirmation\?total=\d+").AsRegex())
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("landed")
-            .Trigger(BrowserExt.Session("shop").Expect("Thank you")).Name("confirmed")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("landed")
+            .Trigger(BrowserExt.Session("shop").Expect("Thank you")).Label("confirmed")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -106,12 +106,12 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
     {
         // The orders arrive over HTTP after the page renders, so the first polls genuinely see less.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Label("open")
             .WaitForEvent(BrowserExt.Events.ScriptIsTrue(
                     "shop",
                     Js.Inline("() => document.querySelectorAll('app-order-row').length >= 2").Named("orders arrived"),
                     pollDelay: TimeSpan.FromMilliseconds(100)))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("data-loaded")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("data-loaded")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -126,11 +126,11 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AScriptWaitRefusesAQuestionWithoutABooleanAnswer()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Label("open")
             .WaitForEvent(BrowserExt.Events.ScriptIsTrue(
                     "shop",
                     Js.Inline("() => document.querySelectorAll('app-order-row').length").Named("counts instead of asking")))
-                .WithTimeOut(TimeSpan.FromSeconds(5)).Name("mistyped")
+                .WithTimeout(TimeSpan.FromSeconds(5)).Label("mistyped")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -146,9 +146,9 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AWaitThatTimesOutSaysWhatItWatchedAndWhereThePageWas()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/products").Expect("Anvil")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/products").Expect("Anvil")).Label("open")
             .WaitForEvent(BrowserExt.Events.TextAppears("shop", "This Never Appears"))
-                .WithTimeOut(TimeSpan.FromSeconds(3)).Name("hopeless")
+                .WithTimeout(TimeSpan.FromSeconds(3)).Label("hopeless")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -172,25 +172,25 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
         // every 400 ms, and a data-state that flips to 'ready' at 900 ms. Three waits, none of which a
         // text wait could express - and the banner's disappearance in the words a person would use.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/delayed")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/delayed")).Label("open")
             .WaitForEvent(BrowserExt.Events.AttributeChanged(
                     "shop",
                     Target.TestId("sync-state"),
                     "data-heartbeat",
                     pollDelay: TimeSpan.FromMilliseconds(100)))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("alive")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("alive")
             .WaitForEvent(BrowserExt.Events.AttributeEquals(
                     "shop",
                     Target.TestId("sync-state"),
                     "data-state",
                     "ready",
                     pollDelay: TimeSpan.FromMilliseconds(100)))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("synced")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("synced")
             .WaitForEvent(BrowserExt.Events.TextDisappears(
                     "shop",
                     "Syncing with the warehouse",
                     pollDelay: TimeSpan.FromMilliseconds(100)))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("banner-gone")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("banner-gone")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -211,14 +211,14 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
         // data-state settles on 'ready'; a wait for 'done' must end by naming what the attribute
         // actually read, because that IS the diagnosis.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/delayed").Expect("3 orders loaded")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/delayed").Expect("3 orders loaded")).Label("open")
             .WaitForEvent(BrowserExt.Events.AttributeEquals(
                     "shop",
                     Target.TestId("sync-state"),
                     "data-state",
                     "done",
                     pollDelay: TimeSpan.FromMilliseconds(100)))
-                .WithTimeOut(TimeSpan.FromSeconds(3)).Name("never")
+                .WithTimeout(TimeSpan.FromSeconds(3)).Label("never")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -237,20 +237,20 @@ public class EventTests(SampleAppFixture fixture, ITestOutputHelper output)
         // The orders arrive over HTTP, the third only after "Load more" - so the first count is reached
         // by loading and the second by acting, and neither wait names an element, only how many.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Label("open")
             .WaitForEvent(BrowserExt.Events.CountAtLeast(
                     "shop",
                     Target.Css("app-order-row"),
                     2,
                     pollDelay: TimeSpan.FromMilliseconds(100)))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("loaded")
-            .Trigger(BrowserExt.Session("shop").Click("Load more")).Name("more")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("loaded")
+            .Trigger(BrowserExt.Session("shop").Click("Load more")).Label("more")
             .WaitForEvent(BrowserExt.Events.CountIs(
                     "shop",
                     Target.Css("app-order-row"),
                     3,
                     pollDelay: TimeSpan.FromMilliseconds(100)))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("all-three")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("all-three")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

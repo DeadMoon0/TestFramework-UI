@@ -32,8 +32,8 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task ALayoutIsCheckedAsRelationsNotCoordinates()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/checkout").Expect(Target.Role("heading", "Checkout"))).Name("open")
-            .Trigger(BrowserExt.Page("shop").CheckLayout(CheckoutLayout)).Name("layout")
+            .Trigger(BrowserExt.Session("shop").Navigate("/checkout").Expect(Target.Role("heading", "Checkout"))).Label("open")
+            .Trigger(BrowserExt.Page("shop").CheckLayout(CheckoutLayout)).Label("layout")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -48,10 +48,10 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
         // The point of relations: the phone renders everything narrower and taller, and not one line of
         // the expectation changes.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop-mobile").Navigate("/checkout").Expect(Target.Role("heading", "Checkout"))).Name("open")
+            .Trigger(BrowserExt.Session("shop-mobile").Navigate("/checkout").Expect(Target.Role("heading", "Checkout"))).Label("open")
             .Trigger(BrowserExt.Page("shop-mobile").CheckLayout(ExpectedLayout
                 .Above(Target.Field("Email"), Target.Button("Place order"))
-                .AndNoHorizontalScroll())).Name("layout")
+                .AndNoHorizontalScroll())).Label("layout")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -65,9 +65,9 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
         // The reversed claim: the button above the field it follows. The failure must hand the reader the
         // page's answer - both rectangles - rather than sending them to the browser to look.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/checkout").Expect(Target.Role("heading", "Checkout"))).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/checkout").Expect(Target.Role("heading", "Checkout"))).Label("open")
             .Trigger(BrowserExt.Page("shop").CheckLayout(ExpectedLayout
-                .Above(Target.Button("Place order"), Target.Field("Email")))).Name("upside-down")
+                .Above(Target.Button("Place order"), Target.Field("Email")))).Label("upside-down")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -87,10 +87,10 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AMissingElementReadsAsAFactNotACrash()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/checkout").Expect(Target.Role("heading", "Checkout"))).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/checkout").Expect(Target.Role("heading", "Checkout"))).Label("open")
             .Trigger(BrowserExt.Page("shop").CheckLayout(ExpectedLayout
                 .InViewport(Target.Button("No Such Button"))))
-                .WithTimeOut(TimeSpan.FromSeconds(8)).Name("nobody-home")
+                .WithTimeout(TimeSpan.FromSeconds(8)).Label("nobody-home")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -105,8 +105,8 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task TheGeometryOfAScopeCanBeCapturedForDriftDetection()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
-            .Trigger(BrowserExt.Page("shop").CaptureLayout(Target.Section("Orders All"), "orderGeometry")).Name("capture")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
+            .Trigger(BrowserExt.Page("shop").CaptureLayout(Target.Section("Orders All"), "orderGeometry")).Label("capture")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -131,7 +131,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/checkout")
                 .Expect(Target.Role("heading", "Checkout"))
                 .Read(Value.Style(Target.Button("Place order"), "text-transform"), "transform"))
-                .Name("read")
+                .Label("read")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -152,7 +152,7 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/checkout")
                 .Expect(Target.Role("heading", "Checkout"))
                 .Read(Value.Style(Target.Button("Place order"), "background-colr"), "x"))
-                .Name("typo")
+                .Label("typo")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -173,20 +173,20 @@ public class LayoutTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/scrolling")
                 .Expect("The newest entry is at the top.")
                 .ScrollToBottom())
-                .Name("down")
+                .Label("down")
             .Trigger(BrowserExt.Page("shop").CheckLayout(ExpectedLayout
                 .InViewport(Target.TestId("end-note"))))
-                .Name("end-visible")
-            .Trigger(BrowserExt.Session("shop").ScrollToTop()).Name("up")
+                .Label("end-visible")
+            .Trigger(BrowserExt.Session("shop").ScrollToTop()).Label("up")
             .Trigger(BrowserExt.Page("shop").CheckLayout(ExpectedLayout
                 .InViewport(Target.TestId("top-note"))))
-                .Name("top-visible")
+                .Label("top-visible")
             .Trigger(BrowserExt.Session("shop")
                 .ScrollTo(Target.Text("Entry 42: routine maintenance and small fixes.")))
-                .Name("to-entry")
+                .Label("to-entry")
             .Trigger(BrowserExt.Page("shop").CheckLayout(ExpectedLayout
                 .InViewport(Target.Text("Entry 42: routine maintenance and small fixes."))))
-                .Name("entry-visible")
+                .Label("entry-visible")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

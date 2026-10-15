@@ -34,7 +34,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Read(Value.SelectedOption(Target.Field("Shipping")), "shipping")
                 .Read(Value.SelectedOption(Target.Field("Country")), "country")
                 .Read(Value.Url(), "where"))
-                .Name("form")
+                .Label("form")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -64,7 +64,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Read(Value.Count(Target.Css("app-order-row")), "rows")
                 .Read(Value.Count(Target.Css("app-invoice-row")), "invoices")   // zero is an answer
                 .Read(Value.Attribute(Target.Section("Orders All"), "data-count"), "declared"))
-                .Name("orders")
+                .Label("orders")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -86,7 +86,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Click("Add Anvil to cart")
                 .Expect("1 item in cart")
                 .Read(Value.LocalStorage("sample-app.cart"), "storedCart"))
-                .Name("cart")
+                .Label("cart")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -106,7 +106,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/confirmation?total=138&shipping=express")
                 .Expect("Thank you")
                 .Read(Value.QueryParam("shipping"), "shipping"))
-                .Name("landed")
+                .Label("landed")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -124,7 +124,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/orders")
                 .Expect("Anvil")
                 .Read(Value.Attribute(Target.Section("Orders All"), "data-nope"), "x"))
-                .Name("read")
+                .Label("read")
             .Build();
 
         TimelineRun run = await attributes.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -139,7 +139,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/confirmation?total=138")
                 .Expect("Thank you")
                 .Read(Value.QueryParam("nope"), "x"))
-                .Name("read")
+                .Label("read")
             .Build();
 
         run = await parameters.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -159,7 +159,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/checkout")
                 .Fill("Emial", "typo@example.test"))
-                .Name("typo")
+                .Label("typo")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -185,7 +185,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/checkout")
                 .Select("Country", "Austria"))
-                .Name("wrong-verb")
+                .Label("wrong-verb")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -205,7 +205,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/checkout")
                 .Choose("Country", "France"))
-                .Name("choose")
+                .Label("choose")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -229,7 +229,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/scrolling")
                 .Expect("The newest entry is at the top.")
                 .Read(Value.Cookie("changelog-visited"), "visited"))
-                .Name("read")
+                .Label("read")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -249,7 +249,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/scrolling")
                 .Expect("The newest entry is at the top.")
                 .Read(Value.Cookie("changelog-visited"), "visited"))
-                .Name("read")
+                .Label("read")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -271,7 +271,7 @@ public class ReadingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/scrolling")
                 .Expect("The newest entry is at the top.")
                 .Read(Value.Cookie("session-token"), "x"))
-                .Name("read")
+                .Label("read")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

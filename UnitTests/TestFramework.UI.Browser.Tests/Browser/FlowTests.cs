@@ -24,7 +24,7 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/products")
                 .Click("Add Anvil to cart")
                 .Expect("1 item in cart"))
-                .Name("add-to-cart")
+                .Label("add-to-cart")
             .Trigger(BrowserExt.Session("shop")
                 // The page offers two ways to Checkout - the navigation and a call to action - so the
                 // test says which one a person would use, rather than letting the run pick.
@@ -38,7 +38,7 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Expect("Thank you")
                 .Read(Target.TestId("order-number"), "orderNo")
                 .Screenshot("confirmation"))
-                .Name("checkout")
+                .Label("checkout")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -70,7 +70,7 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Expect("3 orders loaded")
                 .Click("Export all")
                 .Expect("Export started"))
-                .Name("export")
+                .Label("export")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -89,7 +89,7 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/delayed")
                 .Expect(Target.TestId("banner"))
                 .ExpectNot(Target.TestId("banner")))
-                .Name("banner")
+                .Label("banner")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -101,8 +101,8 @@ public class FlowTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task TheSessionCarriesTheWholeStoryToTheAssertions()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/products").Click("Add Anvil to cart")).Name("first")
-            .Trigger(BrowserExt.Session("shop").Click("Add Rope to cart").Expect("2 items in cart")).Name("second")
+            .Trigger(BrowserExt.Session("shop").Navigate("/products").Click("Add Anvil to cart")).Label("first")
+            .Trigger(BrowserExt.Session("shop").Click("Add Rope to cart").Expect("2 items in cart")).Label("second")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

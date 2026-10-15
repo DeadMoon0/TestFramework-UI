@@ -35,7 +35,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/renamed")
                 .Click("Save")
                 .Expect("Settings saved"))
-                .Name("save")
+                .Label("save")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -58,7 +58,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/moved")
                 .Click("Save changes")
                 .Expect("Settings saved"))
-                .Name("save")
+                .Label("save")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -71,7 +71,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task ANameThatMeansThreeThingsFailsWithTheWayOut()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/ambiguous").Click("Delete")).Name("delete")
+            .Trigger(BrowserExt.Session("shop").Navigate("/ambiguous").Click("Delete")).Label("delete")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -100,7 +100,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/ambiguous")
                 .Click(Target.Button("Delete").InSection("Saved cards"))
                 .Expect("Deleted: card"))
-                .Name("delete")
+                .Label("delete")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -117,7 +117,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop-lenient")
                 .Navigate("/ambiguous")
                 .Click("Delete"))
-                .Name("delete")
+                .Label("delete")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -143,7 +143,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/broken")
                 .Click("Generate report")
                 .Expect("Report ready"))
-                .Name("report")
+                .Label("report")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -167,7 +167,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/renamed")
                 .Click("Delete everything"))
-                .Name("nonsense")
+                .Label("nonsense")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -208,7 +208,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/products")
                 .Click("Add Anvil to cart")
                 .Expect("1 item in cart"))
-                .Name("add")
+                .Label("add")
             .Build();
 
         TimelineRun first = await addToCart.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -220,7 +220,7 @@ public class ResilienceTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/products")
                 .Expect("0 items in cart"))
-                .Name("visit")
+                .Label("visit")
             .Build();
 
         TimelineRun second = await freshVisit.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

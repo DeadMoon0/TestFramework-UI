@@ -43,7 +43,7 @@ Timeline timeline = Timeline.Create()
         .Navigate("/products")
         .Click("Add Anvil to cart")
         .Expect("1 item in cart"))
-        .Name("cart")
+        .Label("cart")
     .Build();
 
 TimelineRun run = await timeline.SetupRun(config).RunAsync();

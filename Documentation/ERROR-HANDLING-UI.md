@@ -90,7 +90,7 @@ The page offers fields named: 'Email', 'Street', 'City'.
 ```
 
 Recovery: it is almost always a typo or an outdated wording — take the name from the offered list.
-If the element genuinely appears later than the step timeout allows, raise `.WithTimeOut(...)` on
+If the element genuinely appears later than the step timeout allows, raise `.WithTimeout(...)` on
 the step, or put a wait event in front where another actor produces it.
 
 ## UiAmbiguousTargetException

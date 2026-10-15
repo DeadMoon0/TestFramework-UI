@@ -32,7 +32,7 @@ public class InteractionTests(SampleAppFixture fixture, ITestOutputHelper output
                 .Expect("Delivered from the Bergen warehouse in 2 to 4 days.")
                 .MouseAway()
                 .ExpectNot(Target.TestId("hover-card")))
-                .Name("hover-cycle")
+                .Label("hover-cycle")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -54,7 +54,7 @@ public class InteractionTests(SampleAppFixture fixture, ITestOutputHelper output
                 .Expect("Rename started")
                 .RightClick(Target.Text("Archive entry"))
                 .Expect("Archive options open"))
-                .Name("mouse-buttons")
+                .Label("mouse-buttons")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -79,7 +79,7 @@ public class InteractionTests(SampleAppFixture fixture, ITestOutputHelper output
                 .Navigate("/interactions")
                 .DragTo(Target.Text("Drag the anvil"), Target.TestId("drop-zone"))
                 .Expect("The anvil landed"))
-                .Name("drag")
+                .Label("drag")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -107,7 +107,7 @@ public class InteractionTests(SampleAppFixture fixture, ITestOutputHelper output
                 .Expect("5 keys pressed")
                 .Press(Target.Field("Search"), "Control+Enter")
                 .Expect("Search-everywhere opened"))
-                .Name("keyboard")
+                .Label("keyboard")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

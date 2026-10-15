@@ -39,13 +39,13 @@ public class ShapeEventTests(SampleAppFixture fixture, ITestOutputHelper output)
         // No Expect anywhere: the wait itself carries the run from "navigated" to "the list is built",
         // while the section does not even exist on the first polls.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders")).Label("open")
             .WaitForEvent(BrowserExt.Events.StructureMatches(
                     "shop",
                     Target.Section("Orders All"),
                     LoadedOrderList,
                     pollDelay: TimeSpan.FromMilliseconds(100)))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("list-built")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("list-built")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -67,7 +67,7 @@ public class ShapeEventTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/orders")
                 .Expect("Anvil")
-                .Click("Load more")).Name("more")
+                .Click("Load more")).Label("more")
             .WaitForEvent(BrowserExt.Events.TableMatches(
                     "shop",
                     Target.Section("Orders All"),
@@ -75,7 +75,7 @@ public class ShapeEventTests(SampleAppFixture fixture, ITestOutputHelper output)
                         .Row("A-1001", "Anvil")
                         .Row("A-1002", "Rope")
                         .Row("A-1003", "Crate")))
-                .WithTimeOut(TimeSpan.FromSeconds(10)).Name("all-rows")
+                .WithTimeout(TimeSpan.FromSeconds(10)).Label("all-rows")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -90,14 +90,14 @@ public class ShapeEventTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AShapeWaitThatTimesOutReportsItsLastLookDifferenceByDifference()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
             .WaitForEvent(BrowserExt.Events.TableMatches(
                     "shop",
                     Target.Section("Orders All"),
                     ExpectedTable.WithHeader("Order", "Qty")
                         .Row("A-1001", "7")
                         .AllowExtraRows()))
-                .WithTimeOut(TimeSpan.FromSeconds(3)).Name("hopeless")
+                .WithTimeout(TimeSpan.FromSeconds(3)).Label("hopeless")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

@@ -42,8 +42,8 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AStructureBuiltFromComponentsIsCheckedByItsOwnElementNames()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
-            .Trigger(BrowserExt.Page("shop").CompareStructure(Target.Section("Orders All"), OrderList)).Name("shape")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
+            .Trigger(BrowserExt.Page("shop").CompareStructure(Target.Section("Orders All"), OrderList)).Label("shape")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -63,11 +63,11 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
         // The list also contains a header row and a total the expectation above never mentioned. Subset
         // matching is what makes a structure test survive somebody adding to the page.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
             .Trigger(BrowserExt.Page("shop").CompareStructure(
                 Target.Section("Orders All"),
                 WebElementStructure.OneElement("app-order-list")
-                    .Containing(x => x.AtLeast(2, "app-order-row")))).Name("rows")
+                    .Containing(x => x.AtLeast(2, "app-order-row")))).Label("rows")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -81,12 +81,12 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
         // The page builds its "table" out of components and ARIA roles, not out of a <table>. A test about
         // the data should not have to know that, and this one does not.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
             .Trigger(BrowserExt.Page("shop").CompareTable(
                 Target.Section("Orders All"),
                 ExpectedTable.WithHeader("Order", "Product", "Qty", "Price")
                     .Row("A-1001", "Anvil", "1", Cell.Contains("129"))
-                    .Row("A-1002", "Rope", "3", Cell.Contains("9")))).Name("orders")
+                    .Row("A-1002", "Rope", "3", Cell.Contains("9")))).Label("orders")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -99,8 +99,8 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task ATableCanBeReadAsDataAndAssertedOnInTheTestsOwnTerms()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
-            .Trigger(BrowserExt.Page("shop").ReadTable(Target.Section("Orders All"), "orderRows")).Name("read")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
+            .Trigger(BrowserExt.Page("shop").ReadTable(Target.Section("Orders All"), "orderRows")).Label("read")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -123,7 +123,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AStructureMismatchHandsBackTheExpectationThatWouldPass()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
             .Trigger(BrowserExt.Page("shop").CompareStructure(
                 Target.Section("Orders All"),
                 WebElementStructure.OneElement("app-order-list")
@@ -131,7 +131,7 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
                     {
                         x.Exactly(9, "app-order-row");
                         x.OneElement("app-pagination");
-                    }))).Name("wrong")
+                    }))).Label("wrong")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -157,12 +157,12 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task ATableMismatchPointsAtTheCellRatherThanTheRow()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
             .Trigger(BrowserExt.Page("shop").CompareTable(
                 Target.Section("Orders All"),
                 ExpectedTable.WithHeader("Order", "Qty")
                     .Row("A-1001", "7")
-                    .AllowExtraRows())).Name("wrong")
+                    .AllowExtraRows())).Label("wrong")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -206,8 +206,8 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
         // has to describe the page it came from. If the renderer ever drifts from the builder - a wrong
         // count, a shadowed lambda name, an attribute rendered the wrong way round - this goes red.
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
-            .Trigger(BrowserExt.Page("shop").CompareStructure(Target.Section("Orders All"), AsSuggested)).Name("pasted")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
+            .Trigger(BrowserExt.Page("shop").CompareStructure(Target.Section("Orders All"), AsSuggested)).Label("pasted")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -220,8 +220,8 @@ public class StructureTests(SampleAppFixture fixture, ITestOutputHelper output)
     public async Task AStructureCanBeCapturedForLaterRunsToBeComparedAgainst()
     {
         Timeline timeline = Timeline.Create()
-            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Name("open")
-            .Trigger(BrowserExt.Page("shop").CaptureStructure(Target.Section("Orders All"), "orderListShape")).Name("capture")
+            .Trigger(BrowserExt.Session("shop").Navigate("/orders").Expect("Anvil")).Label("open")
+            .Trigger(BrowserExt.Page("shop").CaptureStructure(Target.Section("Orders All"), "orderListShape")).Label("capture")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

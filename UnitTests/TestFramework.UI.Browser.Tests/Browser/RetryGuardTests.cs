@@ -23,7 +23,7 @@ public class RetryGuardTests(SampleAppFixture fixture, ITestOutputHelper output)
         // session, no browser - which is why this test needs no [BrowserFact] gate at all.
         Timeline timeline = Timeline.Create()
             .Trigger(BrowserExt.Session("shop").Click("Place order"))
-                .WithRetry(2, CalcDelays.None).Name("dangerous")
+                .WithRetry(2, CalcDelays.None).Label("dangerous")
             .Build();
 
         FrameworkConfigurationException failure = await Assert.ThrowsAsync<FrameworkConfigurationException>(
@@ -44,7 +44,7 @@ public class RetryGuardTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/products")
                 .Expect("Anvil"))
-                .WithRetry(2, CalcDelays.None).Name("safe")
+                .WithRetry(2, CalcDelays.None).Label("safe")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

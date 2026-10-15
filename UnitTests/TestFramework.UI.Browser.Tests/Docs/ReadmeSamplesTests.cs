@@ -20,7 +20,7 @@ public class ReadmeSamplesTests(SampleAppFixture fixture, ITestOutputHelper outp
                 .Navigate("/products")
                 .Click("Add Anvil to cart")
                 .Expect("1 item in cart"))
-                .Name("cart")
+                .Label("cart")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();

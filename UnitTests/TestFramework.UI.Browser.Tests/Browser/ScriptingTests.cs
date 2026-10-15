@@ -31,7 +31,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                     .WithArgument("cart", Var.Ref<string>("seededCart")))
                 .Navigate("/products")
                 .Expect("2 items in cart"))
-                .Name("seeded")
+                .Label("seeded")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -56,7 +56,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                     Target.Section("Orders All"),
                     Js.Inline("el => el.querySelectorAll('[role=row]').length").Named("count the rows"),
                     "rows"))
-                .Name("measured")
+                .Label("measured")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -76,7 +76,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/products")
                 .Execute(Js.Inline("() => { throw new Error('boom from the page') }").Named("the exploder")))
-                .Name("explodes")
+                .Label("explodes")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -98,7 +98,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/products")
                 .Evaluate<int>(Js.Inline("() => { const x = 1; }").Named("forgets to return"), "x"))
-                .Name("empty-handed")
+                .Label("empty-handed")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -116,7 +116,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
             .Trigger(BrowserExt.Session("shop")
                 .Navigate("/products")
                 .Evaluate<int>(Js.Inline("() => 'not a number'").Named("mistyped"), "x"))
-                .Name("mistyped")
+                .Label("mistyped")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
@@ -136,7 +136,7 @@ public class ScriptingTests(SampleAppFixture fixture, ITestOutputHelper output)
                 .Navigate("/products")
                 .Click("Add Anvil to cart")
                 .Expect("1 item in cart"))
-                .Name("plain")
+                .Label("plain")
             .Build();
 
         TimelineRun run = await timeline.SetupRun(fixture.Services(), output.WriteLine).RunAsync();
