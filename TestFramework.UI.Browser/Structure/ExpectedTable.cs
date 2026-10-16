@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Linq;
 using TestFramework.Core.Exceptions;
 
-namespace TestFramework.UI.Structure;
+namespace TestFramework.UI.Browser.Structure;
 
 /// <summary>
 /// The table a test expects to find, written as the table itself.

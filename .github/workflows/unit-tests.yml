@@ -1,7 +1,7 @@
 ﻿name: Unit Tests
 
-# The browser tests gate themselves: without TESTFRAMEWORK_UI_BROWSER they skip with a visible
-# reason, so a bare runner is green on the browser-free suite - which is the fresh-clone promise.
+# The browser tests find a browser for themselves (UiTestEnvironmentGate) and skip with a visible reason
+# only where there is none, so a bare runner is green - which is the fresh-clone promise.
 
 on:
   pull_request:

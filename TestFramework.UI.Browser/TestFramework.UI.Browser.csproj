@@ -16,7 +16,7 @@
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>BREAKING - needs TestFramework.Core 0.7.0 and TestFramework.Config 0.4.0. Rename LoadUIConfig to LoadUiConfig, and BaseUrlFromSite and BaseUrlFromApi to BaseUrlFrom; a key in a Ui entry that is not a setting is now refused, as are a missing or branded browser while the run is planned. Optional parameters became overloads, UiSessionEntry and UiExpectedNode take init properties, and every UI exception is a TimelineFrameworkException. A cookie or local-storage value read into a variable is now a secret variable. A page that is not what a step needs, a changed expectation, or a run asked for the wrong kind of result now fails with FrameworkStateException or FrameworkConfigurationException instead of InvalidOperationException. WebAppIdentifier.ExternalRequirement is now Bridge, UiActionKind is internal, and FindAvailableBrowser reports firefox or webkit only when Playwright has installed it.</PackageReleaseNotes>
+		<PackageReleaseNotes>BREAKING - needs TestFramework.Core 0.7.0 and TestFramework.Config 0.4.0. Rename LoadUIConfig to LoadUiConfig, and BaseUrlFromSite and BaseUrlFromApi to BaseUrlFrom; a key in a Ui entry that is not a setting is now refused, as are a missing or branded browser while the run is planned. Optional parameters became overloads, UiSessionEntry and UiExpectedNode take init properties, and every UI exception is a TimelineFrameworkException. A cookie or local-storage value read into a variable is now a secret variable. A page that is not what a step needs, a changed expectation, or a run asked for the wrong kind of result now fails with FrameworkStateException or FrameworkConfigurationException instead of InvalidOperationException. WebAppIdentifier.ExternalRequirement is now Bridge, UiActionKind is internal, and FindAvailableBrowser reports firefox or webkit only when Playwright has installed it. TestFramework.UI.Session and TestFramework.UI.Structure are now TestFramework.UI.Browser.Session and .Structure.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -43,7 +43,7 @@
 
 
 	<ItemGroup>
-		<None Include="..\Modules\TestFramework-Common\Assets\Icon.png" Condition="Exists('..\Modules\TestFramework-Common\Assets\Icon.png')">
+		<None Include="$(PackageIconSourcePath)" Condition="Exists('..\Modules\TestFramework-Common\Assets\Icon.png')">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>

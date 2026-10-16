@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
-namespace TestFramework.UI.Structure;
+namespace TestFramework.UI.Browser.Structure;
 
 /// <summary>
 /// Compares what a test expected of a page's structure against what the page actually was.

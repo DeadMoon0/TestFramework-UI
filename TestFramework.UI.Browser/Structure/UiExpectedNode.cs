@@ -4,7 +4,7 @@ using System.Globalization;
 
 using TestFramework.Core.Conventions;
 
-namespace TestFramework.UI.Structure;
+namespace TestFramework.UI.Browser.Structure;
 
 /// <summary>
 /// How many of something a structure expects.

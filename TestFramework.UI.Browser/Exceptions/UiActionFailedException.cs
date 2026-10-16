@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 
 using TestFramework.Core.Exceptions;
 namespace TestFramework.UI.Browser.Exceptions;

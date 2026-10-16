@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using TestFramework.Core.Conventions;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 using Xunit;
 using Xunit.Abstractions;
 

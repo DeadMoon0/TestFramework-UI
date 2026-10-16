@@ -5,7 +5,7 @@ using TestFramework.Core.Timelines;
 using TestFramework.Core.Timelines.Assertions;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Steps;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser;

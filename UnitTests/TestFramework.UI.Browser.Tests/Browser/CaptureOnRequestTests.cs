@@ -12,7 +12,7 @@ using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Runtime;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 using TestFramework.UI.Browser.Tests.Shared;
 using Xunit;
 using Xunit.Abstractions;

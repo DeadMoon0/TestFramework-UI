@@ -8,7 +8,7 @@ using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser.Structure;
 
 namespace TestFramework.UI.Browser.Events;
 

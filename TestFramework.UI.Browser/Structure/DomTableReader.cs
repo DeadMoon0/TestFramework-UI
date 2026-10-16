@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 using TestFramework.UI.Browser.Scripting;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser.Structure;
 
 namespace TestFramework.UI.Browser.Structure;
 

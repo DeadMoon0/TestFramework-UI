@@ -1,17 +1,16 @@
-﻿using TestFramework.UI.Browser.Events;
-using System;
+﻿using System.Threading.Tasks;
 using System.Threading;
-using System.Threading.Tasks;
+using System;
 using Microsoft.Playwright;
 using TestFramework.Core.Artifacts;
 using TestFramework.Core.Logging;
-using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
+using TestFramework.Core.Steps;
 using TestFramework.Core.Variables;
+using TestFramework.UI.Browser.Events;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Structure;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Structure;
 
 namespace TestFramework.UI.Browser.Steps.Inspection;
 

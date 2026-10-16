@@ -4,7 +4,7 @@ using System.Linq;
 
 using TestFramework.Core.Conventions;
 
-namespace TestFramework.UI.Structure;
+namespace TestFramework.UI.Browser.Structure;
 
 /// <summary>
 /// What a table on a page actually held.

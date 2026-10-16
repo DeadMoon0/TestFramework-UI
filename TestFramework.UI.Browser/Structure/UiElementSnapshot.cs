@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TestFramework.UI.Structure;
+namespace TestFramework.UI.Browser.Structure;
 
 /// <summary>
 /// What one element on a page actually was, as plain data.

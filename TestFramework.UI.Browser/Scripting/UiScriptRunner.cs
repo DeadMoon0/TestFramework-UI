@@ -8,7 +8,7 @@ using Microsoft.Playwright;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using TestFramework.Core.Variables;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser.Structure;
 using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Scripting;

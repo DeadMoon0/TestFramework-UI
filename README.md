@@ -1,4 +1,5 @@
 ﻿![Icon](https://raw.githubusercontent.com/DeadMoon0/TestFramework-Common/96ef4240c1e55ba95a20b99285219a61407c6355/Assets/Icon.svg)
+[![NuGet Version](https://img.shields.io/nuget/v/TestFramework.UI.Browser?label=nuget%20TestFramework.UI.Browser)](https://www.nuget.org/packages/TestFramework.UI.Browser)
 
 # TestFramework-UI
 

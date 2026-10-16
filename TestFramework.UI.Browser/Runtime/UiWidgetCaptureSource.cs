@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TestFramework.Core.Steps;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 
 namespace TestFramework.UI.Browser.Runtime;
 

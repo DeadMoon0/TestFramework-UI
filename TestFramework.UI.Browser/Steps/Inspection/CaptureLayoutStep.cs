@@ -9,7 +9,7 @@ using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser.Structure;
 
 namespace TestFramework.UI.Browser.Steps.Inspection;
 

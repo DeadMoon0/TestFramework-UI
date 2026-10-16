@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser.Structure;
 
 namespace TestFramework.UI.Browser.Structure;
 

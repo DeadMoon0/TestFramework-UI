@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using TestFramework.UI.Browser.Structure;
-using TestFramework.UI.Structure;
 
 namespace TestFramework.UI.Browser.Tests.Structure;
 

@@ -1,6 +1,6 @@
 using System;
 
-namespace TestFramework.UI.Session;
+namespace TestFramework.UI.Browser.Session;
 
 /// <summary>
 /// The naming convention for the variable that carries an application's session picture through a run.

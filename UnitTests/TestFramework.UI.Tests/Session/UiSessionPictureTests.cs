@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 
 namespace TestFramework.UI.Tests.Session;
 

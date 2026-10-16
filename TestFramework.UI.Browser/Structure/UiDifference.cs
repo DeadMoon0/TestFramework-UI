@@ -1,6 +1,6 @@
 using TestFramework.Core.Conventions;
 
-namespace TestFramework.UI.Structure;
+namespace TestFramework.UI.Browser.Structure;
 
 /// <summary>
 /// What kind of difference a comparison found.

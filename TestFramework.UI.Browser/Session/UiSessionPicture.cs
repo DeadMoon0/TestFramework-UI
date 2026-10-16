@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TestFramework.UI.Session;
+namespace TestFramework.UI.Browser.Session;
 
 /// <summary>
 /// Everything that happened in one application's UI session during a run, in order.

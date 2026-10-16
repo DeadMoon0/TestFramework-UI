@@ -7,7 +7,7 @@ using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Events;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 
 namespace TestFramework.UI.Browser.Tests.Events;
 

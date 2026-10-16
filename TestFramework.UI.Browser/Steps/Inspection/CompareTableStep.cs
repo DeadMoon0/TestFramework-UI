@@ -1,16 +1,15 @@
-﻿using TestFramework.UI.Browser.Events;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 using Microsoft.Playwright;
 using TestFramework.Core.Steps;
+using TestFramework.UI.Browser.Events;
 using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Structure;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Structure;
 
 namespace TestFramework.UI.Browser.Steps.Inspection;
 

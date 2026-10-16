@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 using TestFramework.UI.Browser.Reading;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser.Structure;
 using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Steps;

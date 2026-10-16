@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Events;
@@ -7,11 +7,10 @@ using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Layouting;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Scripting;
-using TestFramework.UI.Browser.Steps;
 using TestFramework.UI.Browser.Steps.Inspection;
+using TestFramework.UI.Browser.Steps;
 using TestFramework.UI.Browser.Structure;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Structure;
 
 namespace TestFramework.UI.Browser;
 

@@ -6,7 +6,7 @@ using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Targeting;
 using TestFramework.UI.Browser.Tests.Shared;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 using Xunit;
 using Xunit.Abstractions;
 

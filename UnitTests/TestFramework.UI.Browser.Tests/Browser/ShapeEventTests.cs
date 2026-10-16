@@ -1,12 +1,11 @@
-using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System;
 using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser.Events;
 using TestFramework.UI.Browser.Structure;
 using TestFramework.UI.Browser.Targeting;
 using TestFramework.UI.Browser.Tests.Shared;
-using TestFramework.UI.Structure;
 using Xunit.Abstractions;
 
 namespace TestFramework.UI.Browser.Tests.Browser;

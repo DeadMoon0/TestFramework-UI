@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using TestFramework.Core.Steps;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 
 namespace TestFramework.UI.Browser.Steps;
 

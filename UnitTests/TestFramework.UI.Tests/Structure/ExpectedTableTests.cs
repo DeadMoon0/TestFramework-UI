@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser.Structure;
 using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Tests.Structure;

@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 using Microsoft.Playwright;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Variables;
@@ -11,7 +11,6 @@ using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Structure;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Structure;
 
 namespace TestFramework.UI.Browser.Events;
 

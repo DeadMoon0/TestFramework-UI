@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using TestFramework.Core.Debugger;
 using TestFramework.Core.Logging;
 using TestFramework.Core.Steps;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 
 namespace TestFramework.UI.Browser.Runtime;
 

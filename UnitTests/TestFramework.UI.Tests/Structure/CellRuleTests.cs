@@ -1,5 +1,5 @@
 using System;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser.Structure;
 
 namespace TestFramework.UI.Tests.Structure;
 

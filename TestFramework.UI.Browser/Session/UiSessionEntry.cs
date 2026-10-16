@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 
-namespace TestFramework.UI.Session;
+namespace TestFramework.UI.Browser.Session;
 
 /// <summary>
 /// One thing that happened in a UI session: an action performed, an expectation checked, a value read.

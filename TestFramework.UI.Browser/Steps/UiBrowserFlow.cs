@@ -20,7 +20,7 @@ using TestFramework.UI.Browser.Reading;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Session;
+using TestFramework.UI.Browser.Session;
 
 namespace TestFramework.UI.Browser.Steps;
 
