@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
@@ -158,11 +159,28 @@ internal static class PlaywrightHost
         {
             return await browserType.LaunchAsync(options).ConfigureAwait(false);
         }
-        catch (PlaywrightException exception) when (UiBrowserNotInstalledException.LooksLikeMissingBrowser(exception))
+        catch (PlaywrightException exception) when (UiBrowserNotInstalledException.IndicatesMissingBrowser(exception, PlaywrightBuildExists(browserType, config)))
         {
             // Playwright's own message explains the download but not the alternatives, and on a Windows
             // machine the best answer is usually to drive the browser that is already there.
             throw new UiBrowserNotInstalledException(config.EffectiveBrowser, config.Channel, exception);
         }
+    }
+
+    /// <summary>
+    /// Whether the build a launch started is on disk, or null when Playwright does not report its path.
+    /// </summary>
+    /// <remarks>
+    /// Playwright reports the path of its own full build only. A branded build lives elsewhere, and a
+    /// headless chromium launch starts a separate headless shell, so for those the path would answer a
+    /// question nobody asked - an installation with only the shell would read as missing whatever the
+    /// launch actually failed on.
+    /// </remarks>
+    private static bool? PlaywrightBuildExists(IBrowserType browserType, WebAppConfig config)
+    {
+        bool reportedPathIsTheLaunchedOne = config.Channel is not { Length: > 0 }
+            && !(config.EffectiveHeadless && string.Equals(browserType.Name, "chromium", StringComparison.OrdinalIgnoreCase));
+
+        return reportedPathIsTheLaunchedOne ? File.Exists(browserType.ExecutablePath) : null;
     }
 }

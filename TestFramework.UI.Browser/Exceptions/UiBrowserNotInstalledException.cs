@@ -26,10 +26,42 @@ public sealed class UiBrowserNotInstalledException : TimelineFrameworkException
     /// <summary>The branded build that was asked for, when one was.</summary>
     public string? Channel { get; }
 
-    internal static bool LooksLikeMissingBrowser(PlaywrightException exception)
-        => exception.Message.Contains("Executable doesn't exist", StringComparison.OrdinalIgnoreCase)
-        || exception.Message.Contains("looks like Playwright", StringComparison.OrdinalIgnoreCase)
-        || exception.Message.Contains("please run the following command to download new browsers", StringComparison.OrdinalIgnoreCase);
+    /// <summary>
+    /// Whether a failed launch failed because the browser is not on this machine.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The file is the answer wherever there is one: Playwright reports the path of its own build, and a
+    /// launch that failed while that path holds nothing failed for want of the browser, whatever language
+    /// or wording its message used.
+    /// </para>
+    /// <para>
+    /// Playwright offers nothing structural beyond that - no error code, no exception type of its own -
+    /// so a branded build, whose path Playwright does not report, and a build present in part (the
+    /// headless shell without the full browser, say) are recognised by its English message. That match is
+    /// <see cref="MessageSaysBrowserIsMissing"/>, and nowhere else.
+    /// </para>
+    /// </remarks>
+    /// <param name="exception">What the launch threw.</param>
+    /// <param name="executableExists">Whether Playwright's own build is on disk, or null when the launch
+    /// asked for a branded build, whose location Playwright does not report.</param>
+    /// <returns>True when the browser is missing.</returns>
+    internal static bool IndicatesMissingBrowser(PlaywrightException exception, bool? executableExists)
+        => executableExists == false || MessageSaysBrowserIsMissing(exception.Message);
+
+    /// <summary>
+    /// Whether Playwright's message says the browser is missing, for the cases its path cannot answer.
+    /// </summary>
+    /// <remarks>
+    /// The texts are Playwright's own, in English, and are pinned by a test so a Playwright upgrade that
+    /// rewords them is noticed there rather than on a fresh clone.
+    /// </remarks>
+    /// <param name="message">The launch failure's message.</param>
+    /// <returns>True when the message is one of Playwright's missing-browser texts.</returns>
+    internal static bool MessageSaysBrowserIsMissing(string message)
+        => message.Contains("Executable doesn't exist", StringComparison.OrdinalIgnoreCase)
+        || message.Contains("looks like Playwright", StringComparison.OrdinalIgnoreCase)
+        || message.Contains("please run the following command to download new browsers", StringComparison.OrdinalIgnoreCase);
 
     private static string BuildMessage(string browser, string? channel)
     {

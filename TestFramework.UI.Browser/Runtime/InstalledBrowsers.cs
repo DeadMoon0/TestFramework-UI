@@ -70,12 +70,17 @@ internal static class InstalledBrowsers
     private const string BrowsersPathVariable = "PLAYWRIGHT_BROWSERS_PATH";
 
     /// <summary>
+    /// The file Playwright's installer writes into a browser's folder once its download is complete.
+    /// </summary>
+    private const string InstallationCompleteMarker = "INSTALLATION_COMPLETE";
+
+    /// <summary>
     /// The best browser available here, or null when this machine has none.
     /// </summary>
     /// <returns>The browser to drive, or null.</returns>
     public static UiAvailableBrowser? Find()
     {
-        if (FindPlaywrightChromium() is { } downloaded)
+        if (FindPlaywrightBuild("chromium", BrowserCacheRoots()) is { } downloaded)
         {
             return downloaded;
         }
@@ -115,14 +120,11 @@ internal static class InstalledBrowsers
             case "chrome":
                 return FindBranded("chrome");
 
-            // Playwright's own builds. Only chromium's location is known here; firefox and webkit are taken
-            // at their word, because a suite naming them has opted into whatever Playwright has downloaded.
+            // Playwright's own builds, each looked for where Playwright downloads it.
             case "chromium":
-                return FindPlaywrightChromium();
-
             case "firefox":
             case "webkit":
-                return new UiAvailableBrowser(requested.ToLowerInvariant(), null, $"{requested.ToLowerInvariant()} (Playwright's own build, as requested)");
+                return FindPlaywrightBuild(requested.ToLowerInvariant(), BrowserCacheRoots());
 
             default:
                 return null;
@@ -137,16 +139,26 @@ internal static class InstalledBrowsers
             .FirstOrDefault();
 
     /// <summary>
-    /// Playwright's downloaded chromium, found the way Playwright itself lays it out.
+    /// One of Playwright's downloaded builds, found the way Playwright itself lays them out.
     /// </summary>
     /// <remarks>
-    /// The folder carries the build number (<c>chromium-1234</c>), so this looks for any of them rather
+    /// <para>
+    /// The folder carries the build number (<c>firefox-1234</c>), so this looks for any of them rather
     /// than pinning one: which build the package reference wants is Playwright's business, and a mismatch
     /// is its own clear error at launch rather than something to second-guess here.
+    /// </para>
+    /// <para>
+    /// A folder counts only once Playwright has marked it finished. Its installer writes that marker last,
+    /// so an interrupted download - or a folder made by hand - is not reported as a browser this machine
+    /// can drive.
+    /// </para>
     /// </remarks>
-    private static UiAvailableBrowser? FindPlaywrightChromium()
+    /// <param name="engine"><c>chromium</c>, <c>firefox</c> or <c>webkit</c>.</param>
+    /// <param name="cacheRoots">The folders Playwright keeps its downloads in.</param>
+    /// <returns>The build, or null when none is installed there.</returns>
+    internal static UiAvailableBrowser? FindPlaywrightBuild(string engine, IEnumerable<string> cacheRoots)
     {
-        foreach (string root in BrowserCacheRoots())
+        foreach (string root in cacheRoots)
         {
             if (root.Length == 0 || !Directory.Exists(root))
             {
@@ -154,12 +166,12 @@ internal static class InstalledBrowsers
             }
 
             bool present = Directory
-                .EnumerateDirectories(root, "chromium-*", SearchOption.TopDirectoryOnly)
-                .Any();
+                .EnumerateDirectories(root, $"{engine}-*", SearchOption.TopDirectoryOnly)
+                .Any(static folder => File.Exists(Path.Combine(folder, InstallationCompleteMarker)));
 
             if (present)
             {
-                return new UiAvailableBrowser("chromium", null, "chromium (Playwright's own build)");
+                return new UiAvailableBrowser(engine, null, $"{engine} (Playwright's own build)");
             }
         }
 
