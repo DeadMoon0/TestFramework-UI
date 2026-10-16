@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using TestFramework.Core.Artifacts;
@@ -57,22 +58,72 @@ internal sealed class UiSessionCleanupStep : Step<EmptyStepResultContext>
         IReadOnlyList<UiSession> sessions = runState.OpenSessions();
         ScopedLogger logger = context.Logger;
 
-        foreach (UiSession session in sessions)
+        try
+        {
+            await CloseEachAsync(
+                sessions,
+                async session =>
+                {
+                    await session.DisposeAsync().ConfigureAwait(false);
+                    logger?.LogInformation("Closed the browser session for '{0}'.", session.App);
+                },
+                (session, exception) => logger?.LogWarning("Could not close the browser session for '{0}': {1}", session.App, exception.Message))
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            runState.Clear();
+        }
+
+        return EmptyStepResultContext.Instance;
+    }
+
+    /// <summary>
+    /// Closes every session, whichever of them fails to close.
+    /// </summary>
+    /// <remarks>
+    /// A close that throws is reported and the next one still runs. A cancelled close is reported the same
+    /// way and then rethrown once every other session has had its turn: stopping at the first cancellation
+    /// left the rest of the run's contexts open in the pooled browser, holding their cookies and storage
+    /// until the process ended.
+    /// </remarks>
+    /// <typeparam name="TSession">What is closed.</typeparam>
+    /// <param name="sessions">The sessions to close.</param>
+    /// <param name="close">Closes one session.</param>
+    /// <param name="reportFailure">Hears about a session that did not close.</param>
+    /// <returns>A task that completes once every session has been tried.</returns>
+    /// <exception cref="OperationCanceledException">A close was cancelled; every other one was still tried.</exception>
+    internal static async Task CloseEachAsync<TSession>(
+        IReadOnlyList<TSession> sessions,
+        Func<TSession, Task> close,
+        Action<TSession, Exception> reportFailure)
+    {
+        ArgumentNullException.ThrowIfNull(sessions);
+        ArgumentNullException.ThrowIfNull(close);
+        ArgumentNullException.ThrowIfNull(reportFailure);
+
+        OperationCanceledException? cancellation = null;
+
+        foreach (TSession session in sessions)
         {
             try
             {
-                await session.DisposeAsync().ConfigureAwait(false);
-
-                logger?.LogInformation("Closed the browser session for '{0}'.", session.App);
+                await close(session).ConfigureAwait(false);
             }
-            catch (Exception exception) when (exception is not OperationCanceledException)
+            catch (OperationCanceledException exception)
             {
-                logger?.LogWarning("Could not close the browser session for '{0}': {1}", session.App, exception.Message);
+                cancellation ??= exception;
+                reportFailure(session, exception);
+            }
+            catch (Exception exception)
+            {
+                reportFailure(session, exception);
             }
         }
 
-        runState.Clear();
-
-        return EmptyStepResultContext.Instance;
+        if (cancellation is not null)
+        {
+            ExceptionDispatchInfo.Throw(cancellation);
+        }
     }
 }
