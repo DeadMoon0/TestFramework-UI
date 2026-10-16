@@ -1,5 +1,4 @@
-﻿using TestFramework.UI.Browser.Events;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -7,23 +6,21 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Playwright;
 using TestFramework.Core;
-using TestFramework.Core.Artifacts;
 using TestFramework.Core.Environment;
 using TestFramework.Core.Environment.Graph;
-using TestFramework.Core.Logging;
+using TestFramework.Core.Exceptions;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Variables;
 using TestFramework.UI.Browser.Configuration;
+using TestFramework.UI.Browser.Events;
 using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Reading;
-using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Scripting;
 using TestFramework.UI.Browser.Targeting;
 using TestFramework.UI.Session;
-using TestFramework.Core.Exceptions;
 
 namespace TestFramework.UI.Browser.Steps;
 
@@ -519,8 +516,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             ? existing
             : UiSessionPicture.Empty(this.app);
 
-        PlaywrightElementQuery query = new PlaywrightElementQuery(session.Page, config.EffectiveTestIdAttribute);
-        UiResolutionOptions resolutionOptions = new UiResolutionOptions(config.EffectiveAmbiguityMode);
+        UiActionPerformer performer = new UiActionPerformer(this.app, session, config, context, label);
         List<UiSessionEntry> entries = new List<UiSessionEntry>();
 
         // The runner is free to reach two steps at once; a page driven from both is not a race to leave
@@ -536,9 +532,7 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
 
                 try
                 {
-                    UiSessionEntry entry = await this
-                        .PerformAsync(action, session, query, resolutionOptions, config, context, context.Variables, label, context.Logger, cancellationToken)
-                        .ConfigureAwait(false);
+                    UiSessionEntry entry = await performer.PerformAsync(action, cancellationToken).ConfigureAwait(false);
 
                     entries.Add(entry with { DurationMs = stopwatch.Elapsed.TotalMilliseconds });
 
@@ -636,428 +630,6 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
             picture,
             consoleErrors,
             inner);
-    }
-
-    private async Task<UiSessionEntry> PerformAsync(
-        UiActionSpec action,
-        UiSession session,
-        PlaywrightElementQuery query,
-        UiResolutionOptions resolutionOptions,
-        WebAppConfig config,
-        RunContext run,
-        VariableStore variableStore,
-        string label,
-        ScopedLogger logger,
-        CancellationToken cancellationToken)
-    {
-        string? value = action.Value?.GetValue(variableStore);
-        string? detail = action.Sensitive ? "•••" : value;
-        UiResolvedTarget? resolved = null;
-
-        switch (action.Kind)
-        {
-            case UiActionKind.Navigate:
-                string target = UiUrls.Resolve(config.BaseUrl, value);
-                await session.Page.GotoAsync(target).ConfigureAwait(false);
-                detail = target;
-                break;
-
-            case UiActionKind.Press when action.Target is null:
-                await session.Page.Keyboard.PressAsync(value ?? throw new ArgumentException("A key press needs keys.")).ConfigureAwait(false);
-                break;
-
-            case UiActionKind.MouseAway:
-                await session.Page.Mouse.MoveAsync(0, 0).ConfigureAwait(false);
-                detail = "to the corner";
-                break;
-
-            case UiActionKind.Drag:
-                resolved = await this
-                    .ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken)
-                    .ConfigureAwait(false);
-
-                UiResolvedTarget destination = await this
-                    .ResolveTargetAsync(action.SecondTarget!, UiSmartContext.Text, session, query, resolutionOptions, config, cancellationToken)
-                    .ConfigureAwait(false);
-
-                await query.Locate(resolved).DragToAsync(query.Locate(destination)).ConfigureAwait(false);
-
-                // The destination's own match is said here, because the entry's audit fields carry the
-                // dragged thing - a destination the framework had to reach for must not hide behind it.
-                detail = destination.IsLoose
-                    ? $"to {action.SecondTarget!.Describe()} (matched via {destination.DescribeMatch()})"
-                    : $"to {action.SecondTarget!.Describe()}";
-                break;
-
-            case UiActionKind.Screenshot:
-                // The gate is already held by the step this runs inside, and it is not reentrant.
-                detail = await UiEvidence
-                    .ScreenshotAsync(session, run, action.CaptureName ?? "screenshot", takeGate: false)
-                    .ConfigureAwait(false);
-                break;
-
-            // Instant on purpose, both of them: a stylesheet's scroll-behavior:smooth would leave the
-            // page mid-glide when the next action looks at it, and where the viewport ends up must not
-            // depend on styling.
-            case UiActionKind.ScrollToTop:
-                await PageJson
-                    .EvaluateAsync(session.Page, "() => window.scrollTo({ top: 0, left: 0, behavior: 'instant' })")
-                    .ConfigureAwait(false);
-                detail = "top";
-                break;
-
-            case UiActionKind.ScrollToBottom:
-                await PageJson
-                    .EvaluateAsync(session.Page, "() => window.scrollTo({ top: document.documentElement.scrollHeight, left: 0, behavior: 'instant' })")
-                    .ConfigureAwait(false);
-                detail = "bottom";
-                break;
-
-            case UiActionKind.ExpectNot:
-                await this.ExpectGoneAsync(action, session, query, resolutionOptions, config, cancellationToken).ConfigureAwait(false);
-                detail = "gone";
-                break;
-
-            case UiActionKind.Read:
-                (resolved, detail) = await this
-                    .ReadAsync(action, session, query, resolutionOptions, config, variableStore, cancellationToken)
-                    .ConfigureAwait(false);
-                break;
-
-            case UiActionKind.Execute:
-            case UiActionKind.Evaluate:
-                (resolved, detail) = await this
-                    .RunScriptAsync(action, session, query, resolutionOptions, config, variableStore, cancellationToken)
-                    .ConfigureAwait(false);
-                break;
-
-            case UiActionKind.Choose:
-                resolved = await this
-                    .ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken)
-                    .ConfigureAwait(false);
-
-                detail = await UiChooser.ChooseAsync(
-                    query.Locate(resolved),
-                    session.Page,
-                    value ?? throw new ArgumentException("Choosing needs an option to choose."),
-                    action.Target!.Describe(),
-                    config.EffectiveActionTimeout,
-                    cancellationToken).ConfigureAwait(false);
-                break;
-
-            default:
-                resolved = await this
-                    .ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken)
-                    .ConfigureAwait(false);
-
-                detail = await ActOnAsync(action, query.Locate(resolved), value, detail).ConfigureAwait(false);
-                break;
-        }
-
-        if (resolved is { IsLoose: true })
-        {
-            // A match the framework had to reach for is said out loud. Tolerance that hides itself is how
-            // a suite ends up trusting a test that only passes by luck.
-            logger.LogInformation(
-                "UI '{0}': {1} matched via {2}{3}.",
-                this.app.ToString(),
-                action.Target?.Describe() ?? action.Kind.ToString(),
-                resolved.DescribeMatch(),
-                resolved.CandidateCount > 1 ? $" ({resolved.CandidateCount} candidates)" : string.Empty);
-        }
-
-        return new UiSessionEntry
-        {
-            StepLabel = label,
-            Action = action.Kind.ToString(),
-            Target = action.Target?.Describe(),
-            ResolvedVia = resolved?.DescribeMatch(),
-            MatchRank = resolved?.Rank,
-            MatchWasFuzzy = resolved is not null && !resolved.Spec.Exact,
-            CandidateCount = resolved?.CandidateCount ?? 0,
-            MatchedSnippet = resolved?.Snippet,
-            Detail = detail,
-            Url = session.Page.Url,
-            ConsoleErrors = session.DrainConsoleErrors(),
-            DurationMs = 0,
-        };
-    }
-
-    private static async Task<string?> ActOnAsync(
-        UiActionSpec action,
-        ILocator locator,
-        string? value,
-        string? detail)
-    {
-        switch (action.Kind)
-        {
-            case UiActionKind.Click:
-                await locator.ClickAsync().ConfigureAwait(false);
-                return null;
-
-            case UiActionKind.DoubleClick:
-                await locator.DblClickAsync().ConfigureAwait(false);
-                return null;
-
-            case UiActionKind.RightClick:
-                await locator.ClickAsync(new LocatorClickOptions { Button = MouseButton.Right }).ConfigureAwait(false);
-                return null;
-
-            case UiActionKind.Fill:
-                await locator.FillAsync(value ?? string.Empty).ConfigureAwait(false);
-                return detail;
-
-            case UiActionKind.Type:
-                await locator.PressSequentiallyAsync(value ?? string.Empty).ConfigureAwait(false);
-                return detail;
-
-            case UiActionKind.Press:
-                await locator.PressAsync(value ?? throw new ArgumentException("A key press needs keys.")).ConfigureAwait(false);
-                return detail;
-
-            case UiActionKind.Select:
-                string tag = await locator.EvaluateAsync<string>("el => el.tagName.toLowerCase()").ConfigureAwait(false);
-
-                if (tag != "select")
-                {
-                    // The one wrong answer would be to click around and hope: a component library's
-                    // select is a different contract, and there is a verb for it.
-                    throw new FrameworkStateException(
-                        $"The {action.Target!.Describe()} is a <{tag}>, not a native <select>, so Select " +
-                        "cannot drive it. Use Choose(...), which drives native lists and ARIA comboboxes alike.");
-                }
-
-                await locator.SelectOptionAsync(value ?? string.Empty).ConfigureAwait(false);
-                return detail;
-
-            case UiActionKind.Check:
-                await locator.CheckAsync().ConfigureAwait(false);
-                return null;
-
-            case UiActionKind.Uncheck:
-                await locator.UncheckAsync().ConfigureAwait(false);
-                return null;
-
-            case UiActionKind.Hover:
-                await locator.HoverAsync().ConfigureAwait(false);
-                return null;
-
-            case UiActionKind.ScrollTo:
-                await locator.ScrollIntoViewIfNeededAsync().ConfigureAwait(false);
-                return "into view";
-
-            case UiActionKind.Expect:
-                await locator.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible }).ConfigureAwait(false);
-                return "visible";
-
-            default:
-                throw new InvalidOperationException($"Action '{action.Kind}' does not act on an element.");
-        }
-    }
-
-    /// <summary>
-    /// Answers one read: resolves the element when the source names one, asks the reader, and writes the
-    /// variable in the source's own type.
-    /// </summary>
-    private async Task<(UiResolvedTarget? Resolved, string Detail)> ReadAsync(
-        UiActionSpec action,
-        UiSession session,
-        PlaywrightElementQuery query,
-        UiResolutionOptions resolutionOptions,
-        WebAppConfig config,
-        VariableStore variableStore,
-        CancellationToken cancellationToken)
-    {
-        UiValueSource source = action.Source!;
-
-        if (source.Kind == UiValueKind.Count)
-        {
-            // A count is a question about the whole page, not about one element, so it goes to the
-            // resolver's ladder rather than through single-element resolution - zero and many are both
-            // answers here, not failures.
-            (int count, UiQuerySpec? spec) = await TargetResolver.CountAsync(
-                query,
-                source.Target!,
-                action.Context,
-                resolutionOptions,
-                this.app,
-                session.Page.Url,
-                cancellationToken).ConfigureAwait(false);
-
-            variableStore.SetVariable(action.CaptureName!, count);
-
-            return (null, spec is null ? "0 (no channel matched)" : $"{count} via {spec.DescribeMatch()}");
-        }
-
-        UiResolvedTarget? resolved = source.Target is null
-            ? null
-            : await this.ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken).ConfigureAwait(false);
-
-        UiReadResult result = await UiValueReader.ReadAsync(
-            source,
-            session.Page,
-            resolved is null ? null : query.Locate(resolved),
-            resolved,
-            cancellationToken).ConfigureAwait(false);
-
-        switch (result.TypedValue)
-        {
-            case bool flag:
-                variableStore.SetVariable(action.CaptureName!, flag);
-                break;
-            case int number:
-                variableStore.SetVariable(action.CaptureName!, number);
-                break;
-            // A credential travels in the variable and nowhere else: the run and the test read it, and the
-            // debugger, the value files and an assertion's message say "(secret)".
-            case string credential when result.IsCredential:
-                variableStore.SetSecretVariable(action.CaptureName!, credential);
-                break;
-            default:
-                variableStore.SetVariable(action.CaptureName!, (string)result.TypedValue);
-                break;
-        }
-
-        return (resolved, result.Detail);
-    }
-
-    /// <summary>
-    /// Runs one script action: resolves the element when the action names one, runs the script, and for
-    /// an evaluation writes the variable in the type the test asked for.
-    /// </summary>
-    private async Task<(UiResolvedTarget? Resolved, string Detail)> RunScriptAsync(
-        UiActionSpec action,
-        UiSession session,
-        PlaywrightElementQuery query,
-        UiResolutionOptions resolutionOptions,
-        WebAppConfig config,
-        VariableStore variableStore,
-        CancellationToken cancellationToken)
-    {
-        JsScript script = action.Script!;
-
-        UiResolvedTarget? resolved = action.Target is null
-            ? null
-            : await this.ResolveAsync(action, session, query, resolutionOptions, config, cancellationToken).ConfigureAwait(false);
-
-        Newtonsoft.Json.Linq.JToken? result = await UiScriptRunner.RunAsync(
-            script,
-            session.Page,
-            resolved is null ? null : query.Locate(resolved),
-            variableStore,
-
-            // A flow acts once rather than polling, so it keeps the page's action timeout. The budget is
-            // for the waits, whose deadline has a grace window to protect.
-            ProbeBudget.Unbounded,
-            cancellationToken).ConfigureAwait(false);
-
-        if (action.Kind == UiActionKind.Execute)
-        {
-            return (resolved, $"'{script.Name}'");
-        }
-
-        action.ResultBinder!.Bind(variableStore, action.CaptureName!, result, script.Name);
-
-        // The raw result, shortened: enough to see what came back without a screen of JSON.
-        return (resolved, $"'{script.Name}' -> {UiText.Truncate(PageJson.Describe(result!), 80)}");
-    }
-
-    private Task<UiResolvedTarget> ResolveAsync(
-        UiActionSpec action,
-        UiSession session,
-        PlaywrightElementQuery query,
-        UiResolutionOptions resolutionOptions,
-        WebAppConfig config,
-        CancellationToken cancellationToken)
-        => this.ResolveTargetAsync(
-            action.Target ?? throw new InvalidOperationException($"Action '{action.Kind}' needs a target."),
-            action.Context,
-            session,
-            query,
-            resolutionOptions,
-            config,
-            cancellationToken);
-
-    private async Task<UiResolvedTarget> ResolveTargetAsync(
-        UiTarget target,
-        UiSmartContext context,
-        UiSession session,
-        PlaywrightElementQuery query,
-        UiResolutionOptions resolutionOptions,
-        WebAppConfig config,
-        CancellationToken cancellationToken)
-    {
-        // Stopwatch, not wall clock: one clock per deadline, and this budget must not jump with the
-        // system time. The loop stays bounded by the step token either way.
-        Stopwatch budget = Stopwatch.StartNew();
-
-        while (true)
-        {
-            try
-            {
-                return await TargetResolver
-                    .ResolveAsync(query, target, context, resolutionOptions, this.app, session.Page.Url, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (UiTargetNotFoundException) when (budget.Elapsed < config.EffectiveActionTimeout)
-            {
-                // Not found may simply mean not yet: an application that renders after fetching data is
-                // normal, and waiting for it is the framework's job rather than the test's. Ambiguity is
-                // deliberately not retried - it is a real answer about the page, not a transient one.
-                await Task.Delay(TimeSpan.FromMilliseconds(120), cancellationToken).ConfigureAwait(false);
-            }
-        }
-    }
-
-    private async Task ExpectGoneAsync(
-        UiActionSpec action,
-        UiSession session,
-        PlaywrightElementQuery query,
-        UiResolutionOptions resolutionOptions,
-        WebAppConfig config,
-        CancellationToken cancellationToken)
-    {
-        UiTarget target = action.Target ?? throw new InvalidOperationException("An absence expectation needs a target.");
-
-        // Stopwatch, not wall clock: one clock per deadline, and this budget must not jump with the
-        // system time. The loop stays bounded by the step token either way.
-        Stopwatch budget = Stopwatch.StartNew();
-
-        while (true)
-        {
-            UiResolvedTarget? resolved = null;
-
-            try
-            {
-                resolved = await TargetResolver
-                    .ResolveAsync(query, target, UiSmartContext.Text, resolutionOptions, this.app, session.Page.Url, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (UiTargetNotFoundException)
-            {
-                // Gone, which is what was asked for.
-                return;
-            }
-            catch (UiAmbiguousTargetException)
-            {
-                // Several of it are still there, so it is certainly not gone.
-            }
-
-            if (resolved is not null && !await query.Locate(resolved).IsVisibleAsync().ConfigureAwait(false))
-            {
-                return;
-            }
-
-            if (budget.Elapsed >= config.EffectiveActionTimeout)
-            {
-                throw new TimeoutException(
-                    $"The {target.Describe()} was still on the page after {config.EffectiveActionTimeout.TotalSeconds:F0}s, " +
-                    $"at {session.Page.Url}. An absence expectation waits for something to go away; if it was never " +
-                    "supposed to be there at all, expect the state that replaces it instead.");
-            }
-
-            await Task.Delay(TimeSpan.FromMilliseconds(120), cancellationToken).ConfigureAwait(false);
-        }
     }
 
     private static async Task<string> SafeTitleAsync(UiSession session)
