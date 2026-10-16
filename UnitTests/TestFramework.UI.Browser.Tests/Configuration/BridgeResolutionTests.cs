@@ -75,13 +75,13 @@ public class BridgeResolutionTests(ITestOutputHelper output)
         // A bridge puts a kind on the requirement, which is the whole reason it takes one rather than a bare
         // name - and it is the only thing that can tell these two entries apart.
         TimelineRun viaSite = await Run(
-            new WebAppIdentifier("shop").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.Site, "shop")),
+            new WebAppIdentifier("shop").BridgedTo(new EnvironmentRequirement(WebResourceKinds.Site, "shop")),
             new WebAppConfig { Browser = "chromium" },
             ("Site:shop:BaseUrl", "http://site/"),
             ("Api:shop:BaseUrl", "http://api/"));
 
         TimelineRun viaApi = await Run(
-            new WebAppIdentifier("shop").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, "shop")),
+            new WebAppIdentifier("shop").BridgedTo(new EnvironmentRequirement(WebResourceKinds.RestApi, "shop")),
             new WebAppConfig { Browser = "chromium" },
             ("Site:shop:BaseUrl", "http://site/"),
             ("Api:shop:BaseUrl", "http://api/"));
@@ -107,8 +107,8 @@ public class BridgeResolutionTests(ITestOutputHelper output)
 
         TimelineRunFailedException failure = Assert.Throws<TimelineRunFailedException>(run.EnsureRanToCompletion);
 
-        Assert.Contains(WebEnvironmentResourceKinds.Site, failure.ToString(), StringComparison.Ordinal);
-        Assert.Contains(WebEnvironmentResourceKinds.RestApi, failure.ToString(), StringComparison.Ordinal);
+        Assert.Contains(WebResourceKinds.Site, failure.ToString(), StringComparison.Ordinal);
+        Assert.Contains(WebResourceKinds.RestApi, failure.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

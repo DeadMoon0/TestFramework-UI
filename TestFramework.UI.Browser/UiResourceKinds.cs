@@ -6,7 +6,7 @@ namespace TestFramework.UI.Browser;
 /// <summary>
 /// The kinds of resource browser steps need a run to declare.
 /// </summary>
-public static class BrowserEnvironmentResourceKinds
+public static class UiResourceKinds
 {
     /// <summary>
     /// A web application reachable over HTTP, addressed by a <see cref="Identifier.WebAppIdentifier"/>.

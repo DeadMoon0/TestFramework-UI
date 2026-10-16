@@ -47,7 +47,7 @@ internal sealed class UiApplications : DeclaredNodeSource
             .OrderBy(static application => application.Key, StringComparer.Ordinal)
             .Select(application => new DeclaredResource
             {
-                Kind = BrowserEnvironmentResourceKinds.WebAppKind,
+                Kind = UiResourceKinds.WebAppKind,
                 Identifier = application.Key,
                 Values = WebAppValues.From(application.Value),
                 DeclaredBy = $"UI application '{application.Key}'",

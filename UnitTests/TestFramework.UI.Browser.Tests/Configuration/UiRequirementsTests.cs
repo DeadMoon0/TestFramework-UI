@@ -56,7 +56,7 @@ public class UiRequirementsTests
     {
         // Damage before: the Docker environment had to know "ui.webapp" and treat it as a site; now the
         // browser package applies its own convention and requires the site itself.
-        ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium" }), Other(WebEnvironmentResourceKinds.SiteKind, "shop"));
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium" }), Other(WebResourceKinds.SiteKind, "shop"));
 
         Assert.Equal(["ui.webapp/shop", "web.site/shop"], Describe(UiRequirements.For(Shop, resources)));
     }
@@ -64,7 +64,7 @@ public class UiRequirementsTests
     [Fact]
     public void TwoAddressesForOneApplication_AreRefused_InsteadOfTheOwnSilentlyWinning()
     {
-        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium" }), Other(WebEnvironmentResourceKinds.SiteKind, "shop"));
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium" }), Other(WebResourceKinds.SiteKind, "shop"));
 
         UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
 
@@ -77,8 +77,8 @@ public class UiRequirementsTests
     {
         ResourceGraph resources = Resources(
             App("shop", new WebAppConfig { Browser = "chromium" }),
-            Other(WebEnvironmentResourceKinds.SiteKind, "shop"),
-            Other(WebEnvironmentResourceKinds.RestApiKind, "shop"));
+            Other(WebResourceKinds.SiteKind, "shop"),
+            Other(WebResourceKinds.RestApiKind, "shop"));
 
         UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
 
@@ -99,8 +99,8 @@ public class UiRequirementsTests
     [Fact]
     public void ABridge_IsRequiredAlongsideTheApplication()
     {
-        ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium" }), Other(WebEnvironmentResourceKinds.SiteKind, "storefront"));
-        WebAppIdentifier bridged = Shop.BridgedTo(WebEnvironmentResourceKinds.SiteKind.Requirement("storefront"));
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium" }), Other(WebResourceKinds.SiteKind, "storefront"));
+        WebAppIdentifier bridged = Shop.BridgedTo(WebResourceKinds.SiteKind.Requirement("storefront"));
 
         Assert.Equal(["ui.webapp/shop", "web.site/storefront"], Describe(UiRequirements.For(bridged, resources)));
     }
@@ -108,7 +108,7 @@ public class UiRequirementsTests
     [Fact]
     public void ABridgeInTheApplicationsOwnEntry_IsRequiredByName()
     {
-        ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium", BaseUrlFrom = "storefront" }), Other(WebEnvironmentResourceKinds.SiteKind, "storefront"));
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium", BaseUrlFrom = "storefront" }), Other(WebResourceKinds.SiteKind, "storefront"));
 
         Assert.Equal(["ui.webapp/shop", "*/storefront"], Describe(UiRequirements.For(Shop, resources)));
     }

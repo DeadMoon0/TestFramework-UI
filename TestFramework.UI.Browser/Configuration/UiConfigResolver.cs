@@ -101,10 +101,10 @@ internal static class UiConfigResolver
         ArgumentNullException.ThrowIfNull(identifier);
 
         // Read from the run, where the application was declared: a step's configuration is run data.
-        IReadOnlyDictionary<string, string> values = context.Values.ValuesFor(BrowserEnvironmentResourceKinds.WebAppKind, identifier.Identifier, ResourceVantage.Host);
+        IReadOnlyDictionary<string, string> values = context.Values.ValuesFor(UiResourceKinds.WebAppKind, identifier.Identifier, ResourceVantage.Host);
         if (values.Count == 0)
         {
-            throw UiConfigurationException.MissingIdentifier(identifier, context.Values.IdentifiersOf(BrowserEnvironmentResourceKinds.WebAppKind));
+            throw UiConfigurationException.MissingIdentifier(identifier, context.Values.IdentifiersOf(UiResourceKinds.WebAppKind));
         }
 
         WebAppConfig config = WebAppValues.Read(values, identifier.Identifier);

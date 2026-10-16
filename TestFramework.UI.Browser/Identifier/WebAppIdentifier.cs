@@ -60,7 +60,7 @@ public sealed record WebAppIdentifier(string Identifier)
     /// <remarks>
     /// The one way to bridge an application, and public so that it is genuinely one way: any package may
     /// teach an identifier where its application really lives, not only the ones this package was built
-    /// alongside. A caller names the kind the serving package defines - <c>WebEnvironmentResourceKinds.Site</c>,
+    /// alongside. A caller names the kind the serving package defines - <c>WebResourceKinds.Site</c>,
     /// say - so no package in between is needed to introduce the two.
     /// </remarks>
     /// <param name="requirement">The resource, by kind and name, that serves this application.</param>

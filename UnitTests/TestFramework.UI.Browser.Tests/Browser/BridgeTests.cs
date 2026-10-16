@@ -65,7 +65,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
             registrations.AddWeb(configuration);
         });
 
-        WebAppIdentifier app = new WebAppIdentifier("shop-bridged").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, "shop-api"));
+        WebAppIdentifier app = new WebAppIdentifier("shop-bridged").BridgedTo(new EnvironmentRequirement(WebResourceKinds.RestApi, "shop-api"));
 
         Timeline timeline = Timeline.Create()
             .Trigger(BrowserExt.Session(app)
@@ -91,7 +91,7 @@ public class BridgeTests(SampleAppFixture fixture, ITestOutputHelper output)
             registrations.AddWeb(configuration);
         });
 
-        WebAppIdentifier app = new WebAppIdentifier("shop-bridged").BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.RestApi, "shop-api"));
+        WebAppIdentifier app = new WebAppIdentifier("shop-bridged").BridgedTo(new EnvironmentRequirement(WebResourceKinds.RestApi, "shop-api"));
 
         Timeline timeline = Timeline.Create()
             // The back door: what the API says the orders are.

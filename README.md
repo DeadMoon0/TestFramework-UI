@@ -22,7 +22,7 @@ the system under test, next to the API, the database and the stubs.
   the API and stub steps use — one identifier, both doors. Leave `BaseUrl` out of the UI entry then: two
   addresses for one name are refused before the run starts rather than one silently winning. When the
   names differ, say so once with
-  `BridgedTo(new EnvironmentRequirement(WebEnvironmentResourceKinds.Site, "..."))`.
+  `BridgedTo(new EnvironmentRequirement(WebResourceKinds.Site, "..."))`.
 - **Identifiers are case-sensitive**, like every resource name in a run, and a browser step whose
   application nothing declares is refused before the first step, naming what is declared.
 - **You want the same test as desktop and as phone**: point it at a second configuration entry with
