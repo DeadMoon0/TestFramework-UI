@@ -34,7 +34,7 @@ internal static class UiRequirements
     public static IReadOnlyCollection<EnvironmentRequirement> Without(WebAppIdentifier app)
     {
         EnvironmentRequirement own = BrowserEnvironmentResourceKinds.WebAppKind.Requirement(app.Identifier);
-        return app.ExternalRequirement is { } bridge ? [own, bridge] : [own];
+        return app.Bridge is { } bridge ? [own, bridge] : [own];
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ internal static class UiRequirements
         // An application nobody declared is the engine's to refuse, naming what is declared.
         if (!resources.TryGetNode(BrowserEnvironmentResourceKinds.WebApp, app.Identifier, out ResourceNode? own) || own is null)
         {
-            return app.ExternalRequirement is { } unresolvedBridge ? [.. required, unresolvedBridge] : required;
+            return app.Bridge is { } unresolvedBridge ? [.. required, unresolvedBridge] : required;
         }
 
         // Which browser a test drives decides what it proves, and there is no default (§5): a run that states none is
@@ -67,7 +67,7 @@ internal static class UiRequirements
         }
 
         bool statesAddress = own.DeclaredValues.Keys.Any(static key => key.ValueName == ValueNames.BaseUrl);
-        EnvironmentRequirement? bridge = app.ExternalRequirement ?? ConfiguredBridge(own);
+        EnvironmentRequirement? bridge = app.Bridge ?? ConfiguredBridge(own);
         IReadOnlyList<ResourceNode> sameName = [.. resources.NodesNamed(app.Identifier)
             .Where(static node => node.KindName != BrowserEnvironmentResourceKinds.WebApp && node.Kind.Offers(ValueNames.BaseUrl))];
 

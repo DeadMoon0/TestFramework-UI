@@ -129,10 +129,10 @@ internal static class UiConfigResolver
 
         // The bridged name comes off the requirement, which is the only thing that carries it now: a
         // separate member holding the same string was one the four bridge sites had to keep in step by hand.
-        string? foreignIdentifier = identifier.ExternalRequirement?.ResourceIdentifier ?? config.BaseUrlFrom;
+        string? foreignIdentifier = identifier.Bridge?.ResourceIdentifier ?? config.BaseUrlFrom;
 
         if (foreignIdentifier is { Length: > 0 }
-            && Address(context, foreignIdentifier, identifier.ExternalRequirement?.ResourceKind) is { Length: > 0 } foreignBaseUrl)
+            && Address(context, foreignIdentifier, identifier.Bridge?.ResourceKind) is { Length: > 0 } foreignBaseUrl)
         {
             return config with { BaseUrl = foreignBaseUrl };
         }
@@ -150,7 +150,7 @@ internal static class UiConfigResolver
         // road at all, and its fix is on the other side: telling the user to set this application's own BaseUrl
         // would lead to a run refused for having two addresses.
         if (foreignIdentifier is { Length: > 0 })
-            throw UiConfigurationException.BridgeHasNoAddress(identifier, foreignIdentifier, identifier.ExternalRequirement?.ResourceKind);
+            throw UiConfigurationException.BridgeHasNoAddress(identifier, foreignIdentifier, identifier.Bridge?.ResourceKind);
 
         throw UiConfigurationException.MissingBaseUrl(identifier);
     }

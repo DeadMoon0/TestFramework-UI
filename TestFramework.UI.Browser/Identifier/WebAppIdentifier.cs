@@ -52,7 +52,7 @@ public sealed record WebAppIdentifier(string Identifier)
     /// declared a requirement for one resource while reading its address from another.
     /// </para>
     /// </remarks>
-    public EnvironmentRequirement? ExternalRequirement { get; private init; }
+    public EnvironmentRequirement? Bridge { get; private init; }
 
     /// <summary>
     /// Points this application at a resource another package provisions.
@@ -69,6 +69,6 @@ public sealed record WebAppIdentifier(string Identifier)
     {
         ArgumentNullException.ThrowIfNull(requirement);
 
-        return this with { ExternalRequirement = requirement };
+        return this with { Bridge = requirement };
     }
 }

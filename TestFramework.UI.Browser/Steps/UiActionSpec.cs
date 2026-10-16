@@ -9,7 +9,7 @@ namespace TestFramework.UI.Browser.Steps;
 /// <summary>
 /// What a flow does, one entry per verb the test wrote.
 /// </summary>
-public enum UiActionKind
+internal enum UiActionKind
 {
     /// <summary>Go to an address.</summary>
     Navigate = 0,

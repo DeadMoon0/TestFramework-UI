@@ -619,7 +619,6 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
 
         // Recorded even on the failing path, and before this throws: the debugging UI, the next run's
         // comparison and the observer about to photograph the page all read the session from here.
-        picture = picture with { Entries = [.. picture.Entries] };
         context.Variables.SetVariable(sessionVariable, picture);
 
         return new UiActionFailedException(
