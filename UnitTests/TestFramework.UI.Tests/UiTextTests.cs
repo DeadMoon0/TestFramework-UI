@@ -1,3 +1,4 @@
+using TestFramework.UI.Browser;
 namespace TestFramework.UI.Tests;
 
 /// <summary>

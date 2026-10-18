@@ -1,7 +1,7 @@
 using System;
 using System.Text;
 
-namespace TestFramework.UI;
+namespace TestFramework.UI.Browser;
 
 /// <summary>
 /// Text normalization shared by everything that compares what a page says to what a test expected.

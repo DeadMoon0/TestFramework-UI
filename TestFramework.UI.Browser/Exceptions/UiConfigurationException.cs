@@ -45,7 +45,7 @@ public sealed class UiConfigurationException : TimelineFrameworkException
     public static UiConfigurationException ApplicationsAlreadyRegistered()
         => new UiConfigurationException(
             "Web applications are already registered on this service collection. Declare them once: either "
-            + "in the 'Ui' configuration section with .LoadUiConfig(), or in code with AddUiBrowser(...), "
+            + "in the 'Ui' configuration section with .LoadUiConfig(), or in code with AddUi(...), "
             + "and not both.");
 
     /// <summary>
@@ -60,7 +60,7 @@ public sealed class UiConfigurationException : TimelineFrameworkException
 
         string knownText = known.Count == 0
             ? "No web application is configured at all. Either add a 'Ui' section and call .LoadUiConfig() "
-              + "on the configuration builder, or declare them in code with services.AddUiBrowser(apps => "
+              + "on the configuration builder, or declare them in code with services.AddUi(apps => "
               + "apps.Add(\"name\", new WebAppConfig { ... }))."
             : $"Configured applications: {string.Join(", ", known.Select(static name => $"'{name}'"))}.";
 

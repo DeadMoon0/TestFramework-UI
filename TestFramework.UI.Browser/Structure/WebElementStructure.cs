@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using TestFramework.UI;
 using TestFramework.UI.Browser.Structure;
 using TestFramework.Core.Exceptions;
 

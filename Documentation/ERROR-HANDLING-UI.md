@@ -72,8 +72,8 @@ configures the browser has the evidence too. The observer records the widgets, a
 where they went or why it could not.
 
 Locally, `TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1` together with `TESTFRAMEWORK_UI_HEADED=1` also holds the
-browser open at the failure state for as long as you need it (a headless browser has no window to hold, and
-the run says so instead) — the run says out loud that it is being held — and `TESTFRAMEWORK_UI_HEADED=1` /
+browser open at the failure state for as long as you need it, and the run says out loud that it is being held.
+A headless browser has no window to hold, so there the run says that instead. `TESTFRAMEWORK_UI_HEADED=1` /
 `TESTFRAMEWORK_UI_SLOWMO=250` replay a run watchably. These are environment overrides, never
 configuration — they belong to a person's machine, not to a suite.
 
@@ -163,8 +163,8 @@ identifiers that *are* registered. Recovery: add the `Ui:<identifier>` entry wit
 
 The configured browser engine is not on the machine. The message names the three ways out: set
 `"Channel": "msedge"` to use the installed Edge with no download, call
-`BrowserExt.Tooling.InstallBrowsers("chromium")` once from a fixture (CI opts in with
-`TESTFRAMEWORK_UI_AUTOINSTALL=1`), or run Playwright's install command by hand.
+`BrowserExt.Tooling.InstallBrowsers("chromium")` once from a fixture, or run Playwright's install command
+by hand. The package never downloads a browser on its own.
 
 ## Wait Event Timeouts
 

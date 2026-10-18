@@ -15,7 +15,7 @@ namespace TestFramework.UI.Browser.Extensions;
 /// The applications a run drives, declared in code rather than read from configuration.
 /// </summary>
 /// <remarks>
-/// Handed to <see cref="UiBrowserServiceCollectionExtension.AddUiBrowser"/>. It collects declarations and
+/// Handed to <see cref="UiServiceCollectionExtension.AddUi"/>. It collects declarations and
 /// holds no services of its own, which is the point: the store it becomes is this package's business, and a
 /// caller never has to name - or be able to name - the type that holds it.
 /// </remarks>
@@ -76,7 +76,7 @@ public sealed class UiBrowserApplications
 /// out the last registration and the earlier set of applications would vanish silently.
 /// </para>
 /// </remarks>
-public static class UiBrowserServiceCollectionExtension
+public static class UiServiceCollectionExtension
 {
     /// <summary>
     /// Registers the applications a run drives, and everything this package needs to drive them.
@@ -88,7 +88,7 @@ public static class UiBrowserServiceCollectionExtension
     /// Applications have already been registered on this collection - by an earlier call, or by
     /// <c>LoadUiConfig()</c> reading the <c>Ui</c> configuration section.
     /// </exception>
-    public static IServiceCollection AddUiBrowser(this IServiceCollection services, Action<UiBrowserApplications> declare)
+    public static IServiceCollection AddUi(this IServiceCollection services, Action<UiBrowserApplications> declare)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(declare);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TestFramework.UI;
+using TestFramework.UI.Browser;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Targeting;
 

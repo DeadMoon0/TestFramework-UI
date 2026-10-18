@@ -231,7 +231,7 @@ internal static class UiValueReader
         {
             // The variable is the one channel the value travels; the trace shows a placeholder.
             // Local storage is where tokens live, and the trace detail reaches the run log, the
-            // session picture, failure messages and the evidence bundle.
+            // session picture, failure messages and the evidence widgets.
             return new UiReadResult(value, SensitiveDetail, Resolved: null, IsCredential: true);
         }
 

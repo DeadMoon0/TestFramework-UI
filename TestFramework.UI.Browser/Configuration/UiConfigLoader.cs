@@ -36,7 +36,7 @@ internal sealed class UiConfigLoader
         // The applications and the pieces that drive them go in together, through the same one place the
         // in-code road uses - so the two roads cannot register different sets, and neither can register
         // half a set.
-        UiBrowserServiceCollectionExtension.AddApplications(serviceCollection, entries);
+        UiServiceCollectionExtension.AddApplications(serviceCollection, entries);
     }
 
     /// <summary>

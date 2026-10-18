@@ -42,7 +42,7 @@ public class ConventionTests(ITestOutputHelper output)
     {
         // The family picked Newtonsoft.Json. Two libraries mean two sets of attributes, two notions of what
         // null means, and values that survive one round trip but not the other - and the session picture in
-        // this package is written to disk as part of a failure bundle, so it is exactly the shape that would
+        // this package is published as one of a failure's widgets, so it is exactly the shape that would
         // show the seam. Checked against the compiled assembly, because a stray using is invisible in a diff.
         Assert.DoesNotContain(
             "System.Text.Json",
@@ -72,7 +72,7 @@ public class ConventionTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public void EveryExceptionThisPackageThrowsIsAFrameworkException()
+    public void EveryExceptionTypeThisPackageDeclaresIsAFrameworkException()
     {
         // One base, so a failure always carries its recovery steps and reads the same way in a run's failure detail.
         string[] strays = [.. typeof(UiSessionPicture).Assembly.GetTypes()

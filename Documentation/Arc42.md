@@ -15,7 +15,7 @@ Three goals rank above everything else:
 2. **One timeline, several doors.** The browser is one way into the system under test, beside the
    API, the database and the stubs. The same timeline shape, variables, assertions and debugging.
 3. **Failures that fix themselves in the message.** Candidate lists, "the page offers" name lists,
-   paste-able expectation output, actual rectangles, and an evidence bundle on disk.
+   paste-able expectation output, actual rectangles, and the evidence as widgets of the run.
 
 ## 2. Constraints
 
@@ -31,7 +31,7 @@ Three goals rank above everything else:
   cancels at the deadline and then waits a grace window in which the step's own account is what
   surfaces, so nothing here under-cuts its budget to be heard. The own-deadline pattern this document
   used to prescribe is gone, and `UiEventDeadline` with it.
-- Turning this package on is one call. `AddUiBrowser(...)` registers the applications and everything
+- Turning this package on is one call. `AddUi(...)` registers the applications and everything
   that drives them together, `.LoadUiConfig()` reaches the same place, and the store behind them is
   internal so half of it cannot be registered alone.
 
@@ -132,7 +132,7 @@ their windows. What a failing step recorded lands in the run output folder CI al
 The `Commitments` idea from the plan is realized as the test suite itself: resilience proven on
 mutation pages (renamed, moved, restyled, ambiguous, delayed, broken), the paste-back round trip
 compiled and re-run, device profiles proven on the responsive page, isolation proven across runs,
-evidence bundles asserted on disk, and every failure-message contract asserted verbatim. Docs are
+evidence widgets asserted on the run, and every failure-message contract asserted verbatim. Docs are
 under test: skill grounding files must exist, README samples mirror real tests, and every public
 exception type must appear in ERROR-HANDLING-UI.md.
 

@@ -133,7 +133,7 @@ public class WebAppConfigInheritanceTests
     {
         ServiceCollection services = new ServiceCollection();
 
-        services.AddUiBrowser(apps => apps
+        services.AddUi(apps => apps
             .Add("parent", parent)
             .Add("child", child with { BasedOn = "parent" }));
 

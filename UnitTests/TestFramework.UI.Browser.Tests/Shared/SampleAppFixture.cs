@@ -110,7 +110,7 @@ public sealed class SampleAppFixture : IAsyncLifetime
         // the only way to declare applications in code: the store behind it is internal, so a fixture
         // cannot register the applications and forget what drives them - which is what used to leave every
         // test about failure evidence quietly passing by finding nothing to check.
-        services.AddUiBrowser(apps => apps
+        services.AddUi(apps => apps
             .Add("shop", shop)
 
             // The same application as a phone sees it, expressed as one line of inheritance rather than a

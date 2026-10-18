@@ -102,8 +102,14 @@ internal static class PlaywrightHost
             try
             {
                 IBrowser browser = await launch.WaitAsync(cancellationToken).ConfigureAwait(false);
-                Browsers[key] = browser;
-                return browser;
+
+                // An earlier step's abandoned launch may have finished and pooled its browser meanwhile - it is
+                // adopted outside the gate. One browser per key stays; the other is closed, not leaked.
+                IBrowser pooled = Browsers.GetOrAdd(key, browser);
+                if (!ReferenceEquals(pooled, browser))
+                    await browser.CloseAsync().ConfigureAwait(false);
+
+                return pooled;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

@@ -16,7 +16,7 @@ public static class UiResourceKinds
     /// <summary>
     /// A web application as the run holds it: the browser settings it is driven with, and its address when
     /// the application's own entry states one. Declared for every application the <c>Ui</c> configuration
-    /// section or <c>AddUiBrowser(...)</c> names, so a browser step's requirement is checked against it
+    /// section or <c>AddUi(...)</c> names, so a browser step's requirement is checked against it
     /// before the run starts.
     /// </summary>
     /// <remarks>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TestFramework.UI.Browser.Structure;
+using TestFramework.UI.Browser;
 
 namespace TestFramework.UI.Tests.Structure;
 

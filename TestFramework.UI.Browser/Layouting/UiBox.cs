@@ -3,7 +3,7 @@ using System.Globalization;
 
 using TestFramework.Core.Conventions;
 
-namespace TestFramework.UI.Layout;
+namespace TestFramework.UI.Browser.Layouting;
 
 /// <summary>
 /// Where something is on a page: its rectangle, in the page's own pixels.

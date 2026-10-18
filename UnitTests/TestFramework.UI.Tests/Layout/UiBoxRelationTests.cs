@@ -1,4 +1,4 @@
-using TestFramework.UI.Layout;
+using TestFramework.UI.Browser.Layouting;
 
 namespace TestFramework.UI.Tests.Layout;
 

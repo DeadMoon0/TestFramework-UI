@@ -30,7 +30,7 @@
     Drift is watched, not asserted: CaptureStructure and CaptureLayout store normalized projections in variables, and the framework's value-change detection reports what changed against the last clean run. A capture never fails a run by itself.
     The browser environment is configuration, never test code: browser, channel, headless, and a Device profile (Playwright descriptors like "iPhone 14", or the package presets Desktop 720p/1080p/1440p, Laptop, Tablet, Narrow). BasedOn inherits an entry and overrides selectively, so the phone variant of an application is one line. The same timeline runs on both by naming the other identifier.
     A retried flow replays its actions against whatever the failed attempt left behind, so WithRetry on a flow is refused at plan time unless its first action is Navigate.
-    Every failure carries its own diagnosis and the next thing to type, plus an evidence bundle on disk: screenshot, page markup, session story and console log, in the run's output folder that CI publishes. Console errors and page exceptions ride along in the session picture, so a crashed application is never misdiagnosed as a locator problem.
+    Every failure carries its own diagnosis and the next thing to type, plus its evidence as widgets of the run: screenshot, page markup, session story and console log, attributed to the step that failed. Console errors and page exceptions ride along in the session picture, so a crashed application is never misdiagnosed as a locator problem.
     Sessions are pooled browsers with per-run contexts: one run never sees another run's cookies or storage, and the first browser step of a run claims the one cleanup step that closes its sessions.
     An application configured or provisioned as a Site under its own identifier resolves with no bridging call at all; BridgedTo(new EnvironmentRequirement(WebResourceKinds.RestApi, apiId)) covers the application its API process serves, and carries that requirement so one provisioned container serves API steps and browser steps alike.
 </key_concepts>
@@ -47,7 +47,7 @@
     Read values into variables and let later steps consume them with Var.Ref; parse with Transform where a type is needed.
     Keep scripts rare, named, and honest: seed and read state, never click through JavaScript. Watch run.UiScripts(app) the way you watch loose matches.
     Put WithRetry only on flows that start with Navigate; the plan-time guard enforces it, so design for it.
-    Set "Channel": "msedge" on Windows machines and CI where Edge is present - zero download; use TESTFRAMEWORK_UI_AUTOINSTALL=1 with chromium on Linux runners.
+    Set "Channel": "msedge" on Windows machines and CI where Edge is present - zero download; on Linux runners call BrowserExt.Tooling.InstallBrowsers("chromium") once from a fixture. The package never downloads a browser on its own.
     Diagnose locally with the environment overrides: TESTFRAMEWORK_UI_HEADED=1 to watch, TESTFRAMEWORK_UI_SLOWMO=250 to follow, TESTFRAMEWORK_UI_PAUSE_ON_FAILURE=1 (with TESTFRAMEWORK_UI_HEADED=1; headless has no window to hold) to inspect the live page at the failure.
     Data-driven browser tests currently use a loop inside a [Fact]; the Core test-identity resolver crashes under xunit theory invokers until the Core fix ships.
 </best_practices>
@@ -123,5 +123,5 @@
     - TestFramework.UI.Browser/BrowserTimelineResultExtensions.cs
     - TestFramework.UI.Browser/Session/UiSessionPicture.cs
     - TestFramework.UI.Browser/Structure/ExpectedTable.cs
-    - TestFramework.UI.Browser/Layout/UiBox.cs
+    - TestFramework.UI.Browser/Layouting/UiBox.cs
 </sources>

@@ -50,12 +50,19 @@ public sealed class BrowserPoolTests
         // The driver started, so what the deadline meets is the launch itself rather than the driver's start.
         await PlaywrightHost.DriverAsync(CancellationToken.None);
 
+        // A full launch on this machine, right now, is the yardstick: a loaded machine slows both alike, where a
+        // fixed bound would read a slow machine as a step that waited.
+        Stopwatch full = Stopwatch.StartNew();
+        IBrowser measured = await PlaywrightHost.BrowserAsync(Config(13), CancellationToken.None);
+        full.Stop();
+        await measured.CloseAsync();
+
         using CancellationTokenSource deadline = new(TimeSpan.FromMilliseconds(50));
         Stopwatch elapsed = Stopwatch.StartNew();
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => PlaywrightHost.BrowserAsync(config, deadline.Token));
 
-        Assert.True(elapsed.Elapsed < TimeSpan.FromMilliseconds(400), $"the launch held the step for {elapsed.Elapsed}");
+        Assert.True(elapsed.Elapsed < full.Elapsed / 2, $"the launch held the step for {elapsed.Elapsed}; a full launch took {full.Elapsed}");
 
         // And the launch it let go of was not leaked: the pool still hands out a working browser.
         IBrowser browser = await PlaywrightHost.BrowserAsync(config, CancellationToken.None);
