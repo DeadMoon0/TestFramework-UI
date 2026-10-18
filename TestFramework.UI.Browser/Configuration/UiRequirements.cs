@@ -1,10 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 using TestFramework.Core.Environment;
 using TestFramework.Core.Environment.Graph;
 using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Identifier;
+using TestFramework.UI.Browser.Runtime;
 
 namespace TestFramework.UI.Browser.Configuration;
 
@@ -42,7 +44,16 @@ internal static class UiRequirements
     /// </summary>
     /// <exception cref="UiConfigurationException">No browser, a browser that is not an engine, two addresses for one
     /// application, or none at all.</exception>
-    public static IReadOnlyCollection<EnvironmentRequirement> For(WebAppIdentifier app, ResourceGraph resources)
+    /// <exception cref="UiBrowserNotInstalledException">The browser build a launch needs is not on this machine, and the
+    /// application did not ask the run to install it.</exception>
+    public static IReadOnlyCollection<EnvironmentRequirement> For(WebAppIdentifier app, ResourceGraph resources, UiRunState runState)
+        => For(app, resources, runState, PlaywrightBuilds.Check);
+
+    /// <summary>
+    /// The requirements, with what this machine has installed asked of <paramref name="checkBuild"/>.
+    /// </summary>
+    /// <remarks>A test states the machine rather than inheriting the one it runs on.</remarks>
+    internal static IReadOnlyCollection<EnvironmentRequirement> For(WebAppIdentifier app, ResourceGraph resources, UiRunState runState, Func<string, bool, UiBuildCheck> checkBuild)
     {
         List<EnvironmentRequirement> required = [UiResourceKinds.WebAppKind.Requirement(app.Identifier)];
 
@@ -65,6 +76,8 @@ internal static class UiRequirements
         {
             throw UiConfigurationException.NotABrowserEngine(app.Identifier, browser);
         }
+
+        EnsureTheBrowserIsHere(app.Identifier, own, runState, checkBuild);
 
         bool statesAddress = own.DeclaredValues.Keys.Any(static key => key.ValueName == ValueNames.BaseUrl);
         EnvironmentRequirement? bridge = app.Bridge ?? ConfiguredBridge(own);
@@ -106,6 +119,63 @@ internal static class UiRequirements
 
         required.Add(new EnvironmentRequirement(sameName[0].KindName, sameName[0].Identifier));
         return required;
+    }
+
+    /// <summary>
+    /// Refuses, while nothing has started, a run whose browser is not on this machine - or notes the install the
+    /// application asked for.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A pipeline agent without the browser used to find out at the first browser step, after the environment had
+    /// started and every earlier step had run, and then tore it all down. The build a launch looks for is a file
+    /// question, so it is asked here.
+    /// </para>
+    /// <para>
+    /// A branded build is left to the launch: where Edge or Chrome is installed is the machine's business, and a
+    /// guess at its path would refuse runs that would have worked.
+    /// </para>
+    /// </remarks>
+    private static void EnsureTheBrowserIsHere(string identifier, ResourceNode own, UiRunState runState, Func<string, bool, UiBuildCheck> checkBuild)
+    {
+        Dictionary<string, string> values = [];
+        foreach ((ValueKey key, string value) in own.DeclaredValues)
+        {
+            values.TryAdd(key.ValueName, value);
+        }
+
+        // The machine's own overrides decide headless or headed, and chromium's two modes are separate builds.
+        WebAppConfig config = UiEnvironmentOverrides.Apply(WebAppValues.Read(values, identifier));
+
+        if (config.Channel is { Length: > 0 } channel)
+        {
+            if (config.Install == true)
+            {
+                throw UiConfigurationException.InstallWithChannel(identifier, channel);
+            }
+
+            return;
+        }
+
+        string engine = config.EffectiveBrowser;
+        UiBuildCheck check = checkBuild(engine, config.EffectiveHeadless);
+
+        if (config.Install == true)
+        {
+            // Asked for, so it happens whenever the build is not known to be here: Playwright's installer skips what
+            // is already in place, and a cache this cannot see is no reason to skip what the application asked for.
+            if (!check.IsInstalled)
+            {
+                runState.InstallBeforeTheRun(engine.ToLowerInvariant(), check.Needed);
+            }
+
+            return;
+        }
+
+        if (check.IsKnownMissing)
+        {
+            throw UiBrowserNotInstalledException.BeforeTheRun(identifier, engine, check);
+        }
     }
 
     /// <summary>

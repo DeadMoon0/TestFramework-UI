@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using System.IO;
 using TestFramework.UI.Browser.Runtime;
@@ -21,7 +22,7 @@ public sealed class InstalledBrowsersTests : IDisposable
     [InlineData("firefox")]
     [InlineData("webkit")]
     public void AnEngineWithNothingDownloaded_IsNotReported(string engine)
-        => Assert.Null(InstalledBrowsers.FindPlaywrightBuild(engine, [this.cache]));
+        => Assert.Null(InstalledBrowsers.FindPlaywrightBuild(engine, Pins, [this.cache]));
 
     [Theory]
     [InlineData("chromium")]
@@ -31,7 +32,7 @@ public sealed class InstalledBrowsersTests : IDisposable
     {
         this.Install(engine, "1234", complete: true);
 
-        UiAvailableBrowser? found = InstalledBrowsers.FindPlaywrightBuild(engine, [this.cache]);
+        UiAvailableBrowser? found = InstalledBrowsers.FindPlaywrightBuild(engine, Pins, [this.cache]);
 
         Assert.NotNull(found);
         Assert.Equal(engine, found.Browser);
@@ -43,7 +44,7 @@ public sealed class InstalledBrowsersTests : IDisposable
     {
         this.Install("firefox", "1234", complete: false);
 
-        Assert.Null(InstalledBrowsers.FindPlaywrightBuild("firefox", [this.cache]));
+        Assert.Null(InstalledBrowsers.FindPlaywrightBuild("firefox", Pins, [this.cache]));
     }
 
     [Fact]
@@ -51,12 +52,40 @@ public sealed class InstalledBrowsersTests : IDisposable
     {
         this.Install("chromium", "1234", complete: true);
 
-        Assert.Null(InstalledBrowsers.FindPlaywrightBuild("webkit", [this.cache]));
+        Assert.Null(InstalledBrowsers.FindPlaywrightBuild("webkit", Pins, [this.cache]));
     }
 
     [Fact]
     public void ACacheFolderThatDoesNotExist_IsNotReported()
-        => Assert.Null(InstalledBrowsers.FindPlaywrightBuild("chromium", [Path.Combine(this.cache, "missing")]));
+        => Assert.Null(InstalledBrowsers.FindPlaywrightBuild("chromium", Pins, [Path.Combine(this.cache, "missing")]));
+
+    [Fact]
+    public void ABuildOfAnotherPlaywrightVersion_IsNotReported_BecauseTheLaunchWouldNotUseIt()
+    {
+        this.Install("chromium", "1223", complete: true);
+
+        Assert.Null(InstalledBrowsers.FindPlaywrightBuild("chromium", Pins, [this.cache]));
+    }
+
+    [Fact]
+    public void ChromiumsHeadlessShellAlone_IsReported_BecauseAHeadlessLaunchNeedsNothingElse()
+    {
+        this.Install("chromium_headless_shell", "1234", complete: true);
+
+        Assert.NotNull(InstalledBrowsers.FindPlaywrightBuild("chromium", Pins, [this.cache]));
+    }
+
+    [Fact]
+    public void WithoutThePins_NothingIsReported_RatherThanAGuess()
+        => Assert.Null(InstalledBrowsers.FindPlaywrightBuild("chromium", null, [this.cache]));
+
+    private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Pins = new Dictionary<string, IReadOnlyList<string>>
+    {
+        ["chromium"] = ["1234"],
+        ["chromium-headless-shell"] = ["1234"],
+        ["firefox"] = ["1234"],
+        ["webkit"] = ["1234"],
+    };
 
     private void Install(string engine, string build, bool complete)
     {

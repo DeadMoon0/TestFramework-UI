@@ -17,6 +17,7 @@ using TestFramework.UI.Browser.Identifier;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Browser.Session;
+using TestFramework.UI.Browser.Steps;
 
 namespace TestFramework.UI.Browser.Events;
 
@@ -45,7 +46,7 @@ internal sealed record UiProbeOutcome(bool Satisfied, string? ResolvedVia = null
 /// </para>
 /// </remarks>
 /// <typeparam name="TEvent">The concrete event type.</typeparam>
-public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultContext>, IHasEnvironmentRequirements, IHasCleanupStep
+public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultContext>, IHasEnvironmentRequirements, IHasCleanupStep, IHasPreStep
     where TEvent : UiEvent<TEvent>
 {
     private readonly WebAppIdentifier app;
@@ -112,7 +113,15 @@ public abstract class UiEvent<TEvent> : SequentialEvent<TEvent, UiWaitResultCont
     /// decided with the run's resources in view; see <see cref="UiRequirements"/>.
     /// </remarks>
     public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore, ResourceGraph resources)
-        => UiRequirements.For(this.app, resources);
+        => UiRequirements.For(this.app, resources, UiRunState.For(variableStore));
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Every browser step offers one, but a run needs at most one: it installs whatever the plan noted for the run's
+    /// applications. The first step planned claims it.
+    /// </remarks>
+    public StepGeneric? CreatePreStep(VariableStore variableStore)
+        => UiRunState.For(variableStore).TryClaimInstall() ? new UiBrowserInstallStep() : null;
 
     /// <inheritdoc />
     public StepGeneric? CreateCleanupStep(VariableStore variableStore)

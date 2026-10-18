@@ -40,7 +40,7 @@ namespace TestFramework.UI.Browser.Steps;
 /// individual action is still recorded, so nothing is hidden by grouping them.
 /// </para>
 /// </remarks>
-public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRequirements, IHasCleanupStep
+public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRequirements, IHasCleanupStep, IHasPreStep
 {
     private readonly WebAppIdentifier app;
     private readonly List<UiActionSpec> actions = new List<UiActionSpec>();
@@ -409,7 +409,15 @@ public sealed class UiBrowserFlow : Step<UiFlowResultContext>, IHasEnvironmentRe
     /// decided with the run's resources in view; see <see cref="UiRequirements"/>.
     /// </remarks>
     public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore, ResourceGraph resources)
-        => UiRequirements.For(this.app, resources);
+        => UiRequirements.For(this.app, resources, UiRunState.For(variableStore));
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Every browser step offers one, but a run needs at most one: it installs whatever the plan noted for the run's
+    /// applications. The first step planned claims it.
+    /// </remarks>
+    public StepGeneric? CreatePreStep(VariableStore variableStore)
+        => UiRunState.For(variableStore).TryClaimInstall() ? new UiBrowserInstallStep() : null;
 
     /// <inheritdoc />
     /// <remarks>

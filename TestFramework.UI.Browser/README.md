@@ -60,6 +60,10 @@ prints the actual structure as source you can paste back into the test.
 Viewport, device, channel and headlessness live in configuration, so the same timeline runs against a
 1080p desktop and an iPhone by pointing at a different identifier - no test change.
 
+A browser the machine does not have refuses the run while it is planned, naming the build it needs. Use an
+installed one with `"Channel": "msedge"` or `"chrome"`, install it in the pipeline, or let the run install
+Playwright's build with `"Install": true`.
+
 ## When not to use it
 
 For suites that only test a browser, Playwright's own tooling (UI mode, trace viewer, codegen) is the

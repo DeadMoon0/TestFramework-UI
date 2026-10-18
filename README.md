@@ -30,6 +30,32 @@ the system under test, next to the API, the database and the stubs.
 - **You need the site booted for you**: that is the container lane's job. Browser steps declare what
   they need; an environment that provisions the site under its identifier serves them unchanged.
 
+## A Browser On A Pipeline Agent
+
+A run checks, while it is planned, that the exact browser build this version of Playwright launches is on the
+machine - and refuses before anything starts when it is not, naming the build it needs and any older one a
+cache left behind. Three ways to have it:
+
+- **Use a browser the agent already has.** GitHub's hosted Windows and Ubuntu runners come with Chrome and
+  Edge: `"Channel": "chrome"` or `"msedge"`, nothing to download.
+- **Install it in the pipeline**, before the tests, with the Playwright of the test project:
+
+  ```yaml
+  - run: dotnet build
+  - uses: actions/cache@v4
+    with:
+      path: ~/.cache/ms-playwright
+      key: playwright-${{ runner.os }}-${{ hashFiles('**/packages.lock.json', '**/*.csproj') }}
+  - run: pwsh tests/MyTests/bin/Debug/net8.0/playwright.ps1 install --with-deps chromium
+  ```
+
+  Key the cache on what pins the Playwright version, or an upgrade restores the old build. `--with-deps`
+  installs the system libraries Linux needs, which takes root - only the pipeline can do that.
+- **Let the run install it**: `"Install": true` on the application. The run then installs exactly the build it
+  needs, as a step of its own before the first browser step, and logs what it installed. Playwright's own builds
+  only - a `Channel` is installed with the machine - and on a bare Linux agent the system libraries still need
+  `playwright install-deps` in the pipeline.
+
 ## Install
 
 ```bash

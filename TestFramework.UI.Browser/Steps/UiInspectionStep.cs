@@ -38,7 +38,7 @@ namespace TestFramework.UI.Browser.Steps;
 /// </para>
 /// </remarks>
 /// <typeparam name="TResult">What this inspection produces.</typeparam>
-internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironmentRequirements, IHasCleanupStep
+internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironmentRequirements, IHasCleanupStep, IHasPreStep
     where TResult : StepResultContext
 {
     private readonly WebAppIdentifier app;
@@ -88,7 +88,15 @@ internal abstract class UiInspectionStep<TResult> : Step<TResult>, IHasEnvironme
     /// decided with the run's resources in view; see <see cref="UiRequirements"/>.
     /// </remarks>
     public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore, ResourceGraph resources)
-        => UiRequirements.For(this.app, resources);
+        => UiRequirements.For(this.app, resources, UiRunState.For(variableStore));
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Every browser step offers one, but a run needs at most one: it installs whatever the plan noted for the run's
+    /// applications. The first step planned claims it.
+    /// </remarks>
+    public StepGeneric? CreatePreStep(VariableStore variableStore)
+        => UiRunState.For(variableStore).TryClaimInstall() ? new UiBrowserInstallStep() : null;
 
     /// <inheritdoc />
     public StepGeneric? CreateCleanupStep(VariableStore variableStore)

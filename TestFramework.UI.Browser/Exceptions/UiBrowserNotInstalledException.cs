@@ -1,24 +1,45 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Playwright;
-
 using TestFramework.Core.Exceptions;
+using TestFramework.UI.Browser.Runtime;
+
 namespace TestFramework.UI.Browser.Exceptions;
 
 /// <summary>
 /// Thrown when the configured browser is not on this machine.
 /// </summary>
 /// <remarks>
-/// A first run on a fresh clone hits this, so the message is written for somebody who has not read any
-/// documentation yet: it names the three ways forward and puts the one needing no download first.
+/// A first run on a fresh clone or a fresh pipeline agent hits this, so the message is written for somebody who
+/// has not read any documentation yet: it names the three ways forward and puts the one needing no download first.
+/// Thrown while the run is planned when the missing build can be told from files, and at the launch otherwise.
 /// </remarks>
 public sealed class UiBrowserNotInstalledException : TimelineFrameworkException
 {
     internal UiBrowserNotInstalledException(string browser, string? channel, Exception inner)
-        : base(BuildMessage(browser, channel), [], [], inner)
+        : base(BuildMessage(browser, channel, needed: null, found: []), [], [], inner)
     {
         this.Browser = browser;
         this.Channel = channel;
     }
+
+    private UiBrowserNotInstalledException(string identifier, string browser, string needed, IReadOnlyList<string> found)
+        : base($"The web application '{identifier}' cannot run here, so this run was refused before anything started.\n\n" + BuildMessage(browser, null, needed, found), [])
+    {
+        this.Browser = browser;
+        this.Channel = null;
+    }
+
+    /// <summary>
+    /// The refusal while a run is planned: the build a launch would look for is not on this machine, and the
+    /// application did not ask the run to install it.
+    /// </summary>
+    /// <param name="identifier">The application.</param>
+    /// <param name="browser">The engine.</param>
+    /// <param name="check">What was found.</param>
+    /// <returns>The exception.</returns>
+    internal static UiBrowserNotInstalledException BeforeTheRun(string identifier, string browser, UiBuildCheck check)
+        => new(identifier, browser, check.Needed ?? browser, check.Found);
 
     /// <summary>The browser that could not be started.</summary>
     public string Browser { get; }
@@ -63,23 +84,26 @@ public sealed class UiBrowserNotInstalledException : TimelineFrameworkException
         || message.Contains("looks like Playwright", StringComparison.OrdinalIgnoreCase)
         || message.Contains("please run the following command to download new browsers", StringComparison.OrdinalIgnoreCase);
 
-    private static string BuildMessage(string browser, string? channel)
+    private static string BuildMessage(string browser, string? channel, string? needed, IReadOnlyList<string> found)
     {
         string what = channel is { Length: > 0 } ? $"the '{channel}' build of {browser}" : browser;
+        string which = needed is null ? string.Empty : $" This version of Playwright launches the build '{needed}'.";
+        string stale = found.Count == 0 ? string.Empty
+            : $"\n\nThis machine has {string.Join(", ", found)} - another version of Playwright's build. A cached browser folder from before a\nPlaywright upgrade looks like this; key the cache on the Playwright package version.";
 
         return $"""
-            The browser this run needs ({what}) is not available on this machine.
+            The browser this run needs ({what}) is not available on this machine.{which}{stale}
 
             Any one of these fixes it:
 
               1. Use a browser that is already installed - no download at all. In the 'Ui' section of
                  your settings, set "Channel": "msedge" (or "chrome") for this application.
 
-              2. Install the browsers once from a test fixture:
-                     BrowserExt.Tooling.InstallBrowsers("chromium");
+              2. Let the run install it: set "Install": true for this application. The run then installs
+                 exactly the build it needs, as a step of its own, before the first browser step.
 
-              3. Install them from a terminal, in the test project's output folder:
-                     pwsh bin/Debug/net8.0/playwright.ps1 install chromium
+              3. Install it in the pipeline or from a terminal, in the test project's output folder:
+                     pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps {browser}
 
             The application's Browser and Channel settings decide which browser a run drives; nothing
             picks another one for it.

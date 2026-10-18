@@ -36,6 +36,8 @@ internal sealed class UiRunState
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, UiSession> sessions = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim sessionGate = new SemaphoreSlim(1, 1);
     private int cleanupClaimed;
+    private int installClaimed;
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string?> installs = new(StringComparer.Ordinal);
     private int inspectionHolds;
 
     /// <summary>
@@ -102,6 +104,22 @@ internal sealed class UiRunState
     /// </remarks>
     /// <returns>True for the first caller of a run, false for every later one.</returns>
     public bool TryClaimCleanup() => Interlocked.Exchange(ref this.cleanupClaimed, 1) == 0;
+
+    /// <summary>
+    /// Claims the right to create this run's single browser-install step.
+    /// </summary>
+    /// <returns>True for the first caller of a run, false for every later one.</returns>
+    public bool TryClaimInstall() => Interlocked.Exchange(ref this.installClaimed, 1) == 0;
+
+    /// <summary>
+    /// Notes, while the run is planned, a browser build an application declared the run may install.
+    /// </summary>
+    /// <param name="engine">The engine to install: <c>chromium</c>, <c>firefox</c> or <c>webkit</c>.</param>
+    /// <param name="build">The build folder the launch will look for, or null when that cannot be told here.</param>
+    public void InstallBeforeTheRun(string engine, string? build) => this.installs[engine] = build;
+
+    /// <summary>The installs the plan noted, by engine, with the build each has to produce when it is known.</summary>
+    public IReadOnlyDictionary<string, string?> PlannedInstalls => this.installs;
 
     /// <summary>
     /// The session for an application, creating it on first use.

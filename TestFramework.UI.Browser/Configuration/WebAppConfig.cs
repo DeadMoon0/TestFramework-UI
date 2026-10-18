@@ -75,6 +75,23 @@ public sealed record WebAppConfig : IInheritsConfig
     public bool? Headless { get; init; }
 
     /// <summary>
+    /// Whether the run installs Playwright's build of the browser when this machine does not have it. Defaults to false.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Stated, never assumed: without it a missing browser refuses the run while it is planned, before anything
+    /// starts. With it the run installs exactly the build this version of Playwright launches, as a step of its own
+    /// that says what it installed and how long it took.
+    /// </para>
+    /// <para>
+    /// Playwright's own builds only. A <see cref="Channel"/> is installed with the machine, not by a run, and the
+    /// operating-system libraries a browser needs on Linux take root to install - a pipeline step
+    /// (<c>playwright install-deps</c>) does that.
+    /// </para>
+    /// </remarks>
+    public bool? Install { get; init; }
+
+    /// <summary>
     /// A named device to emulate: one of Playwright's descriptors such as <c>iPhone 14</c> or
     /// <c>Pixel 7</c>, or one of this package's desktop presets. See <see cref="UiDeviceProfiles"/>.
     /// </summary>

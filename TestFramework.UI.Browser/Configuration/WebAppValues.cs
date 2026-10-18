@@ -36,6 +36,7 @@ internal static class WebAppValues
         Add(values, nameof(WebAppConfig.Browser), config.Browser);
         Add(values, nameof(WebAppConfig.Channel), config.Channel);
         Add(values, nameof(WebAppConfig.Headless), Format(config.Headless));
+        Add(values, nameof(WebAppConfig.Install), Format(config.Install));
         Add(values, nameof(WebAppConfig.Device), config.Device);
         Add(values, nameof(WebAppConfig.ViewportWidth), config.ViewportWidth?.ToString(CultureInfo.InvariantCulture));
         Add(values, nameof(WebAppConfig.ViewportHeight), config.ViewportHeight?.ToString(CultureInfo.InvariantCulture));
@@ -79,6 +80,7 @@ internal static class WebAppValues
             Browser = Get(values, nameof(WebAppConfig.Browser)),
             Channel = Get(values, nameof(WebAppConfig.Channel)),
             Headless = ParseBool(values, identifier, nameof(WebAppConfig.Headless)),
+            Install = ParseBool(values, identifier, nameof(WebAppConfig.Install)),
             Device = Get(values, nameof(WebAppConfig.Device)),
             ViewportWidth = ParseInt(values, identifier, nameof(WebAppConfig.ViewportWidth)),
             ViewportHeight = ParseInt(values, identifier, nameof(WebAppConfig.ViewportHeight)),

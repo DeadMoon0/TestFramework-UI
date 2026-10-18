@@ -31,6 +31,7 @@ public static class UiResourceKinds
         .Offers(nameof(WebAppConfig.Browser), ValueTraits.Optional)
         .Offers(nameof(WebAppConfig.Channel), ValueTraits.Optional)
         .Offers(nameof(WebAppConfig.Headless), ValueTraits.Optional)
+        .Offers(nameof(WebAppConfig.Install), ValueTraits.Optional)
         .Offers(nameof(WebAppConfig.Device), ValueTraits.Optional)
         .Offers(nameof(WebAppConfig.ViewportWidth), ValueTraits.Optional)
         .Offers(nameof(WebAppConfig.ViewportHeight), ValueTraits.Optional)

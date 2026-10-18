@@ -16,7 +16,7 @@
 		<RepositoryUrl>https://github.com/DeadMoon0/TestFramework-UI.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 		<Copyright>Copyright (c) DeadMoon0 2026</Copyright>
-		<PackageReleaseNotes>BREAKING - needs TestFramework.Core 0.7.0 and TestFramework.Config 0.4.0. BREAKING - renamed: AddUiBrowser is AddUi, LoadUIConfig is LoadUiConfig, BaseUrlFromSite and BaseUrlFromApi are BaseUrlFrom, ExternalRequirement is Bridge, BrowserEnvironmentResourceKinds is UiResourceKinds, and every public type is under TestFramework.UI.Browser (Session, Structure, Layouting for UiBox, and UiText at the root). A key in a Ui entry that is not a setting is refused, as are a missing or branded browser while the run is planned, and a cookie or local-storage value read into a variable is a secret variable.</PackageReleaseNotes>
+		<PackageReleaseNotes>BREAKING - needs TestFramework.Core 0.7.0 and TestFramework.Config 0.4.0. BREAKING - renamed: AddUiBrowser is AddUi, LoadUIConfig is LoadUiConfig, BaseUrlFromSite and BaseUrlFromApi are BaseUrlFrom, ExternalRequirement is Bridge, BrowserEnvironmentResourceKinds is UiResourceKinds, and every public type is under TestFramework.UI.Browser (Session, Structure, Layouting for UiBox, and UiText at the root). A key in a Ui entry that is not a setting is refused, as are a missing or branded browser while the run is planned, and a cookie or local-storage value read into a variable is a secret variable. A browser the machine does not have now refuses the run while it is planned, naming the exact build; "Install": true lets the run install Playwright's build as a step of its own.</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>

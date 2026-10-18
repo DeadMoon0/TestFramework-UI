@@ -122,6 +122,18 @@ public sealed class UiConfigurationException : TimelineFrameworkException
     }
 
     /// <summary>
+    /// An application asks the run to install a branded build, which only the machine can.
+    /// </summary>
+    /// <param name="identifier">The application.</param>
+    /// <param name="channel">The branded build it names.</param>
+    /// <returns>The exception.</returns>
+    public static UiConfigurationException InstallWithChannel(string identifier, string channel)
+        => new UiConfigurationException(
+            $"The web application '{identifier}' states Install = true together with Channel = \"{channel}\". "
+            + "A run installs Playwright's own builds; a branded browser is installed with the machine. "
+            + "Drop Channel to let the run install Playwright's build, or drop Install and use the browser the machine has.");
+
+    /// <summary>
     /// An application's configuration entry holds keys that are not settings.
     /// </summary>
     /// <param name="identifier">The application.</param>

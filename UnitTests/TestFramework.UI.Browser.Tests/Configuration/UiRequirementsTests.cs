@@ -6,6 +6,7 @@ using TestFramework.Core.Environment.Graph;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Identifier;
+using TestFramework.UI.Browser.Runtime;
 using TestFramework.Web;
 using Xunit;
 
@@ -27,7 +28,7 @@ public class UiRequirementsTests
         // before it; nothing has run yet when the plan is made.
         ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/" }));
 
-        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => For(Shop, resources));
 
         Assert.Contains("'shop'", refusal.Message, StringComparison.Ordinal);
         Assert.Contains("browser", refusal.Message, StringComparison.OrdinalIgnoreCase);
@@ -38,7 +39,7 @@ public class UiRequirementsTests
     {
         ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "msedge" }));
 
-        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => For(Shop, resources));
 
         Assert.Contains("Channel = \"msedge\"", refusal.Message, StringComparison.Ordinal);
     }
@@ -48,7 +49,7 @@ public class UiRequirementsTests
     {
         ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium" }));
 
-        Assert.Equal(["ui.webapp/shop"], Describe(UiRequirements.For(Shop, resources)));
+        Assert.Equal(["ui.webapp/shop"], Describe(For(Shop, resources)));
     }
 
     [Fact]
@@ -58,7 +59,7 @@ public class UiRequirementsTests
         // browser package applies its own convention and requires the site itself.
         ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium" }), Other(WebResourceKinds.SiteKind, "shop"));
 
-        Assert.Equal(["ui.webapp/shop", "web.site/shop"], Describe(UiRequirements.For(Shop, resources)));
+        Assert.Equal(["ui.webapp/shop", "web.site/shop"], Describe(For(Shop, resources)));
     }
 
     [Fact]
@@ -66,7 +67,7 @@ public class UiRequirementsTests
     {
         ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium" }), Other(WebResourceKinds.SiteKind, "shop"));
 
-        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => For(Shop, resources));
 
         Assert.Contains("states its own 'BaseUrl'", refusal.Message);
         Assert.Contains("web.site 'shop'", refusal.Message);
@@ -80,7 +81,7 @@ public class UiRequirementsTests
             Other(WebResourceKinds.SiteKind, "shop"),
             Other(WebResourceKinds.RestApiKind, "shop"));
 
-        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => For(Shop, resources));
 
         Assert.Contains("web.site 'shop'", refusal.Message);
         Assert.Contains("web.restapi 'shop'", refusal.Message);
@@ -91,7 +92,7 @@ public class UiRequirementsTests
     {
         ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium" }));
 
-        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => UiRequirements.For(Shop, resources));
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => For(Shop, resources));
 
         Assert.Contains("has no address", refusal.Message);
     }
@@ -102,7 +103,7 @@ public class UiRequirementsTests
         ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium" }), Other(WebResourceKinds.SiteKind, "storefront"));
         WebAppIdentifier bridged = Shop.BridgedTo(WebResourceKinds.SiteKind.Requirement("storefront"));
 
-        Assert.Equal(["ui.webapp/shop", "web.site/storefront"], Describe(UiRequirements.For(bridged, resources)));
+        Assert.Equal(["ui.webapp/shop", "web.site/storefront"], Describe(For(bridged, resources)));
     }
 
     [Fact]
@@ -110,8 +111,87 @@ public class UiRequirementsTests
     {
         ResourceGraph resources = Resources(App("shop", new WebAppConfig { Browser = "chromium", BaseUrlFrom = "storefront" }), Other(WebResourceKinds.SiteKind, "storefront"));
 
-        Assert.Equal(["ui.webapp/shop", "*/storefront"], Describe(UiRequirements.For(Shop, resources)));
+        Assert.Equal(["ui.webapp/shop", "*/storefront"], Describe(For(Shop, resources)));
     }
+
+    [Fact]
+    public void ABrowserThisMachineDoesNotHave_IsRefusedWhileTheRunIsPlanned_NamingTheBuildAndTheStaleOne()
+    {
+        // A pipeline agent found out at the first browser step, after the environment had started; and a cache restored
+        // from an older Playwright said "installed" because some chromium was there.
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium" }));
+
+        UiBrowserNotInstalledException refusal = Assert.Throws<UiBrowserNotInstalledException>(
+            () => UiRequirements.For(Shop, resources, new UiRunState(), (_, _) => UiBuildCheck.Missing("chromium_headless_shell-1234", ["chromium_headless_shell-1223"])));
+
+        Assert.Contains("'shop'", refusal.Message, StringComparison.Ordinal);
+        Assert.Contains("chromium_headless_shell-1234", refusal.Message, StringComparison.Ordinal);
+        Assert.Contains("chromium_headless_shell-1223", refusal.Message, StringComparison.Ordinal);
+        Assert.Contains("\"Install\": true", refusal.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AMissingBrowserTheApplicationAskedToInstall_IsPlannedForInstall_NotRefused()
+    {
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium", Install = true }));
+        UiRunState runState = new();
+
+        UiRequirements.For(Shop, resources, runState, (_, _) => UiBuildCheck.Missing("chromium_headless_shell-1234", []));
+
+        Assert.Equal("chromium_headless_shell-1234", Assert.Single(runState.PlannedInstalls, pair => pair.Key == "chromium").Value);
+    }
+
+    [Fact]
+    public void AnInstalledBrowser_IsNeitherRefusedNorInstalled()
+    {
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium", Install = true }));
+        UiRunState runState = new();
+
+        UiRequirements.For(Shop, resources, runState, (_, _) => UiBuildCheck.Installed);
+
+        Assert.Empty(runState.PlannedInstalls);
+    }
+
+    [Theory]
+    [InlineData(true, "chromium", "chromium_headless_shell")]
+    [InlineData(false, "chromium", "chromium")]
+    public void TheBuildAskedForFollowsHeadlessness_BecauseChromiumsTwoModesAreTwoDownloads(bool headless, string engine, string build)
+    {
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = engine, Headless = headless }));
+        bool? askedHeadless = null;
+
+        For(Shop, resources, (_, asked) => { askedHeadless = asked; return UiBuildCheck.Installed; });
+
+        Assert.Equal(headless, askedHeadless);
+        Assert.StartsWith(build, PlaywrightBuildsFolderFor(engine, headless), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void InstallTogetherWithABrandedBuild_IsRefused_BecauseOnlyTheMachineInstallsThose()
+    {
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium", Channel = "msedge", Install = true }));
+
+        UiConfigurationException refusal = Assert.Throws<UiConfigurationException>(() => For(Shop, resources));
+
+        Assert.Contains("Channel = \"msedge\"", refusal.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ABrandedBuild_IsLeftToTheLaunch_BecauseWhereItIsInstalledIsTheMachinesBusiness()
+    {
+        ResourceGraph resources = Resources(App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium", Channel = "msedge" }));
+
+        For(Shop, resources, (_, _) => throw new InvalidOperationException("A branded build must not be looked up in Playwright's cache."));
+    }
+
+    private static string PlaywrightBuildsFolderFor(string engine, bool headless)
+        => PlaywrightBuilds.Check(engine, headless, new Dictionary<string, IReadOnlyList<string>> { ["chromium"] = ["1"], ["chromium-headless-shell"] = ["1"] }, []).Needed!;
+
+    private static IReadOnlyCollection<EnvironmentRequirement> For(WebAppIdentifier app, ResourceGraph resources)
+        => For(app, resources, (_, _) => UiBuildCheck.Installed);
+
+    private static IReadOnlyCollection<EnvironmentRequirement> For(WebAppIdentifier app, ResourceGraph resources, Func<string, bool, UiBuildCheck> checkBuild)
+        => UiRequirements.For(app, resources, new UiRunState(), checkBuild);
 
     private static IResourceNodeSource App(string identifier, WebAppConfig config)
         => new UiApplications([new(identifier, config)]);

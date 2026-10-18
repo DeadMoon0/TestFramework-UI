@@ -161,10 +161,19 @@ identifiers that *are* registered. Recovery: add the `Ui:<identifier>` entry wit
 
 ## UiBrowserNotInstalledException
 
-The configured browser engine is not on the machine. The message names the three ways out: set
-`"Channel": "msedge"` to use the installed Edge with no download, call
-`BrowserExt.Tooling.InstallBrowsers("chromium")` once from a fixture, or run Playwright's install command
-by hand. The package never downloads a browser on its own.
+The configured browser is not on the machine. Thrown while the run is planned, before anything starts,
+when the exact build this version of Playwright launches is missing from its cache - naming that build, and
+any other build of the same browser found there, which is what a cache restored from before a Playwright
+upgrade looks like. Thrown at the launch for what files cannot tell: a branded build, or a cache Playwright
+keeps beside its package.
+
+The message names the three ways out: set `"Channel": "msedge"` (or `"chrome"`) to use an installed browser
+with no download, set `"Install": true` to let the run install Playwright's build as a step of its own, or
+install it in the pipeline (`playwright install --with-deps chromium`). The package never downloads a browser
+unless the application says `Install`.
+
+`Install` together with a `Channel` is refused while the run is planned with `UiConfigurationException`: a
+branded browser is installed with the machine, not by a run.
 
 ## Wait Event Timeouts
 

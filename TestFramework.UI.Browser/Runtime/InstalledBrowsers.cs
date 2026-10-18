@@ -65,22 +65,12 @@ public sealed record UiAvailableBrowser
 internal static class InstalledBrowsers
 {
     /// <summary>
-    /// Overrides where Playwright keeps its downloaded browsers, and is Playwright's own variable.
-    /// </summary>
-    private const string BrowsersPathVariable = "PLAYWRIGHT_BROWSERS_PATH";
-
-    /// <summary>
-    /// The file Playwright's installer writes into a browser's folder once its download is complete.
-    /// </summary>
-    private const string InstallationCompleteMarker = "INSTALLATION_COMPLETE";
-
-    /// <summary>
     /// The best browser available here, or null when this machine has none.
     /// </summary>
     /// <returns>The browser to drive, or null.</returns>
     public static UiAvailableBrowser? Find()
     {
-        if (FindPlaywrightBuild("chromium", BrowserCacheRoots()) is { } downloaded)
+        if (FindPlaywrightBuild("chromium") is { } downloaded)
         {
             return downloaded;
         }
@@ -124,7 +114,7 @@ internal static class InstalledBrowsers
             case "chromium":
             case "firefox":
             case "webkit":
-                return FindPlaywrightBuild(requested.ToLowerInvariant(), BrowserCacheRoots());
+                return FindPlaywrightBuild(requested.ToLowerInvariant());
 
             default:
                 return null;
@@ -138,14 +128,17 @@ internal static class InstalledBrowsers
             .Select(static candidate => new UiAvailableBrowser("chromium", candidate.Channel, candidate.Description))
             .FirstOrDefault();
 
+    private static UiAvailableBrowser? FindPlaywrightBuild(string engine)
+        => PlaywrightBuilds.CacheRoots() is { } roots ? FindPlaywrightBuild(engine, PlaywrightBuilds.Pins, roots) : null;
+
     /// <summary>
-    /// One of Playwright's downloaded builds, found the way Playwright itself lays them out.
+    /// The build of <paramref name="engine"/> this version of Playwright launches, when it is installed.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The folder carries the build number (<c>firefox-1234</c>), so this looks for any of them rather
-    /// than pinning one: which build the package reference wants is Playwright's business, and a mismatch
-    /// is its own clear error at launch rather than something to second-guess here.
+    /// The exact build, not any: a cache restored from an older Playwright holds a finished build of another
+    /// number, and reporting it as available sends a suite into a launch that fails. Headless or headed is
+    /// the launch's choice, so either of chromium's two builds counts.
     /// </para>
     /// <para>
     /// A folder counts only once Playwright has marked it finished. Its installer writes that marker last,
@@ -154,59 +147,14 @@ internal static class InstalledBrowsers
     /// </para>
     /// </remarks>
     /// <param name="engine"><c>chromium</c>, <c>firefox</c> or <c>webkit</c>.</param>
+    /// <param name="pins">The builds this version of Playwright launches.</param>
     /// <param name="cacheRoots">The folders Playwright keeps its downloads in.</param>
-    /// <returns>The build, or null when none is installed there.</returns>
-    internal static UiAvailableBrowser? FindPlaywrightBuild(string engine, IEnumerable<string> cacheRoots)
-    {
-        foreach (string root in cacheRoots)
-        {
-            if (root.Length == 0 || !Directory.Exists(root))
-            {
-                continue;
-            }
-
-            bool present = Directory
-                .EnumerateDirectories(root, $"{engine}-*", SearchOption.TopDirectoryOnly)
-                .Any(static folder => File.Exists(Path.Combine(folder, InstallationCompleteMarker)));
-
-            if (present)
-            {
-                return new UiAvailableBrowser(engine, null, $"{engine} (Playwright's own build)");
-            }
-        }
-
-        return null;
-    }
-
-    private static IEnumerable<string> BrowserCacheRoots()
-    {
-        if (Environment.GetEnvironmentVariable(BrowsersPathVariable) is { Length: > 0 } configured)
-        {
-            yield return configured;
-
-            // Playwright treats "0" as "beside the package", which this cannot locate. Saying nothing is
-            // then the honest answer rather than reporting the default cache it is not using.
-            yield break;
-        }
-
-        if (OperatingSystem.IsWindows())
-        {
-            yield return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "ms-playwright");
-
-            yield break;
-        }
-
-        string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-
-        if (OperatingSystem.IsMacOS())
-        {
-            yield return Path.Combine(home, "Library", "Caches", "ms-playwright");
-
-            yield break;
-        }
-
-        yield return Path.Combine(home, ".cache", "ms-playwright");
-    }
+    /// <returns>The build, or null when it is not installed or the pins cannot be read.</returns>
+    internal static UiAvailableBrowser? FindPlaywrightBuild(string engine, IReadOnlyDictionary<string, IReadOnlyList<string>>? pins, IReadOnlyList<string> cacheRoots)
+        => PlaywrightBuilds.Check(engine, headless: true, pins, cacheRoots).IsInstalled
+        || PlaywrightBuilds.Check(engine, headless: false, pins, cacheRoots).IsInstalled
+            ? new UiAvailableBrowser(engine, null, $"{engine} (Playwright's own build)")
+            : null;
 
     /// <summary>
     /// Where a branded build lives, per platform.
