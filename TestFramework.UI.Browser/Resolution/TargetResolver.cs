@@ -95,8 +95,26 @@ internal static class TargetResolver
                 .ConfigureAwait(false);
         }
 
-        UiResolvedTarget? fuzzyMatch = await SweepAsync(query, target, ladder, scopeSpec, scopeIndex, options, app, url, exact: false, tried, cancellationToken)
-            .ConfigureAwait(false);
+        UiResolvedTarget? fuzzyMatch;
+        try
+        {
+            fuzzyMatch = await SweepAsync(query, target, ladder, scopeSpec, scopeIndex, options, app, url, exact: false, tried, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (UiAmbiguousTargetException)
+        {
+            // The same race as below, met harder: the element arrived during the loose sweep, which then saw it
+            // beside everything that merely mentions it. The exact channels get their second look before the
+            // ambiguity stands - refusing a page that names the element exactly would fail a correct test on
+            // timing alone.
+            if (await SweepAsync(query, target, ladder, scopeSpec, scopeIndex, options, app, url, exact: true, new List<UiQuerySpec>(), cancellationToken)
+                .ConfigureAwait(false) is { } late)
+            {
+                return late;
+            }
+
+            throw;
+        }
 
         if (fuzzyMatch is null)
         {

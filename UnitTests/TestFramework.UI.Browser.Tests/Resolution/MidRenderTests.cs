@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using TestFramework.UI.Browser.Exceptions;
 using TestFramework.UI.Browser.Resolution;
 using TestFramework.UI.Browser.Targeting;
 using TestFramework.UI.Browser.Tests.Fakes;
@@ -71,6 +72,67 @@ public class MidRenderTests
 
         Assert.Equal("LabelExact", resolved.DescribeMatch());
         Assert.False(resolved.IsLoose, "the page names the field exactly; only the timing was unlucky");
+    }
+
+    /// <summary>
+    /// A page whose element arrives between the exact sweep and the loose one.
+    /// </summary>
+    private sealed class ArrivesDuringTheLooseSweep(FakeElement arriving, params FakeElement[] present) : IUiElementQuery
+    {
+        private readonly FakePage before = new FakePage(present);
+        private readonly FakePage after = new FakePage([.. present, arriving]);
+        private bool looseAsked;
+
+        public Task<int> CountAsync(UiQuerySpec spec, CancellationToken cancellationToken)
+        {
+            this.looseAsked |= !spec.Exact;
+            return (this.looseAsked ? this.after : this.before).CountAsync(spec, cancellationToken);
+        }
+
+        public Task<IReadOnlyList<UiCandidate>> DescribeAsync(UiQuerySpec spec, int max, CancellationToken cancellationToken)
+            => this.after.DescribeAsync(spec, max, cancellationToken);
+
+        public Task<IReadOnlyList<string>> AvailableNamesAsync(UiQuerySpec spec, int max, CancellationToken cancellationToken)
+            => this.after.AvailableNamesAsync(spec, max, cancellationToken);
+    }
+
+    [Fact]
+    public async Task AnElementThatArrivesDuringTheLooseSweep_IsFoundExactly_NotRefusedAsAmbiguous()
+    {
+        // Measured on the sample app: the exact channels ran before the product link rendered, the loose one after -
+        // and found the link beside a blurb that mentions it, so a correct test failed as ambiguous.
+        ArrivesDuringTheLooseSweep page = new ArrivesDuringTheLooseSweep(
+            new FakeElement("a", Role: "link", Name: "Anvil", Text: "Anvil"),
+            new FakeElement("span", Text: "Holds an anvil, barely."));
+
+        UiResolvedTarget resolved = await TargetResolver.ResolveAsync(
+            page,
+            "Anvil",
+            UiSmartContext.Text,
+            UiResolutionOptions.Default,
+            "shop",
+            "http://localhost/app/products",
+            CancellationToken.None);
+
+        Assert.False(resolved.IsLoose, "the page names the link exactly; only the timing was unlucky");
+    }
+
+    [Fact]
+    public async Task AGenuineAmbiguity_IsStillRefused()
+    {
+        // The second look must not paper over a page that really does offer two loose answers and no exact one.
+        FakePage page = new FakePage(
+            new FakeElement("span", Text: "Holds an anvil, barely."),
+            new FakeElement("span", Text: "Anvils, all sizes."));
+
+        await Assert.ThrowsAsync<UiAmbiguousTargetException>(() => TargetResolver.ResolveAsync(
+            page,
+            "Anvil",
+            UiSmartContext.Text,
+            UiResolutionOptions.Default,
+            "shop",
+            "http://localhost/app/products",
+            CancellationToken.None));
     }
 
     [Fact]
