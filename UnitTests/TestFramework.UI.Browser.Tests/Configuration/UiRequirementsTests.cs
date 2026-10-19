@@ -138,7 +138,29 @@ public class UiRequirementsTests
 
         UiRequirements.For(Shop, resources, runState, (_, _) => UiBuildCheck.Missing("chromium_headless_shell-1234", []));
 
-        Assert.Equal("chromium_headless_shell-1234", Assert.Single(runState.PlannedInstalls, pair => pair.Key == "chromium").Value);
+        Assert.Equal("chromium_headless_shell-1234", Assert.Single(runState.PlannedInstalls).Build);
+    }
+
+    [Fact]
+    public void AHeadlessAndAHeadedApplication_EachGetTheirBuildInstalled()
+    {
+        // Chromium's headless shell and its full browser are two downloads; noting one per engine installed only one.
+        ResourceGraph resources = Resources(
+            App("shop", new WebAppConfig { BaseUrl = "http://shop/", Browser = "chromium", Headless = true, Install = true }),
+            App("admin", new WebAppConfig { BaseUrl = "http://admin/", Browser = "chromium", Headless = false, Install = true }));
+        UiRunState runState = new();
+
+        UiRequirements.For(Shop, resources, runState, (_, headless) => UiBuildCheck.Missing(headless ? "chromium_headless_shell-1234" : "chromium-1234", []));
+        UiRequirements.For(new WebAppIdentifier("admin"), resources, runState, (_, headless) => UiBuildCheck.Missing(headless ? "chromium_headless_shell-1234" : "chromium-1234", []));
+
+        Assert.Equal(["chromium-1234", "chromium_headless_shell-1234"], runState.PlannedInstalls.Select(static install => install.Build).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void AHeadlessChromiumInstall_FetchesOnlyTheHeadlessShell()
+    {
+        Assert.Equal(["install", "--only-shell", "chromium"], new UiPlannedInstall("chromium", Headless: true, "chromium_headless_shell-1234").InstallerArguments);
+        Assert.Equal(["install", "chromium"], new UiPlannedInstall("chromium", Headless: false, "chromium-1234").InstallerArguments);
     }
 
     [Fact]

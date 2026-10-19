@@ -166,7 +166,7 @@ internal static class UiRequirements
             // is already in place, and a cache this cannot see is no reason to skip what the application asked for.
             if (!check.IsInstalled)
             {
-                runState.InstallBeforeTheRun(engine.ToLowerInvariant(), check.Needed);
+                runState.InstallBeforeTheRun(new UiPlannedInstall(engine.ToLowerInvariant(), config.EffectiveHeadless, check.Needed));
             }
 
             return;

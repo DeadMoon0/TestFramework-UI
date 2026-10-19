@@ -37,7 +37,7 @@ internal sealed class UiRunState
     private readonly SemaphoreSlim sessionGate = new SemaphoreSlim(1, 1);
     private int cleanupClaimed;
     private int installClaimed;
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string?> installs = new(StringComparer.Ordinal);
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<(string Engine, bool Headless), UiPlannedInstall> installs = new();
     private int inspectionHolds;
 
     /// <summary>
@@ -114,12 +114,12 @@ internal sealed class UiRunState
     /// <summary>
     /// Notes, while the run is planned, a browser build an application declared the run may install.
     /// </summary>
-    /// <param name="engine">The engine to install: <c>chromium</c>, <c>firefox</c> or <c>webkit</c>.</param>
-    /// <param name="build">The build folder the launch will look for, or null when that cannot be told here.</param>
-    public void InstallBeforeTheRun(string engine, string? build) => this.installs[engine] = build;
+    /// <remarks>One per engine and mode: a headless and a headed chromium application need two different builds.</remarks>
+    /// <param name="install">The build to install.</param>
+    public void InstallBeforeTheRun(UiPlannedInstall install) => this.installs[(install.Engine, install.Headless)] = install;
 
-    /// <summary>The installs the plan noted, by engine, with the build each has to produce when it is known.</summary>
-    public IReadOnlyDictionary<string, string?> PlannedInstalls => this.installs;
+    /// <summary>The installs the plan noted.</summary>
+    public IReadOnlyCollection<UiPlannedInstall> PlannedInstalls => [.. this.installs.Values];
 
     /// <summary>
     /// The session for an application, creating it on first use.

@@ -58,16 +58,19 @@ internal sealed class UiBrowserInstallStep : Step<EmptyStepResultContext>
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        foreach ((string engine, string? build) in UiRunState.For(context.Variables).PlannedInstalls.OrderBy(static pair => pair.Key, StringComparer.Ordinal))
+        foreach (UiPlannedInstall install in UiRunState.For(context.Variables).PlannedInstalls.OrderBy(static install => install.Build ?? install.Engine, StringComparer.Ordinal))
         {
-            await InstallAsync(engine, build, context).ConfigureAwait(false);
+            await InstallAsync(install, context).ConfigureAwait(false);
         }
 
         return EmptyStepResultContext.Instance;
     }
 
-    private static async Task InstallAsync(string engine, string? build, RunContext context)
+    private static async Task InstallAsync(UiPlannedInstall install, RunContext context)
     {
+        string engine = install.Engine;
+        string? build = install.Build;
+
         await OneInstallAtATime.WaitAsync(context.Deadline.Token).ConfigureAwait(false);
         try
         {
@@ -82,7 +85,7 @@ internal sealed class UiBrowserInstallStep : Step<EmptyStepResultContext>
             Stopwatch elapsed = Stopwatch.StartNew();
 
             // The installer cannot be stopped half-way; the step stops waiting for it when its deadline does.
-            int exitCode = await Task.Run(() => Microsoft.Playwright.Program.Main(["install", engine]))
+            int exitCode = await Task.Run(() => Microsoft.Playwright.Program.Main(install.InstallerArguments))
                 .WaitAsync(context.Deadline.Token)
                 .ConfigureAwait(false);
 
